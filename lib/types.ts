@@ -1,5 +1,6 @@
 export type Customer = {
   id: string
+  authUserId: string | null
   businessName: string
   contactName: string | null
   email: string | null

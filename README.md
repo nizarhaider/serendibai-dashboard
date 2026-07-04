@@ -19,12 +19,35 @@ If `DATABASE_URL` is not set, the dashboard uses deterministic mock data. When `
 - `agent_configs`
 - `calls`
 
+## Authentication
+
+Customer login uses Neon Auth. Enable Auth in the Neon Console, copy the Auth Base URL, and set:
+
+```bash
+NEON_AUTH_BASE_URL="https://YOUR_NEON_AUTH_URL/neondb/auth"
+NEON_AUTH_COOKIE_SECRET="$(openssl rand -base64 32)"
+```
+
+The dashboard uses one customer table. Link a Neon Auth user directly to a customer:
+
+```sql
+alter table customers add column if not exists auth_user_id text unique;
+update customers set auth_user_id = 'neon-auth-user-id' where id = 'customer-id';
+```
+
+Routes:
+
+- `/login` signs customers in.
+- `/dashboard` is protected and loads only the matching `customers.auth_user_id` row.
+
 ## Production Runtime
 
-For an EC2 deployment, set `DATABASE_URL` in the process environment instead of committing it:
+For an EC2 deployment, set secrets in the process environment instead of committing them:
 
 ```bash
 export DATABASE_URL="postgresql://..."
+export NEON_AUTH_BASE_URL="https://..."
+export NEON_AUTH_COOKIE_SECRET="..."
 pnpm build
 pnpm start
 ```

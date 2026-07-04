@@ -4,6 +4,7 @@ import type { AgentConfig, CallRecord, Customer, WhatsAppNumber } from './types'
 
 type CustomerRow = {
   id: string
+  auth_user_id: string | null
   business_name: string
   contact_name: string | null
   email: string | null
@@ -48,6 +49,7 @@ function getDatabaseUrl() {
 function toCustomer(row: CustomerRow): Customer {
   return {
     id: row.id,
+    authUserId: row.auth_user_id,
     businessName: row.business_name,
     contactName: row.contact_name,
     email: row.email,
@@ -92,7 +94,7 @@ function toCall(row: CallRow): CallRecord {
   }
 }
 
-export async function getDashboardData() {
+export async function getDashboardData(authUserId?: string) {
   const databaseUrl = getDatabaseUrl()
 
   if (!databaseUrl) {
@@ -101,15 +103,22 @@ export async function getDashboardData() {
 
   try {
     const sql = neon(databaseUrl)
-    const customers = (await sql`
-      select id, business_name, contact_name, email, phone, created_at
-      from customers
-      order by created_at asc
-      limit 1
-    `) as CustomerRow[]
+    const customers = authUserId
+      ? ((await sql`
+          select id, auth_user_id, business_name, contact_name, email, phone, created_at
+          from customers
+          where auth_user_id = ${authUserId}
+          limit 1
+        `) as CustomerRow[])
+      : ((await sql`
+          select id, auth_user_id, business_name, contact_name, email, phone, created_at
+          from customers
+          order by created_at asc
+          limit 1
+        `) as CustomerRow[])
 
     if (!customers[0]) {
-      return mockDashboardData
+      return null
     }
 
     const customer = toCustomer(customers[0])

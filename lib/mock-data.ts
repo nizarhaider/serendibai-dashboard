@@ -2,6 +2,7 @@ import type { AgentConfig, CallRecord, Customer, DashboardData, WhatsAppNumber }
 
 const customer: Customer = {
   id: 'demo-customer',
+  authUserId: null,
   businessName: 'Colombo Care Clinic',
   contactName: 'Nimali Perera',
   email: 'ops@colombocare.example',
