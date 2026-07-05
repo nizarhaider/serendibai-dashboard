@@ -22,11 +22,11 @@ import { getDashboardData } from '@/lib/dashboard-data'
 export const dynamic = 'force-dynamic'
 
 const navItems = [
-  { label: 'Overview', icon: Activity, active: true },
-  { label: 'Calls', icon: PhoneCall },
-  { label: 'Agent setup', icon: Bot },
-  { label: 'Customers', icon: Users },
-  { label: 'Settings', icon: Settings },
+  { label: 'Overview', href: '/dashboard', icon: Activity, active: true },
+  { label: 'Calls', href: '/dashboard/calls', icon: PhoneCall },
+  { label: 'Agent setup', href: '/dashboard/agent', icon: Bot },
+  { label: 'Customers', href: '/dashboard/customers', icon: Users },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 const statusStyles: Record<string, string> = {
@@ -94,7 +94,7 @@ export default async function Home() {
               const Icon = item.icon
               return (
                 <a
-                  href="#"
+                  href={item.href}
                   key={item.label}
                   className={`flex min-w-max items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
                     item.active
