@@ -39,6 +39,14 @@ Routes:
 
 - `/login` signs customers in.
 - `/dashboard` is protected and loads only the matching `customers.auth_user_id` row.
+- `/admin` lets admin users create customer logins and send password reset emails.
+- `/reset-password` receives Neon Auth reset links and lets customers set a password.
+
+Admin access is controlled by the Neon Auth user `role` column:
+
+```sql
+update neon_auth."user" set role = 'admin' where email = 'admin@example.com';
+```
 
 ## Production Runtime
 
