@@ -11,6 +11,9 @@ const messages: Record<string, string> = {
   'user-created': 'Customer user created and password reset email sent.',
   'reset-sent': 'Password reset email sent.',
   'auth-missing': 'Neon Auth is not configured.',
+  'email-required': 'Enter a customer email.',
+  'create-failed': 'Could not create this auth user.',
+  'reset-failed': 'User created, but the reset email failed.',
 }
 
 function formatDate(value: string) {
@@ -81,7 +84,15 @@ export default async function AdminPage({
 
       <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         {message && messages[message] ? (
-          <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          <p
+            className={`rounded-md border px-3 py-2 text-sm ${
+              message.includes('failed') ||
+              message.includes('missing') ||
+              message.includes('required')
+                ? 'border-rose-200 bg-rose-50 text-rose-700'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            }`}
+          >
             {messages[message]}
           </p>
         ) : null}

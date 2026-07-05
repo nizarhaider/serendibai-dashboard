@@ -1,15 +1,8 @@
-'use client'
-
-import { useActionState } from 'react'
-import { createCustomerUserAction, type CreateUserState } from '@/app/admin/actions'
-
-const initialState: CreateUserState = {}
+import { createCustomerUserAction } from '@/app/admin/actions'
 
 export function AdminCreateUserForm() {
-  const [state, formAction, isPending] = useActionState(createCustomerUserAction, initialState)
-
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={createCustomerUserAction} className="space-y-4">
       <div>
         <label htmlFor="email" className="text-sm font-medium">
           Customer email
@@ -49,18 +42,11 @@ export function AdminCreateUserForm() {
         </div>
       </div>
 
-      {state.error ? (
-        <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {state.error}
-        </p>
-      ) : null}
-
       <button
         type="submit"
-        disabled={isPending}
-        className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/92 disabled:cursor-not-allowed disabled:opacity-60"
+        className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/92"
       >
-        {isPending ? 'Creating...' : 'Create user and send reset'}
+        Create user and send reset
       </button>
     </form>
   )

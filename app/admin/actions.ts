@@ -6,10 +6,6 @@ import { redirect } from 'next/navigation'
 import { getCurrentAdminUser, getSql } from '@/lib/admin-data'
 import { getAuth } from '@/lib/auth/server'
 
-export type CreateUserState = {
-  error?: string
-}
-
 async function requireAdmin() {
   const user = await getCurrentAdminUser()
 
@@ -34,16 +30,13 @@ function fallbackBusinessName(email: string) {
   return email.split('@')[0]?.replace(/[._-]+/g, ' ') || email
 }
 
-export async function createCustomerUserAction(
-  _state: CreateUserState,
-  formData: FormData
-): Promise<CreateUserState> {
+export async function createCustomerUserAction(formData: FormData) {
   await requireAdmin()
 
   const auth = getAuth()
 
   if (!auth) {
-    return { error: 'Neon Auth is not configured.' }
+    redirect('/admin?message=auth-missing')
   }
 
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
@@ -51,7 +44,7 @@ export async function createCustomerUserAction(
   const businessName = String(formData.get('businessName') ?? '').trim()
 
   if (!email) {
-    return { error: 'Enter a customer email.' }
+    redirect('/admin?message=email-required')
   }
 
   const displayName = name || businessName || fallbackBusinessName(email)
@@ -73,14 +66,14 @@ export async function createCustomerUserAction(
     `
 
     if (!existingUsers[0]) {
-      return { error: createResult.error.message || 'Could not create this auth user.' }
+      redirect('/admin?message=create-failed')
     }
 
     userId = existingUsers[0].id as string
   }
 
   if (!userId) {
-    return { error: 'Neon Auth did not return a user ID.' }
+    redirect('/admin?message=create-failed')
   }
 
   const customerName = businessName || displayName
@@ -106,9 +99,7 @@ export async function createCustomerUserAction(
   revalidatePath('/admin')
 
   if (resetResult.error) {
-    return {
-      error: `User created, but the reset email failed: ${resetResult.error.message}`,
-    }
+    redirect('/admin?message=reset-failed')
   }
 
   redirect('/admin?message=user-created')
