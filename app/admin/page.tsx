@@ -1,6 +1,5 @@
 import { Headphones, ShieldCheck, Users } from 'lucide-react'
 import { redirect } from 'next/navigation'
-import { resendPasswordResetAction } from '@/app/admin/actions'
 import { signOutAction } from '@/app/dashboard/actions'
 import { AdminCreateUserForm } from '@/components/admin-create-user-form'
 import { getCurrentAdminUser, listAdminUsers } from '@/lib/admin-data'
@@ -162,7 +161,7 @@ export default async function AdminPage({
                         {formatDate(user.createdAt)}
                       </td>
                       <td className="px-5 py-4">
-                        <form action={resendPasswordResetAction}>
+                        <form action="/admin/users/reset" method="post">
                           <input type="hidden" name="email" value={user.email} />
                           <button className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted">
                             Send reset

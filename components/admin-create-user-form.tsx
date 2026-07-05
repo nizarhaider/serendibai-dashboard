@@ -1,8 +1,6 @@
-import { createCustomerUserAction } from '@/app/admin/actions'
-
 export function AdminCreateUserForm() {
   return (
-    <form action={createCustomerUserAction} className="space-y-4">
+    <form action="/admin/users" method="post" className="space-y-4">
       <div>
         <label htmlFor="email" className="text-sm font-medium">
           Customer email
