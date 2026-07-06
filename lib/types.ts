@@ -43,12 +43,43 @@ export type DailyCallCount = {
   calls: number
 }
 
+export type SubscriptionPlan = {
+  id: string
+  name: string
+  monthlyPriceCents: number
+  tokenLimit: number
+  callLimit: number
+  isActive: boolean
+}
+
+export type CustomerSubscription = {
+  planId: string
+  planName: string
+  monthlyPriceCents: number
+  tokenLimit: number
+  callLimit: number
+  status: string
+  currentPeriodStart: string
+  currentPeriodEnd: string
+}
+
+export type UsageSummary = {
+  periodStart: string
+  periodEnd: string
+  tokensUsed: number
+  callsMade: number
+  tokenLimit: number
+  callLimit: number
+}
+
 export type DashboardData = {
   customer: Customer
   whatsappNumber: WhatsAppNumber | null
   agentConfig: AgentConfig | null
   calls: CallRecord[]
   dailyCalls: DailyCallCount[]
+  subscription: CustomerSubscription
+  usage: UsageSummary
   stats: {
     totalCalls: number
     completedCalls: number

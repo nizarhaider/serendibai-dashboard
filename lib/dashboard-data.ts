@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless'
+import { getBillingSummary } from './billing-data'
 import { buildDashboardData, mockDashboardData } from './mock-data'
 import type { AgentConfig, CallRecord, Customer, WhatsAppNumber } from './types'
 
@@ -94,7 +95,7 @@ function toCall(row: CallRow): CallRecord {
   }
 }
 
-export async function getDashboardData(authUserId?: string) {
+async function getDashboardDataByWhereClause(where: 'auth' | 'customer' | 'first', value?: string) {
   const databaseUrl = getDatabaseUrl()
 
   if (!databaseUrl) {
@@ -103,14 +104,21 @@ export async function getDashboardData(authUserId?: string) {
 
   try {
     const sql = neon(databaseUrl)
-    const customers = authUserId
+    const customers = where === 'auth' && value
       ? ((await sql`
           select id, auth_user_id, business_name, contact_name, email, phone, created_at
           from customers
-          where auth_user_id = ${authUserId}
+          where auth_user_id = ${value}
           limit 1
         `) as CustomerRow[])
-      : ((await sql`
+      : where === 'customer' && value
+        ? ((await sql`
+          select id, auth_user_id, business_name, contact_name, email, phone, created_at
+          from customers
+          where id = ${value}
+          limit 1
+        `) as CustomerRow[])
+        : ((await sql`
           select id, auth_user_id, business_name, contact_name, email, phone, created_at
           from customers
           order by created_at asc
@@ -123,7 +131,7 @@ export async function getDashboardData(authUserId?: string) {
 
     const customer = toCustomer(customers[0])
 
-    const [numbers, agents, calls] = await Promise.all([
+    const [numbers, agents, calls, billing] = await Promise.all([
       sql`
         select id, customer_id, phone_number, phone_number_id, waba_id, status, created_at
         from whatsapp_numbers
@@ -145,6 +153,7 @@ export async function getDashboardData(authUserId?: string) {
         order by created_at desc
         limit 25
       `,
+      getBillingSummary(customer.id, sql),
     ])
 
     return buildDashboardData(
@@ -152,10 +161,20 @@ export async function getDashboardData(authUserId?: string) {
       (numbers as WhatsAppNumberRow[])[0] ? toWhatsAppNumber((numbers as WhatsAppNumberRow[])[0]) : null,
       (agents as AgentConfigRow[])[0] ? toAgentConfig((agents as AgentConfigRow[])[0]) : null,
       (calls as CallRow[]).map(toCall),
-      'neon'
+      'neon',
+      billing.subscription,
+      billing.usage
     )
   } catch (error) {
     console.error('Failed to load Neon dashboard data:', error)
     return mockDashboardData
   }
+}
+
+export async function getDashboardData(authUserId?: string) {
+  return getDashboardDataByWhereClause(authUserId ? 'auth' : 'first', authUserId)
+}
+
+export async function getDashboardDataForCustomer(customerId: string) {
+  return getDashboardDataByWhereClause('customer', customerId)
 }

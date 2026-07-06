@@ -1,6 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { getSql } from '@/lib/admin-data'
 import { getAuth } from '@/lib/auth/server'
 
 export type LoginState = {
@@ -17,7 +18,7 @@ export async function signInAction(_state: LoginState, formData: FormData): Prom
     }
   }
 
-  const email = String(formData.get('email') ?? '').trim()
+  const email = String(formData.get('email') ?? '').trim().toLowerCase()
   const password = String(formData.get('password') ?? '')
 
   if (!email || !password) {
@@ -33,5 +34,21 @@ export async function signInAction(_state: LoginState, formData: FormData): Prom
     return { error: error.message || 'Could not sign in with those credentials.' }
   }
 
-  redirect('/dashboard')
+  let redirectTo = '/dashboard'
+
+  if (process.env.DATABASE_URL) {
+    const sql = getSql()
+    const users = await sql`
+      select role
+      from neon_auth."user"
+      where email = ${email}
+      limit 1
+    `
+
+    if (users[0]?.role === 'admin') {
+      redirectTo = '/admin'
+    }
+  }
+
+  redirect(redirectTo)
 }

@@ -3,6 +3,7 @@ import {
   Bot,
   CheckCircle2,
   Clock3,
+  Coins,
   Headphones,
   MessageSquareText,
   PhoneCall,
@@ -14,9 +15,20 @@ import {
 } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import type { ComponentType } from 'react'
-import { signOutAction } from '@/app/dashboard/actions'
 import CallsChart from '@/components/calls-chart'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { getAuth } from '@/lib/auth/server'
+import { getSessionFromAuthRoute } from '@/lib/auth/session'
 import { getDashboardData } from '@/lib/dashboard-data'
 
 export const dynamic = 'force-dynamic'
@@ -30,12 +42,12 @@ const navItems = [
 ]
 
 const statusStyles: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  completed: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  escalated: 'bg-orange-50 text-orange-700 ring-orange-200',
-  missed: 'bg-rose-50 text-rose-700 ring-rose-200',
-  pending: 'bg-amber-50 text-amber-700 ring-amber-200',
-  started: 'bg-sky-50 text-sky-700 ring-sky-200',
+  active: 'border-primary/25 bg-primary/10 text-primary',
+  completed: 'border-primary/25 bg-primary/10 text-primary',
+  escalated: 'border-accent/30 bg-accent/10 text-accent',
+  missed: 'border-destructive/25 bg-destructive/10 text-destructive',
+  pending: 'border-border bg-muted text-muted-foreground',
+  started: 'border-border bg-muted text-muted-foreground',
 }
 
 function formatDateTime(value: string) {
@@ -49,13 +61,13 @@ function formatDateTime(value: string) {
 }
 
 function statusClassName(status: string) {
-  return statusStyles[status] ?? 'bg-slate-50 text-slate-700 ring-slate-200'
+  return statusStyles[status] ?? 'border-border bg-muted text-muted-foreground'
 }
 
 export default async function Home() {
   const auth = getAuth()
-  const sessionResult = auth ? await auth.getSession() : null
-  const user = sessionResult?.data?.user
+  const sessionResult = auth ? await getSessionFromAuthRoute() : null
+  const user = sessionResult?.user
 
   if (auth && !user) {
     redirect('/login')
@@ -129,22 +141,18 @@ export default async function Home() {
                 </h1>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="rounded-md border border-border bg-background px-3 py-2 text-muted-foreground">
+                <Badge variant="outline" className="h-8 rounded-lg px-3 text-muted-foreground">
                   {data.customer.contactName ?? 'No contact assigned'}
-                </span>
-                <span
-                  className={`rounded-md px-3 py-2 font-medium ring-1 ${statusClassName(
-                    data.whatsappNumber?.status ?? 'pending'
-                  )}`}
-                >
+                </Badge>
+                <Badge variant="outline" className={statusClassName(data.whatsappNumber?.status ?? 'pending')}>
                   WhatsApp {data.whatsappNumber?.status ?? 'pending'}
-                </span>
+                </Badge>
                 {auth ? (
-                  <form action={signOutAction}>
-                    <button className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 font-medium hover:bg-muted">
+                  <form action="/logout" method="post">
+                    <Button variant="outline" type="submit">
                       <LogOut className="h-4 w-4" aria-hidden={true} />
                       Log out
-                    </button>
+                    </Button>
                   </form>
                 ) : null}
               </div>
@@ -179,25 +187,54 @@ export default async function Home() {
               />
             </section>
 
+            <section className="grid gap-4 md:grid-cols-3">
+              <MetricCard
+                label="Current plan"
+                value={data.subscription.planName}
+                detail={`$${(data.subscription.monthlyPriceCents / 100).toFixed(0)} per month`}
+                icon={Settings}
+              />
+              <MetricCard
+                label="Tokens used"
+                value={data.usage.tokensUsed.toLocaleString()}
+                detail={`${Math.round(
+                  (data.usage.tokensUsed / Math.max(data.usage.tokenLimit, 1)) * 100
+                )}% of ${data.usage.tokenLimit.toLocaleString()}`}
+                icon={Coins}
+              />
+              <MetricCard
+                label="Calls this month"
+                value={data.usage.callsMade.toLocaleString()}
+                detail={`${Math.round(
+                  (data.usage.callsMade / Math.max(data.usage.callLimit, 1)) * 100
+                )}% of ${data.usage.callLimit.toLocaleString()}`}
+                icon={PhoneCall}
+              />
+            </section>
+
             <section className="grid gap-6 xl:grid-cols-[1.45fr_0.85fr]">
-              <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <div className="mb-5 flex items-center justify-between gap-3">
+              <Card>
+                <CardHeader className="flex-row items-center justify-between">
                   <div>
-                    <h2 className="font-semibold">Call volume</h2>
+                    <CardTitle>Call volume</CardTitle>
                     <p className="text-sm text-muted-foreground">
                       Recent WhatsApp call activity by day
                     </p>
                   </div>
-                  <span className="rounded-md bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                  <Badge variant="secondary">
                     Asia/Colombo
-                  </span>
-                </div>
-                <CallsChart data={data.dailyCalls} />
-              </div>
+                  </Badge>
+                </CardHeader>
+                <CardContent>
+                  <CallsChart data={data.dailyCalls} />
+                </CardContent>
+              </Card>
 
-              <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <h2 className="font-semibold">Agent configuration</h2>
-                <div className="mt-5 space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Agent configuration</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <InfoRow label="Agent" value={data.agentConfig?.name ?? 'Not configured'} />
                   <InfoRow
                     label="Languages"
@@ -215,56 +252,52 @@ export default async function Home() {
                       {data.agentConfig?.systemPrompt ?? 'No prompt has been configured yet.'}
                     </p>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </section>
 
-            <section className="rounded-lg border border-border bg-card shadow-sm">
+            <Card>
               <div className="flex flex-col gap-3 border-b border-border p-5 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h2 className="font-semibold">Recent calls</h2>
+                  <CardTitle>Recent calls</CardTitle>
                   <p className="text-sm text-muted-foreground">
                     Latest customer conversations handled by the AI agent
                   </p>
                 </div>
-                <button className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted">
+                <Button variant="outline">
                   Export CSV
-                </button>
+                </Button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[820px] border-collapse text-left text-sm">
-                  <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
-                    <tr>
-                      <th className="px-5 py-3 font-medium">Time</th>
-                      <th className="px-5 py-3 font-medium">Customer phone</th>
-                      <th className="px-5 py-3 font-medium">Status</th>
-                      <th className="px-5 py-3 font-medium">Transcript</th>
-                      <th className="px-5 py-3 font-medium">Recording</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <CardContent>
+                <Table className="min-w-[820px]">
+                  <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Customer phone</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Transcript</TableHead>
+                      <TableHead>Recording</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {data.calls.map((call) => (
-                      <tr key={call.id} className="border-t border-border align-top">
-                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-muted-foreground">
+                      <TableRow key={call.id} className="align-top">
+                        <TableCell className="whitespace-nowrap font-mono text-xs text-muted-foreground">
                           {formatDateTime(call.createdAt)}
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4 font-medium">
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap font-medium">
                           {call.customerPhone ?? 'Unknown'}
-                        </td>
-                        <td className="px-5 py-4">
-                          <span
-                            className={`rounded-md px-2.5 py-1 text-xs font-medium ring-1 ${statusClassName(
-                              call.status
-                            )}`}
-                          >
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={statusClassName(call.status)}>
                             {call.status}
-                          </span>
-                        </td>
-                        <td className="max-w-xl px-5 py-4 text-muted-foreground">
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xl text-muted-foreground">
                           {call.transcript ?? 'No transcript captured yet.'}
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4">
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
                           {call.recordingUrl ? (
                             <a href={call.recordingUrl} className="font-medium text-primary">
                               Open
@@ -272,13 +305,13 @@ export default async function Home() {
                           ) : (
                             <span className="text-muted-foreground">None</span>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
             <section className="grid gap-4 lg:grid-cols-3">
               <MiniPanel
@@ -307,7 +340,8 @@ export default async function Home() {
 function NoCustomerAccess({ email }: { email: string | null }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
-      <section className="w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-sm">
+      <Card className="w-full max-w-lg">
+        <CardContent>
         <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
           <ShieldCheck className="h-5 w-5" aria-hidden={true} />
         </div>
@@ -317,13 +351,14 @@ function NoCustomerAccess({ email }: { email: string | null }) {
           customers.auth_user_id row yet. Add this Neon Auth user ID to the customer record before
           granting dashboard access.
         </p>
-        <form action={signOutAction} className="mt-6">
-          <button className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-medium hover:bg-muted">
+        <form action="/logout" method="post" className="mt-6">
+          <Button variant="outline" type="submit">
             <LogOut className="h-4 w-4" aria-hidden={true} />
             Log out
-          </button>
+          </Button>
         </form>
-      </section>
+        </CardContent>
+      </Card>
     </main>
   )
 }
@@ -342,7 +377,8 @@ function MetricCard({
   icon: IconComponent
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <Card>
+      <CardContent>
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">{label}</p>
@@ -353,7 +389,8 @@ function MetricCard({
         </div>
       </div>
       <p className="mt-4 text-sm text-muted-foreground">{detail}</p>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -376,10 +413,12 @@ function MiniPanel({
   text: string
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <Card>
+      <CardContent>
       <Icon className="h-5 w-5 text-primary" aria-hidden={true} />
       <h3 className="mt-4 font-semibold">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

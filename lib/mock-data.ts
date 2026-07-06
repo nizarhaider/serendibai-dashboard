@@ -1,4 +1,12 @@
-import type { AgentConfig, CallRecord, Customer, DashboardData, WhatsAppNumber } from './types'
+import type {
+  AgentConfig,
+  CallRecord,
+  Customer,
+  CustomerSubscription,
+  DashboardData,
+  UsageSummary,
+  WhatsAppNumber,
+} from './types'
 
 const customer: Customer = {
   id: 'demo-customer',
@@ -87,12 +95,25 @@ const calls: CallRecord[] = [
   },
 ]
 
+const subscription: CustomerSubscription = {
+  planId: 'growth',
+  planName: 'Growth',
+  monthlyPriceCents: 4900,
+  tokenLimit: 500000,
+  callLimit: 1000,
+  status: 'active',
+  currentPeriodStart: '2026-07-01T00:00:00.000Z',
+  currentPeriodEnd: '2026-08-01T00:00:00.000Z',
+}
+
 export function buildDashboardData(
   sourceCustomer = customer,
   sourceWhatsAppNumber: WhatsAppNumber | null = whatsappNumber,
   sourceAgentConfig: AgentConfig | null = agentConfig,
   sourceCalls = calls,
-  dataSource: DashboardData['dataSource'] = 'mock'
+  dataSource: DashboardData['dataSource'] = 'mock',
+  sourceSubscription: CustomerSubscription = subscription,
+  sourceUsage?: UsageSummary
 ): DashboardData {
   const sortedCalls = [...sourceCalls].sort(
     (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
@@ -107,6 +128,15 @@ export function buildDashboardData(
     return acc
   }, {})
 
+  const usage = sourceUsage ?? {
+    periodStart: sourceSubscription.currentPeriodStart,
+    periodEnd: sourceSubscription.currentPeriodEnd,
+    tokensUsed: 183400,
+    callsMade: sortedCalls.length,
+    tokenLimit: sourceSubscription.tokenLimit,
+    callLimit: sourceSubscription.callLimit,
+  }
+
   return {
     customer: sourceCustomer,
     whatsappNumber: sourceWhatsAppNumber,
@@ -115,6 +145,8 @@ export function buildDashboardData(
     dailyCalls: Object.entries(countsByDate)
       .map(([date, callCount]) => ({ date, calls: callCount }))
       .reverse(),
+    subscription: sourceSubscription,
+    usage,
     stats: {
       totalCalls: sortedCalls.length,
       completedCalls: sortedCalls.filter((call) => call.status === 'completed').length,

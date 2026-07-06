@@ -1,7 +1,28 @@
-import { Headphones, ShieldCheck, Users } from 'lucide-react'
+import { Coins, Headphones, MoreHorizontal, PhoneCall, ShieldCheck, Users } from 'lucide-react'
 import { redirect } from 'next/navigation'
-import { signOutAction } from '@/app/dashboard/actions'
 import { AdminCreateUserForm } from '@/components/admin-create-user-form'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { listSubscriptionPlans } from '@/lib/billing-data'
 import { getCurrentAdminUser, listAdminUsers } from '@/lib/admin-data'
 
 export const dynamic = 'force-dynamic'
@@ -37,23 +58,31 @@ export default async function AdminPage({
   if (adminUser.role !== 'admin') {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
-        <section className="w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-sm">
-          <ShieldCheck className="h-6 w-6 text-primary" aria-hidden={true} />
-          <h1 className="mt-5 text-2xl font-semibold tracking-tight">Admin access required</h1>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            You are signed in, but this account is not allowed to manage SerendibAI users.
-          </p>
-          <form action={signOutAction} className="mt-6">
-            <button className="h-10 rounded-md border border-border px-3 text-sm font-medium hover:bg-muted">
+        <Card className="w-full max-w-lg">
+          <CardHeader>
+            <ShieldCheck className="h-6 w-6 text-primary" aria-hidden={true} />
+            <CardTitle className="mt-3 text-2xl">Admin access required</CardTitle>
+            <p className="text-sm leading-6 text-muted-foreground">
+              You are signed in, but this account is not allowed to manage SerendibAI users.
+            </p>
+          </CardHeader>
+          <CardContent>
+          <form action="/logout" method="post">
+            <Button variant="outline">
               Log out
-            </button>
+            </Button>
           </form>
-        </section>
+          </CardContent>
+        </Card>
       </main>
     )
   }
 
-  const [{ message }, users] = await Promise.all([searchParams, listAdminUsers()])
+  const [{ message }, users, plans] = await Promise.all([
+    searchParams,
+    listAdminUsers(),
+    listSubscriptionPlans(),
+  ])
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -69,13 +98,13 @@ export default async function AdminPage({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <a className="rounded-md border border-border px-3 py-2 font-medium hover:bg-muted" href="/dashboard">
-              Customer dashboard
-            </a>
-            <form action={signOutAction}>
-              <button className="rounded-md border border-border px-3 py-2 font-medium hover:bg-muted">
+            <Button asChild variant="outline">
+              <a href="/dashboard">Customer dashboard</a>
+            </Button>
+            <form action="/logout" method="post">
+              <Button variant="outline" type="submit">
                 Log out
-              </button>
+              </Button>
             </form>
           </div>
         </div>
@@ -83,97 +112,162 @@ export default async function AdminPage({
 
       <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         {message && messages[message] ? (
-          <p
-            className={`rounded-md border px-3 py-2 text-sm ${
-              message.includes('failed') ||
-              message.includes('missing') ||
-              message.includes('required')
-                ? 'border-rose-200 bg-rose-50 text-rose-700'
-                : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-            }`}
+          <Alert
+            variant={
+              message.includes('failed') || message.includes('missing') || message.includes('required')
+                ? 'destructive'
+                : 'default'
+            }
           >
-            {messages[message]}
-          </p>
+            <AlertDescription>{messages[message]}</AlertDescription>
+          </Alert>
         ) : null}
 
         <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-primary" aria-hidden={true} />
-              <div>
-                <h2 className="font-semibold">Add customer user</h2>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-primary" aria-hidden={true} />
+                <div>
+                  <CardTitle>Add customer user</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Creates an auth user, links a customer row, and emails a password reset link.
                 </p>
+                </div>
               </div>
-            </div>
-            <div className="mt-5">
+            </CardHeader>
+            <CardContent>
               <AdminCreateUserForm />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <section className="rounded-lg border border-border bg-card shadow-sm">
-            <div className="border-b border-border p-5">
-              <h2 className="font-semibold">Users</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Users</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Auth users and their linked customer accounts.
               </p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] border-collapse text-left text-sm">
-                <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-5 py-3 font-medium">User</th>
-                    <th className="px-5 py-3 font-medium">Role</th>
-                    <th className="px-5 py-3 font-medium">Customer</th>
-                    <th className="px-5 py-3 font-medium">Password</th>
-                    <th className="px-5 py-3 font-medium">Created</th>
-                    <th className="px-5 py-3 font-medium">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+            </CardHeader>
+            <CardContent>
+              <Table className="min-w-[1060px]">
+                <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Usage</TableHead>
+                    <TableHead>Password</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {users.map((user) => (
-                    <tr key={user.id} className="border-t border-border align-top">
-                      <td className="px-5 py-4">
+                    <TableRow key={user.id} className="align-top">
+                      <TableCell>
                         <p className="font-medium">{user.email}</p>
                         <p className="mt-1 text-xs text-muted-foreground">{user.name}</p>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="rounded-md bg-muted px-2.5 py-1 text-xs font-medium">
-                          {user.role ?? 'user'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-muted-foreground">
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{user.role ?? 'user'}</Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
                         {user.businessName ?? 'Not linked'}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={`rounded-md px-2.5 py-1 text-xs font-medium ring-1 ${
-                            user.hasPassword
-                              ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-                              : 'bg-amber-50 text-amber-700 ring-amber-200'
-                          }`}
-                        >
+                      </TableCell>
+                      <TableCell>
+                        {user.planName ? (
+                          <Badge variant="outline">{user.planName}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">None</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                          <p className="flex items-center gap-1.5">
+                            <Coins className="h-3.5 w-3.5" aria-hidden={true} />
+                            {user.tokensUsed.toLocaleString()} tokens
+                          </p>
+                          <p className="flex items-center gap-1.5">
+                            <PhoneCall className="h-3.5 w-3.5" aria-hidden={true} />
+                            {user.callsMade.toLocaleString()} calls
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.hasPassword ? 'default' : 'outline'}>
                           {user.hasPassword ? 'Set' : 'Pending'}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-muted-foreground">
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-muted-foreground">
                         {formatDate(user.createdAt)}
-                      </td>
-                      <td className="px-5 py-4">
-                        <form action="/admin/users/reset" method="post">
-                          <input type="hidden" name="email" value={user.email} />
-                          <button className="rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted">
-                            Send reset
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" aria-label="Open user actions">
+                            <MoreHorizontal className="h-4 w-4" aria-hidden={true} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-64">
+                            {user.customerId ? (
+                              <>
+                                <DropdownMenuItem asChild>
+                                  <a href={`/admin/customers/${user.customerId}`}>
+                                  Manage customer
+                                  </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <a href={`/admin/customers/${user.customerId}?mode=impersonate`}>
+                                  Log in as customer
+                                  </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <form
+                                  action={`/admin/customers/${user.customerId}/subscription`}
+                                  method="post"
+                                  className="space-y-2 p-1"
+                                >
+                                  <DropdownMenuLabel className="px-0">Subscription</DropdownMenuLabel>
+                                  <Select
+                                    name="planId"
+                                    defaultValue={user.planId ?? ''}
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select plan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                    {plans.map((plan) => (
+                                      <SelectItem key={plan.id} value={plan.id}>
+                                        {plan.name}
+                                      </SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button className="w-full" size="sm">
+                                    Save plan
+                                  </Button>
+                                </form>
+                              </>
+                            ) : null}
+                            <DropdownMenuSeparator />
+                            <form action="/admin/users/reset" method="post">
+                              <input type="hidden" name="email" value={user.email} />
+                              <DropdownMenuItem asChild>
+                                <Button type="submit" variant="ghost" className="h-7 w-full justify-start px-1.5">
+                                  Send password reset
+                                </Button>
+                              </DropdownMenuItem>
+                            </form>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </section>
       </div>
     </main>

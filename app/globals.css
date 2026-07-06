@@ -2,22 +2,30 @@
 @import "tw-animate-css";
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-border: var(--border);
+  --color-input: var(--input);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
   --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.75);
+  --radius-md: calc(var(--radius) * 0.875);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
 }
 
 :root {
@@ -26,16 +34,21 @@
   --foreground: #162235;
   --card: #ffffff;
   --card-foreground: #162235;
+  --popover: #ffffff;
+  --popover-foreground: #162235;
   --muted: #e9eef0;
   --muted-foreground: #627184;
   --border: #dce4e8;
+  --input: #dce4e8;
   --primary: #168f8b;
   --primary-foreground: #f8ffff;
   --secondary: #17263b;
   --secondary-foreground: #f8fbff;
   --accent: #f26d3d;
   --accent-foreground: #fff7f3;
+  --destructive: #c2413a;
   --ring: #168f8b;
+  --radius: 0.5rem;
 }
 
 * {

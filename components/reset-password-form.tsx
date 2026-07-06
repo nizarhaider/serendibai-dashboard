@@ -1,60 +1,88 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { resetPasswordAction, type ResetPasswordState } from '@/app/reset-password/actions'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 const initialState: ResetPasswordState = {}
 
-export function ResetPasswordForm({ token }: { token: string }) {
+function findTokenInUrl() {
+  const params = new URLSearchParams(window.location.search)
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+
+  return (
+    params.get('token') ??
+    params.get('token_hash') ??
+    params.get('code') ??
+    params.get('otp') ??
+    hashParams.get('token') ??
+    hashParams.get('token_hash') ??
+    hashParams.get('code') ??
+    hashParams.get('otp') ??
+    ''
+  )
+}
+
+export function ResetPasswordForm({ initialToken }: { initialToken: string }) {
   const [state, formAction, isPending] = useActionState(resetPasswordAction, initialState)
+  const [token] = useState(() =>
+    typeof window === 'undefined' ? initialToken : initialToken || findTokenInUrl()
+  )
 
   return (
     <form action={formAction} className="mt-8 space-y-5">
       <input type="hidden" name="token" value={token} />
 
       <div>
-        <label htmlFor="password" className="text-sm font-medium">
-          New password
-        </label>
-        <input
+        <Label htmlFor="password">New password</Label>
+        <Input
           id="password"
           name="password"
           type="password"
           autoComplete="new-password"
           required={true}
           minLength={8}
-          className="mt-2 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+          className="mt-2 h-11"
         />
       </div>
 
       <div>
-        <label htmlFor="confirmPassword" className="text-sm font-medium">
-          Confirm password
-        </label>
-        <input
+        <Label htmlFor="confirmPassword">Confirm password</Label>
+        <Input
           id="confirmPassword"
           name="confirmPassword"
           type="password"
           autoComplete="new-password"
           required={true}
           minLength={8}
-          className="mt-2 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+          className="mt-2 h-11"
         />
       </div>
 
       {state.error ? (
-        <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {state.error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
       ) : null}
 
-      <button
+      {!token ? (
+        <Alert>
+          <AlertDescription>
+            This reset link is missing a token. Request a new reset email and use the latest link.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <Button
         type="submit"
-        disabled={isPending}
-        className="h-11 w-full rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/92 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={isPending || !token}
+        className="h-11 w-full"
       >
         {isPending ? 'Saving...' : 'Set password'}
-      </button>
+      </Button>
     </form>
   )
 }

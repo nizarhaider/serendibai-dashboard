@@ -2,6 +2,10 @@
 
 import { useActionState } from 'react'
 import { signInAction, type LoginState } from '@/app/login/actions'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 const initialState: LoginState = {}
 
@@ -9,50 +13,51 @@ export function LoginForm() {
   const [state, formAction, isPending] = useActionState(signInAction, initialState)
 
   return (
-    <form action={formAction} className="mt-8 space-y-5">
+    <form action={formAction} className="mt-5 space-y-4">
       <div>
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <input
+        <Label htmlFor="email">Email</Label>
+        <Input
           id="email"
           name="email"
           type="email"
           autoComplete="email"
           required={true}
-          className="mt-2 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+          className="mt-2"
           placeholder="customer@example.com"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="text-sm font-medium">
-          Password
-        </label>
-        <input
+        <div className="flex items-center justify-between gap-4">
+          <Label htmlFor="password">Password</Label>
+          <a href="/forgot-password" className="text-sm font-medium text-primary hover:text-primary/80">
+            Forgot password?
+          </a>
+        </div>
+        <Input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
           required={true}
-          className="mt-2 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+          className="mt-2"
           placeholder="Enter your password"
         />
       </div>
 
       {state.error ? (
-        <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {state.error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
       ) : null}
 
-      <button
+      <Button
         type="submit"
         disabled={isPending}
-        className="h-11 w-full rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/92 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full"
       >
         {isPending ? 'Signing in...' : 'Sign in'}
-      </button>
+      </Button>
     </form>
   )
 }

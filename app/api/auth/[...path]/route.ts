@@ -4,6 +4,10 @@ type AuthContext = {
   params: Promise<{ path: string[] }>
 }
 
+async function getPath(context: AuthContext) {
+  return (await context.params).path.join('/')
+}
+
 function authUnavailable() {
   return Response.json(
     {
@@ -20,6 +24,15 @@ export async function GET(request: Request, context: AuthContext) {
 }
 
 export async function POST(request: Request, context: AuthContext) {
+  const path = await getPath(context)
+
+  if (path === 'sign-up/email') {
+    return Response.json(
+      { error: 'Public sign-up is disabled. Ask an admin to create your account.' },
+      { status: 403 }
+    )
+  }
+
   const auth = getAuth()
   return auth ? auth.handler().POST(request, context) : authUnavailable()
 }

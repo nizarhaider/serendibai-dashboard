@@ -1,5 +1,6 @@
 import { getCurrentAdminUser, getSql } from '@/lib/admin-data'
 import { isAuthConfigured } from '@/lib/auth/server'
+import { getPasswordResetUrl } from '@/lib/password-reset'
 
 export type AdminMutationResult =
   | { ok: true; message: 'user-created' | 'reset-sent' }
@@ -85,6 +86,12 @@ export async function createCustomerUser(formData: FormData, origin: string, coo
     return { ok: false, message: 'create-failed' } satisfies AdminMutationResult
   }
 
+  await sql`
+    update neon_auth."user"
+    set "emailVerified" = true, "updatedAt" = now()
+    where id = ${userId}
+  `
+
   const customerName = businessName || displayName
   const updated = await sql`
     update customers
@@ -102,7 +109,7 @@ export async function createCustomerUser(formData: FormData, origin: string, coo
 
   const resetResult = await postAuthApi<{ status?: boolean; message?: string }>(
     'request-password-reset',
-    { email, redirectTo: `${origin}/reset-password` },
+    { email, redirectTo: getPasswordResetUrl(origin), callbackURL: getPasswordResetUrl(origin) },
     origin,
     cookieHeader
   )
@@ -131,7 +138,7 @@ export async function resendPasswordReset(formData: FormData, origin: string, co
 
   const resetResult = await postAuthApi<{ status?: boolean; message?: string }>(
     'request-password-reset',
-    { email, redirectTo: `${origin}/reset-password` },
+    { email, redirectTo: getPasswordResetUrl(origin), callbackURL: getPasswordResetUrl(origin) },
     origin,
     cookieHeader
   )

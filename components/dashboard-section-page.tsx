@@ -1,6 +1,7 @@
 import {
   Activity,
   Bot,
+  Coins,
   Headphones,
   LogOut,
   PhoneCall,
@@ -10,10 +11,23 @@ import {
 } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import type { ComponentType } from 'react'
-import { signOutAction } from '@/app/dashboard/actions'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { listSubscriptionPlans } from '@/lib/billing-data'
 import { getAuth } from '@/lib/auth/server'
+import { getSessionFromAuthRoute } from '@/lib/auth/session'
 import { getDashboardData } from '@/lib/dashboard-data'
-import type { DashboardData } from '@/lib/types'
+import type { DashboardData, SubscriptionPlan } from '@/lib/types'
 
 export type DashboardSection = 'calls' | 'agent' | 'customers' | 'settings'
 
@@ -40,16 +54,16 @@ const subtitles: Record<DashboardSection, string> = {
 }
 
 const statusStyles: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  completed: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  escalated: 'bg-orange-50 text-orange-700 ring-orange-200',
-  missed: 'bg-rose-50 text-rose-700 ring-rose-200',
-  pending: 'bg-amber-50 text-amber-700 ring-amber-200',
-  started: 'bg-sky-50 text-sky-700 ring-sky-200',
+  active: 'border-primary/25 bg-primary/10 text-primary',
+  completed: 'border-primary/25 bg-primary/10 text-primary',
+  escalated: 'border-accent/30 bg-accent/10 text-accent',
+  missed: 'border-destructive/25 bg-destructive/10 text-destructive',
+  pending: 'border-border bg-muted text-muted-foreground',
+  started: 'border-border bg-muted text-muted-foreground',
 }
 
 function statusClassName(status: string) {
-  return statusStyles[status] ?? 'bg-slate-50 text-slate-700 ring-slate-200'
+  return statusStyles[status] ?? 'border-border bg-muted text-muted-foreground'
 }
 
 function formatDateTime(value: string) {
@@ -64,14 +78,15 @@ function formatDateTime(value: string) {
 
 export async function DashboardSectionPage({ section }: { section: DashboardSection }) {
   const auth = getAuth()
-  const sessionResult = auth ? await auth.getSession() : null
-  const user = sessionResult?.data?.user
+  const sessionResult = auth ? await getSessionFromAuthRoute() : null
+  const user = sessionResult?.user
 
   if (auth && !user) {
     redirect('/login')
   }
 
   const data = await getDashboardData(user?.id)
+  const plans = data && section === 'settings' ? await listSubscriptionPlans() : []
 
   if (!data) {
     return <NoCustomerAccess email={user?.email ?? null} />
@@ -137,11 +152,11 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
                 <p className="mt-2 text-sm text-muted-foreground">{subtitles[section]}</p>
               </div>
               {auth ? (
-                <form action={signOutAction}>
-                  <button className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-muted">
+                <form action="/logout" method="post">
+                  <Button variant="outline" type="submit">
                     <LogOut className="h-4 w-4" aria-hidden={true} />
                     Log out
-                  </button>
+                  </Button>
                 </form>
               ) : null}
             </div>
@@ -151,7 +166,7 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
             {section === 'calls' ? <CallsSection data={data} /> : null}
             {section === 'agent' ? <AgentSection data={data} /> : null}
             {section === 'customers' ? <CustomerSection data={data} /> : null}
-            {section === 'settings' ? <SettingsSection data={data} /> : null}
+            {section === 'settings' ? <SettingsSection data={data} plans={plans} /> : null}
           </div>
         </section>
       </div>
@@ -161,46 +176,42 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
 
 function CallsSection({ data }: { data: DashboardData }) {
   return (
-    <section className="rounded-lg border border-border bg-card shadow-sm">
-      <div className="border-b border-border p-5">
-        <h2 className="font-semibold">Call history</h2>
+    <Card>
+      <CardHeader>
+        <CardTitle>Call history</CardTitle>
         <p className="text-sm text-muted-foreground">
           Latest conversations handled by the AI agent.
         </p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px] border-collapse text-left text-sm">
-          <thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
-            <tr>
-              <th className="px-5 py-3 font-medium">Time</th>
-              <th className="px-5 py-3 font-medium">Customer phone</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Transcript</th>
-              <th className="px-5 py-3 font-medium">Recording</th>
-            </tr>
-          </thead>
-          <tbody>
+      </CardHeader>
+      <CardContent>
+        <Table className="min-w-[820px]">
+          <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+            <TableRow>
+              <TableHead>Time</TableHead>
+              <TableHead>Customer phone</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Transcript</TableHead>
+              <TableHead>Recording</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.calls.map((call) => (
-              <tr key={call.id} className="border-t border-border align-top">
-                <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-muted-foreground">
+              <TableRow key={call.id} className="align-top">
+                <TableCell className="whitespace-nowrap font-mono text-xs text-muted-foreground">
                   {formatDateTime(call.createdAt)}
-                </td>
-                <td className="whitespace-nowrap px-5 py-4 font-medium">
+                </TableCell>
+                <TableCell className="whitespace-nowrap font-medium">
                   {call.customerPhone ?? 'Unknown'}
-                </td>
-                <td className="px-5 py-4">
-                  <span
-                    className={`rounded-md px-2.5 py-1 text-xs font-medium ring-1 ${statusClassName(
-                      call.status
-                    )}`}
-                  >
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={statusClassName(call.status)}>
                     {call.status}
-                  </span>
-                </td>
-                <td className="max-w-xl px-5 py-4 text-muted-foreground">
+                  </Badge>
+                </TableCell>
+                <TableCell className="max-w-xl text-muted-foreground">
                   {call.transcript ?? 'No transcript captured yet.'}
-                </td>
-                <td className="whitespace-nowrap px-5 py-4">
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
                   {call.recordingUrl ? (
                     <a href={call.recordingUrl} className="font-medium text-primary">
                       Open
@@ -208,13 +219,13 @@ function CallsSection({ data }: { data: DashboardData }) {
                   ) : (
                     <span className="text-muted-foreground">None</span>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -260,24 +271,65 @@ function CustomerSection({ data }: { data: DashboardData }) {
   )
 }
 
-function SettingsSection({ data }: { data: DashboardData }) {
+function SettingsSection({ data, plans }: { data: DashboardData; plans: SubscriptionPlan[] }) {
   return (
-    <section className="grid gap-6 lg:grid-cols-3">
-      <MiniPanel
-        icon={ShieldCheck}
-        title="Access"
-        text="Dashboard access is controlled by Neon Auth and linked through customers.auth_user_id."
-      />
-      <MiniPanel
-        icon={Bot}
-        title="Agent runtime"
-        text="The AI server should write calls, transcripts, and recordings to this same Neon database."
-      />
-      <MiniPanel
-        icon={Settings}
-        title="Workspace"
-        text={`Current workspace: ${data.customer.businessName}. Configuration editing is planned next.`}
-      />
+    <section className="space-y-6">
+      <section className="grid gap-4 md:grid-cols-3">
+        <MiniPanel
+          icon={Coins}
+          title="Tokens used"
+          text={`${data.usage.tokensUsed.toLocaleString()} of ${data.usage.tokenLimit.toLocaleString()} this month.`}
+        />
+        <MiniPanel
+          icon={PhoneCall}
+          title="Calls made"
+          text={`${data.usage.callsMade.toLocaleString()} of ${data.usage.callLimit.toLocaleString()} this month.`}
+        />
+        <MiniPanel
+          icon={Settings}
+          title="Current plan"
+          text={`${data.subscription.planName} at $${(data.subscription.monthlyPriceCents / 100).toFixed(0)} per month.`}
+        />
+      </section>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Subscription plan</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose the plan for this workspace. Changes apply to the current billing period.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <form action="/dashboard/subscription" method="post" className="grid max-w-sm gap-3">
+            <Select name="planId" defaultValue={data.subscription.planId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select plan" />
+              </SelectTrigger>
+              <SelectContent>
+                {plans.map((plan) => (
+                  <SelectItem key={plan.id} value={plan.id}>
+                    {plan.name} - ${(plan.monthlyPriceCents / 100).toFixed(0)}/mo
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button>Update plan</Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <MiniPanel
+          icon={ShieldCheck}
+          title="Access"
+          text="Dashboard access is controlled by Neon Auth and linked through customers.auth_user_id."
+        />
+        <MiniPanel
+          icon={Bot}
+          title="Agent runtime"
+          text="The AI server should write calls, transcripts, recordings, and token usage to this same Neon database."
+        />
+      </section>
     </section>
   )
 }
@@ -285,23 +337,27 @@ function SettingsSection({ data }: { data: DashboardData }) {
 function NoCustomerAccess({ email }: { email: string | null }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
-      <section className="w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-sm">
+      <Card className="w-full max-w-lg">
+        <CardContent>
         <ShieldCheck className="h-5 w-5 text-primary" aria-hidden={true} />
         <h1 className="mt-5 text-2xl font-semibold tracking-tight">No customer account linked</h1>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           {email ?? 'This signed-in user'} is authenticated, but there is no matching customer row.
         </p>
-      </section>
+        </CardContent>
+      </Card>
     </main>
   )
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
-      <h2 className="font-semibold">{title}</h2>
-      <div className="mt-5 space-y-4">{children}</div>
-    </section>
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">{children}</CardContent>
+    </Card>
   )
 }
 
@@ -326,10 +382,12 @@ function MiniPanel({
   text: string
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-      <Icon className="h-5 w-5 text-primary" aria-hidden={true} />
-      <h3 className="mt-4 font-semibold">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
-    </div>
+    <Card>
+      <CardContent>
+        <Icon className="h-5 w-5 text-primary" aria-hidden={true} />
+        <h3 className="mt-4 font-semibold">{title}</h3>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
+      </CardContent>
+    </Card>
   )
 }
