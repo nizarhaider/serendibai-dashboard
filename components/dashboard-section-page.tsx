@@ -2,7 +2,6 @@ import {
   Activity,
   Bot,
   Coins,
-  Headphones,
   LogOut,
   PhoneCall,
   Settings,
@@ -10,10 +9,18 @@ import {
   Users,
 } from 'lucide-react'
 import { redirect } from 'next/navigation'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
+import { WorkspaceShell, type WorkspaceNavItem } from '@/components/workspace-shell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -22,7 +29,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { listSubscriptionPlans } from '@/lib/billing-data'
 import { getAuth } from '@/lib/auth/server'
 import { getSessionFromAuthRoute } from '@/lib/auth/session'
@@ -31,12 +37,12 @@ import type { DashboardData, SubscriptionPlan } from '@/lib/types'
 
 export type DashboardSection = 'calls' | 'agent' | 'customers' | 'settings'
 
-const navItems = [
-  { label: 'Overview', href: '/dashboard', icon: Activity, section: 'overview' },
-  { label: 'Calls', href: '/dashboard/calls', icon: PhoneCall, section: 'calls' },
-  { label: 'Agent setup', href: '/dashboard/agent', icon: Bot, section: 'agent' },
-  { label: 'Customers', href: '/dashboard/customers', icon: Users, section: 'customers' },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings, section: 'settings' },
+const navItems: Array<Omit<WorkspaceNavItem, 'active'>> = [
+  { label: 'Overview', href: '/dashboard', icon: Activity },
+  { label: 'Calls', href: '/dashboard/calls', icon: PhoneCall },
+  { label: 'Agent setup', href: '/dashboard/agent', icon: Bot },
+  { label: 'Customers', href: '/dashboard/customers', icon: Users },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 const titles: Record<DashboardSection, string> = {
@@ -92,85 +98,64 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
     return <NoCustomerAccess email={user?.email ?? null} />
   }
 
+  const currentNav = navItems.map((item) => ({
+    ...item,
+    active:
+      (section === 'calls' && item.href === '/dashboard/calls') ||
+      (section === 'agent' && item.href === '/dashboard/agent') ||
+      (section === 'customers' && item.href === '/dashboard/customers') ||
+      (section === 'settings' && item.href === '/dashboard/settings'),
+  }))
+
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="border-b border-border bg-secondary px-4 py-4 text-secondary-foreground lg:border-b-0 lg:border-r">
-          <div className="flex items-center gap-3 px-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Headphones className="h-5 w-5" aria-hidden={true} />
-            </div>
-            <div>
-              <p className="font-semibold">SerendibAI</p>
-              <p className="text-xs text-secondary-foreground/65">Call operations</p>
-            </div>
+    <WorkspaceShell
+      breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: titles[section] }]}
+      headerActions={
+        auth ? (
+          <form action="/logout" method="post">
+            <Button variant="outline" type="submit">
+              <LogOut className="h-4 w-4" aria-hidden={true} />
+              Log out
+            </Button>
+          </form>
+        ) : null
+      }
+      headerDescription={subtitles[section]}
+      headerEyebrow={data.customer.businessName}
+      headerTitle={titles[section]}
+      navItems={currentNav}
+      sidebarFooter={<SidebarStatus dataSource={data.dataSource} />}
+      sidebarSubtitle="Customer call operations"
+      sidebarTag="Customer"
+      userEmail={user?.email ?? null}
+    >
+      <Card className="border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
+        <CardHeader className="gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <Badge variant="outline" className="rounded-full border-white/15 bg-white/8 text-secondary-foreground">
+              Workspace
+            </Badge>
+            <CardTitle className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              {titles[section]} for {data.customer.businessName}
+            </CardTitle>
+            <CardDescription className="mt-3 max-w-xl text-sm leading-7 text-secondary-foreground/72">
+              {subtitles[section]}
+            </CardDescription>
           </div>
-          {user?.email ? (
-            <p className="mt-4 truncate px-2 text-xs text-secondary-foreground/60">{user.email}</p>
-          ) : null}
+          <Badge
+            variant="outline"
+            className="rounded-full border-white/15 bg-white/8 px-3 py-1.5 text-secondary-foreground"
+          >
+            {data.dataSource === 'neon' ? 'Connected to Neon Postgres' : 'Previewing local mock data'}
+          </Badge>
+        </CardHeader>
+      </Card>
 
-          <nav className="mt-6 flex gap-2 overflow-x-auto lg:block lg:space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const active = item.section === section
-
-              return (
-                <a
-                  href={item.href}
-                  key={item.label}
-                  className={`flex min-w-max items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                    active
-                      ? 'bg-white/12 text-white'
-                      : 'text-secondary-foreground/72 hover:bg-white/8 hover:text-white'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" aria-hidden={true} />
-                  {item.label}
-                </a>
-              )
-            })}
-          </nav>
-
-          <div className="mt-6 hidden rounded-lg border border-white/10 bg-white/5 p-4 lg:block">
-            <p className="text-sm font-medium">Data source</p>
-            <p className="mt-1 text-xs leading-relaxed text-secondary-foreground/70">
-              {data.dataSource === 'neon'
-                ? 'Connected to Neon Postgres.'
-                : 'Using local mock data. Set DATABASE_URL to read Neon.'}
-            </p>
-          </div>
-        </aside>
-
-        <section className="min-w-0">
-          <header className="border-b border-border bg-card px-4 py-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{data.customer.businessName}</p>
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                  {titles[section]}
-                </h1>
-                <p className="mt-2 text-sm text-muted-foreground">{subtitles[section]}</p>
-              </div>
-              {auth ? (
-                <form action="/logout" method="post">
-                  <Button variant="outline" type="submit">
-                    <LogOut className="h-4 w-4" aria-hidden={true} />
-                    Log out
-                  </Button>
-                </form>
-              ) : null}
-            </div>
-          </header>
-
-          <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-            {section === 'calls' ? <CallsSection data={data} /> : null}
-            {section === 'agent' ? <AgentSection data={data} /> : null}
-            {section === 'customers' ? <CustomerSection data={data} /> : null}
-            {section === 'settings' ? <SettingsSection data={data} plans={plans} /> : null}
-          </div>
-        </section>
-      </div>
-    </main>
+      {section === 'calls' ? <CallsSection data={data} /> : null}
+      {section === 'agent' ? <AgentSection data={data} /> : null}
+      {section === 'customers' ? <CustomerSection data={data} /> : null}
+      {section === 'settings' ? <SettingsSection data={data} plans={plans} /> : null}
+    </WorkspaceShell>
   )
 }
 
@@ -179,9 +164,7 @@ function CallsSection({ data }: { data: DashboardData }) {
     <Card>
       <CardHeader>
         <CardTitle>Call history</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Latest conversations handled by the AI agent.
-        </p>
+        <CardDescription>Latest conversations handled by the AI agent.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table className="min-w-[820px]">
@@ -232,7 +215,10 @@ function CallsSection({ data }: { data: DashboardData }) {
 function AgentSection({ data }: { data: DashboardData }) {
   return (
     <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-      <Panel title="Agent configuration">
+      <Panel
+        description="Runtime settings currently attached to this customer workspace."
+        title="Agent configuration"
+      >
         <InfoRow label="Agent name" value={data.agentConfig?.name ?? 'Not configured'} />
         <InfoRow
           label="Languages"
@@ -241,7 +227,7 @@ function AgentSection({ data }: { data: DashboardData }) {
         <InfoRow label="WhatsApp number" value={data.whatsappNumber?.phoneNumber ?? 'Not connected'} />
         <InfoRow label="Status" value={data.whatsappNumber?.status ?? 'pending'} />
       </Panel>
-      <Panel title="System prompt">
+      <Panel description="System prompt used to steer live customer conversations." title="System prompt">
         <p className="text-sm leading-6 text-muted-foreground">
           {data.agentConfig?.systemPrompt ?? 'No prompt has been configured yet.'}
         </p>
@@ -253,13 +239,13 @@ function AgentSection({ data }: { data: DashboardData }) {
 function CustomerSection({ data }: { data: DashboardData }) {
   return (
     <section className="grid gap-6 lg:grid-cols-2">
-      <Panel title="Business details">
+      <Panel description="Reference details stored for this business account." title="Business details">
         <InfoRow label="Business" value={data.customer.businessName} />
         <InfoRow label="Contact" value={data.customer.contactName ?? 'Not set'} />
         <InfoRow label="Email" value={data.customer.email ?? 'Not set'} />
         <InfoRow label="Phone" value={data.customer.phone ?? 'Not set'} />
       </Panel>
-      <Panel title="Account access">
+      <Panel description="Identity and access mapping for this workspace." title="Account access">
         <InfoRow label="Customer ID" value={data.customer.id} />
         <InfoRow label="Auth user" value={data.customer.authUserId ?? 'Not linked'} />
         <p className="mt-4 text-sm leading-6 text-muted-foreground">
@@ -295,9 +281,9 @@ function SettingsSection({ data, plans }: { data: DashboardData; plans: Subscrip
       <Card>
         <CardHeader>
           <CardTitle>Subscription plan</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <CardDescription>
             Choose the plan for this workspace. Changes apply to the current billing period.
-          </p>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form action="/dashboard/subscription" method="post" className="grid max-w-sm gap-3">
@@ -334,27 +320,52 @@ function SettingsSection({ data, plans }: { data: DashboardData; plans: Subscrip
   )
 }
 
+function SidebarStatus({ dataSource }: { dataSource: string }) {
+  return (
+    <Card className="border-border/80 bg-muted/55 shadow-none">
+      <CardHeader>
+        <CardTitle className="text-sm">Data source</CardTitle>
+        <CardDescription className="leading-6">
+          {dataSource === 'neon'
+            ? 'Connected to Neon Postgres.'
+            : 'Using local mock data. Set DATABASE_URL to read Neon.'}
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  )
+}
+
 function NoCustomerAccess({ email }: { email: string | null }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
       <Card className="w-full max-w-lg">
-        <CardContent>
-        <ShieldCheck className="h-5 w-5 text-primary" aria-hidden={true} />
-        <h1 className="mt-5 text-2xl font-semibold tracking-tight">No customer account linked</h1>
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {email ?? 'This signed-in user'} is authenticated, but there is no matching customer row.
-        </p>
-        </CardContent>
+        <CardHeader>
+          <ShieldCheck className="h-6 w-6 text-primary" aria-hidden={true} />
+          <CardTitle className="mt-3 text-2xl">No customer account linked</CardTitle>
+          <CardDescription className="leading-6">
+            {email ?? 'This signed-in user'} is authenticated, but there is no matching customer
+            row.
+          </CardDescription>
+        </CardHeader>
       </Card>
     </main>
   )
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+function Panel({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: ReactNode
+}) {
   return (
-    <Card>
+    <Card className="bg-white/72">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
+        {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>
       <CardContent className="space-y-4">{children}</CardContent>
     </Card>
@@ -382,9 +393,11 @@ function MiniPanel({
   text: string
 }) {
   return (
-    <Card>
+    <Card className="bg-white/70">
       <CardContent>
-        <Icon className="h-5 w-5 text-primary" aria-hidden={true} />
+        <div className="inline-flex rounded-2xl bg-primary/10 p-2 text-primary">
+          <Icon className="h-5 w-5" aria-hidden={true} />
+        </div>
         <h3 className="mt-4 font-semibold">{title}</h3>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
       </CardContent>

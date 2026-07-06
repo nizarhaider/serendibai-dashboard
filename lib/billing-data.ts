@@ -30,6 +30,33 @@ type UsageRow = {
 
 export const DEFAULT_PLAN_ID = 'starter'
 
+const mockPlans: SubscriptionPlan[] = [
+  {
+    id: 'starter',
+    name: 'Starter',
+    monthlyPriceCents: 0,
+    tokenLimit: 100000,
+    callLimit: 250,
+    isActive: true,
+  },
+  {
+    id: 'growth',
+    name: 'Growth',
+    monthlyPriceCents: 4900,
+    tokenLimit: 500000,
+    callLimit: 1000,
+    isActive: true,
+  },
+  {
+    id: 'scale',
+    name: 'Scale',
+    monthlyPriceCents: 14900,
+    tokenLimit: 2000000,
+    callLimit: 5000,
+    isActive: true,
+  },
+]
+
 function getSql() {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is required for billing data.')
@@ -130,10 +157,16 @@ export async function ensureBillingSchema(sql: SqlClient = getSql()) {
   `
 }
 
-export async function listSubscriptionPlans(sql: SqlClient = getSql()) {
-  await ensureBillingSchema(sql)
+export async function listSubscriptionPlans(sql?: SqlClient) {
+  if (!process.env.DATABASE_URL) {
+    return mockPlans
+  }
 
-  const rows = (await sql`
+  const client = sql ?? getSql()
+
+  await ensureBillingSchema(client)
+
+  const rows = (await client`
     select id, name, monthly_price_cents, token_limit, call_limit, is_active
     from subscription_plans
     where is_active = true
@@ -214,10 +247,16 @@ export async function getBillingSummary(customerId: string, sql: SqlClient = get
   return { subscription, usage }
 }
 
-export async function setCustomerPlan(customerId: string, planId: string, sql: SqlClient = getSql()) {
-  await ensureBillingSchema(sql)
+export async function setCustomerPlan(customerId: string, planId: string, sql?: SqlClient) {
+  if (!process.env.DATABASE_URL) {
+    return
+  }
 
-  const plans = await sql`
+  const client = sql ?? getSql()
+
+  await ensureBillingSchema(client)
+
+  const plans = await client`
     select id
     from subscription_plans
     where id = ${planId} and is_active = true
@@ -230,7 +269,7 @@ export async function setCustomerPlan(customerId: string, planId: string, sql: S
 
   const { start, end } = currentBillingPeriod()
 
-  await sql`
+  await client`
     insert into customer_subscriptions (
       customer_id,
       plan_id,

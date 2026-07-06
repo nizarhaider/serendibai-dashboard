@@ -3,10 +3,7 @@ import { getAuth, isAuthConfigured } from '@/lib/auth/server'
 
 export default function middleware(request: NextRequest) {
   if (!isAuthConfigured()) {
-    if (
-      request.nextUrl.pathname.startsWith('/dashboard') ||
-      request.nextUrl.pathname.startsWith('/admin')
-    ) {
+    if (request.nextUrl.pathname.startsWith('/admin')) {
       return NextResponse.redirect(new URL('/login?setup=missing', request.url))
     }
 
@@ -18,5 +15,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin'],
+  matcher: ['/dashboard/:path*', '/admin/:path*'],
 }
