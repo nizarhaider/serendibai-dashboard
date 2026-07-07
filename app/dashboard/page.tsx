@@ -122,21 +122,21 @@ export default async function Home() {
       sidebarTag="Customer"
       userEmail={user?.email ?? null}
     >
-      <Card className="border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
-        <CardHeader className="gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <Card className="overflow-hidden border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
+        <CardHeader className="gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <Badge variant="outline" className="rounded-full border-white/15 bg-white/8 text-secondary-foreground">
               Operations overview
             </Badge>
-            <CardTitle className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <CardTitle className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-4xl">
               Track live call activity, agent health, and account usage in one place.
             </CardTitle>
-            <CardDescription className="mt-3 max-w-xl text-sm leading-7 text-secondary-foreground/72">
+            <CardDescription className="mt-3 max-w-xl text-sm leading-6 text-secondary-foreground/72">
               Review customer conversations, monitor escalations, and manage the WhatsApp AI
               runtime from a single operational dashboard.
             </CardDescription>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[360px]">
             <HeroStat label="Plan" value={data.subscription.planName} />
             <HeroStat label="Calls" value={data.usage.callsMade.toLocaleString()} />
             <HeroStat label="Tokens" value={data.usage.tokensUsed.toLocaleString()} />
@@ -237,7 +237,7 @@ export default async function Home() {
         </Card>
       </section>
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader className="flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle>Recent calls</CardTitle>
@@ -247,8 +247,8 @@ export default async function Home() {
           </div>
           <Button variant="outline">Export CSV</Button>
         </CardHeader>
-        <CardContent>
-          <Table className="min-w-[820px]">
+        <CardContent className="px-0 sm:px-6">
+          <Table className="min-w-[680px] md:min-w-[820px]">
             <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
               <TableRow>
                 <TableHead>Time</TableHead>
@@ -272,7 +272,7 @@ export default async function Home() {
                       {call.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="max-w-xl text-muted-foreground">
+                  <TableCell className="min-w-[220px] max-w-xl whitespace-normal text-muted-foreground">
                     {call.transcript ?? 'No transcript captured yet.'}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">

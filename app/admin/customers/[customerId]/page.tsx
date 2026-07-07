@@ -93,16 +93,16 @@ export default async function AdminCustomerPage({ params, searchParams }: PagePr
       sidebarTag="Admin"
       userEmail={adminUser.email ?? null}
     >
-      <Card className="border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
+      <Card className="overflow-hidden border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
         <CardHeader className="gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <Badge variant="outline" className="rounded-full border-white/15 bg-white/8 text-secondary-foreground">
               Customer admin
             </Badge>
-            <CardTitle className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <CardTitle className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-4xl">
               Billing, usage, and account context for {data.customer.businessName}.
             </CardTitle>
-            <CardDescription className="mt-3 max-w-xl text-sm leading-7 text-secondary-foreground/72">
+            <CardDescription className="mt-3 max-w-xl text-sm leading-6 text-secondary-foreground/72">
               Review subscription usage, recent calls, and linked account details before making
               plan changes.
             </CardDescription>
@@ -192,13 +192,13 @@ export default async function AdminCustomerPage({ params, searchParams }: PagePr
         </Card>
       </section>
 
-      <Card className="bg-white/72">
+      <Card className="overflow-hidden bg-white/72">
         <CardHeader>
           <CardTitle>Recent calls</CardTitle>
           <CardDescription>Latest calls for this customer.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table className="min-w-[760px]">
+        <CardContent className="px-0 sm:px-6">
+          <Table className="min-w-[640px] md:min-w-[760px]">
             <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
               <TableRow>
                 <TableHead>Time</TableHead>
@@ -217,7 +217,7 @@ export default async function AdminCustomerPage({ params, searchParams }: PagePr
                   <TableCell>
                     <Badge variant="outline">{call.status}</Badge>
                   </TableCell>
-                  <TableCell className="max-w-xl text-muted-foreground">
+                  <TableCell className="min-w-[220px] max-w-xl whitespace-normal text-muted-foreground">
                     {call.transcript ?? 'No transcript captured.'}
                   </TableCell>
                 </TableRow>

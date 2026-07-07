@@ -120,16 +120,16 @@ export default async function AdminPage({
       sidebarTag="Admin"
       userEmail={adminUser.email ?? null}
     >
-      <Card className="border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
+      <Card className="overflow-hidden border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
         <CardHeader className="gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <Badge variant="outline" className="rounded-full border-white/15 bg-white/8 text-secondary-foreground">
               Admin workspace
             </Badge>
-            <CardTitle className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <CardTitle className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-4xl">
               Manage customer access, subscription plans, and account health.
             </CardTitle>
-            <CardDescription className="mt-3 max-w-xl text-sm leading-7 text-secondary-foreground/72">
+            <CardDescription className="mt-3 max-w-xl text-sm leading-6 text-secondary-foreground/72">
               Create customer users, reset passwords, review plan assignments, and monitor current
               usage from one control surface.
             </CardDescription>
@@ -156,7 +156,7 @@ export default async function AdminPage({
       ) : null}
 
       <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
-        <Card className="bg-white/72">
+        <Card className="overflow-hidden bg-white/72">
           <CardHeader>
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-primary" aria-hidden={true} />
@@ -178,8 +178,8 @@ export default async function AdminPage({
             <CardTitle>Users</CardTitle>
             <CardDescription>Auth users and their linked customer accounts.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Table className="min-w-[1060px]">
+          <CardContent className="px-0 sm:px-6">
+            <Table className="min-w-[880px] lg:min-w-[1060px]">
               <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
                 <TableRow>
                   <TableHead>User</TableHead>

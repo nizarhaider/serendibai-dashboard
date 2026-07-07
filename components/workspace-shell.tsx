@@ -86,15 +86,15 @@ export function WorkspaceShell({
   const hasSidebar = navItems.length > 0
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen overflow-x-clip bg-background text-foreground">
       <div
         className={cn(
-          "min-h-screen",
+          "min-h-screen overflow-x-clip",
           hasSidebar ? "grid lg:grid-cols-[290px_1fr]" : "block"
         )}
       >
         {hasSidebar ? (
-          <aside className="border-b border-border/70 bg-muted/30 px-4 py-4 lg:border-r lg:border-b-0 lg:px-5 lg:py-5">
+          <aside className="hidden border-b border-border/70 bg-muted/30 px-4 py-4 lg:block lg:border-r lg:border-b-0 lg:px-5 lg:py-5">
             <Card className="h-full border-border/80 bg-card/95 shadow-[0_22px_45px_-36px_rgba(24,38,62,0.4)]">
               <CardHeader className="gap-4">
                 <div className="flex items-center gap-3">
@@ -160,7 +160,50 @@ export function WorkspaceShell({
           </aside>
         ) : null}
 
-        <section className="min-w-0">
+        <section className="min-w-0 overflow-x-hidden">
+          {hasSidebar ? (
+            <div className="border-b border-border/70 bg-background px-4 py-4 lg:hidden">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground shadow-[0_18px_40px_-28px_rgba(24,38,62,0.65)]">
+                    <Headphones className="h-4 w-4" aria-hidden={true} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-semibold">SerendibAI</p>
+                    <p className="truncate text-sm text-muted-foreground">{sidebarSubtitle}</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="shrink-0 rounded-full px-2.5">
+                  {sidebarTag}
+                </Badge>
+              </div>
+
+              <nav className="mt-4 flex flex-wrap gap-2">
+                {navItems.map((item) => {
+                  const Icon = item.icon
+
+                  return (
+                    <Button
+                      asChild
+                      key={item.href}
+                      size="sm"
+                      variant={item.active ? "secondary" : "outline"}
+                      className={cn(
+                        "rounded-full px-3",
+                        item.active && "shadow-[0_18px_40px_-34px_rgba(24,38,62,0.45)]"
+                      )}
+                    >
+                      <a href={item.href}>
+                        <Icon className="h-4 w-4" aria-hidden={true} />
+                        <span>{item.label}</span>
+                      </a>
+                    </Button>
+                  )
+                })}
+              </nav>
+            </div>
+          ) : null}
+
           <header className="border-b border-border/70 bg-white/60 px-4 py-5 backdrop-blur-sm sm:px-6 lg:px-8">
             {breadcrumbs.length > 0 ? (
               <Breadcrumb>
@@ -188,7 +231,7 @@ export function WorkspaceShell({
                     {headerEyebrow}
                   </p>
                 ) : null}
-                <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+                <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-4xl">
                   {headerTitle}
                 </h1>
                 {headerDescription ? (

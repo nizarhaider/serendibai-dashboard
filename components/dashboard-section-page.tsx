@@ -129,16 +129,16 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
       sidebarTag="Customer"
       userEmail={user?.email ?? null}
     >
-      <Card className="border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
+      <Card className="overflow-hidden border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
         <CardHeader className="gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <Badge variant="outline" className="rounded-full border-white/15 bg-white/8 text-secondary-foreground">
               Workspace
             </Badge>
-            <CardTitle className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <CardTitle className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-4xl">
               {titles[section]} for {data.customer.businessName}
             </CardTitle>
-            <CardDescription className="mt-3 max-w-xl text-sm leading-7 text-secondary-foreground/72">
+            <CardDescription className="mt-3 max-w-xl text-sm leading-6 text-secondary-foreground/72">
               {subtitles[section]}
             </CardDescription>
           </div>
@@ -161,13 +161,13 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
 
 function CallsSection({ data }: { data: DashboardData }) {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader>
         <CardTitle>Call history</CardTitle>
         <CardDescription>Latest conversations handled by the AI agent.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Table className="min-w-[820px]">
+      <CardContent className="px-0 sm:px-6">
+        <Table className="min-w-[680px] md:min-w-[820px]">
           <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
             <TableRow>
               <TableHead>Time</TableHead>
@@ -191,7 +191,7 @@ function CallsSection({ data }: { data: DashboardData }) {
                     {call.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="max-w-xl text-muted-foreground">
+                <TableCell className="min-w-[220px] max-w-xl whitespace-normal text-muted-foreground">
                   {call.transcript ?? 'No transcript captured yet.'}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
@@ -374,9 +374,9 @@ function Panel({
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-border pb-3 last:border-0 last:pb-0">
+    <div className="flex flex-col gap-1 border-b border-border pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="max-w-[65%] break-words text-right text-sm font-medium">{value}</p>
+      <p className="break-words text-sm font-medium sm:max-w-[65%] sm:text-right">{value}</p>
     </div>
   )
 }
