@@ -12,13 +12,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
@@ -94,20 +87,20 @@ export function WorkspaceShell({
         )}
       >
         {hasSidebar ? (
-          <aside className="hidden border-b border-border/70 bg-muted/30 px-4 py-4 lg:block lg:border-r lg:border-b-0 lg:px-5 lg:py-5">
-            <Card className="h-full border-border/80 bg-card/95 shadow-[0_22px_45px_-36px_rgba(24,38,62,0.4)]">
-              <CardHeader className="gap-4">
+          <aside className="hidden border-b border-border/70 bg-white/72 px-4 py-4 backdrop-blur lg:sticky lg:top-0 lg:block lg:h-screen lg:border-r lg:border-b-0 lg:px-5 lg:py-5">
+            <div className="flex h-full flex-col">
+              <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground shadow-[0_18px_40px_-28px_rgba(24,38,62,0.65)]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary text-secondary-foreground shadow-[0_18px_40px_-28px_rgba(24,38,62,0.65)]">
                     <Headphones className="h-5 w-5" aria-hidden={true} />
                   </div>
                   <div>
-                    <CardTitle>SerendibAI</CardTitle>
-                    <CardDescription>{sidebarSubtitle}</CardDescription>
+                    <p className="font-semibold">SerendibAI</p>
+                    <p className="text-sm leading-5 text-muted-foreground">{sidebarSubtitle}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <Badge variant="outline" className="rounded-full px-2.5">
+                  <Badge variant="outline" className="px-2.5">
                     {sidebarTag}
                   </Badge>
                   {userEmail ? (
@@ -119,53 +112,52 @@ export function WorkspaceShell({
                     </div>
                   ) : null}
                 </div>
-              </CardHeader>
-              <CardContent className="flex h-full flex-col gap-5">
-                <Separator />
-                <nav className="flex gap-2 overflow-x-auto lg:block lg:space-y-1.5">
-                  {navItems.map((item) => {
-                    const Icon = item.icon
+              </div>
 
-                    return (
-                      <Button
-                        asChild
-                        key={item.href}
-                        variant={item.active ? "secondary" : "ghost"}
-                        className={cn(
-                          "min-w-max justify-start gap-3 rounded-xl px-3 py-2.5",
-                          item.active && "shadow-[0_18px_40px_-34px_rgba(24,38,62,0.45)]"
-                        )}
-                      >
-                        <a href={item.href}>
-                          <Icon className="h-4 w-4" aria-hidden={true} />
-                          <span>{item.label}</span>
-                          {item.badge ? (
-                            <Badge variant="outline" className="ml-auto rounded-full px-2 text-[10px]">
-                              {item.badge}
-                            </Badge>
-                          ) : null}
-                        </a>
-                      </Button>
-                    )
-                  })}
-                </nav>
-                {sidebarFooter ? (
-                  <>
-                    <Separator className="mt-auto" />
-                    <div>{sidebarFooter}</div>
-                  </>
-                ) : null}
-              </CardContent>
-            </Card>
+              <Separator className="my-5" />
+              <nav className="flex gap-2 overflow-x-auto lg:block lg:space-y-1.5">
+                {navItems.map((item) => {
+                  const Icon = item.icon
+
+                  return (
+                    <Button
+                      asChild
+                      key={item.href}
+                      variant={item.active ? "secondary" : "ghost"}
+                      className={cn(
+                        "min-w-max justify-start gap-3 rounded-lg px-3 py-2.5",
+                        item.active && "shadow-[0_18px_40px_-34px_rgba(24,38,62,0.45)]"
+                      )}
+                    >
+                      <a href={item.href}>
+                        <Icon className="h-4 w-4" aria-hidden={true} />
+                        <span>{item.label}</span>
+                        {item.badge ? (
+                          <Badge variant="outline" className="ml-auto px-2 text-[10px]">
+                            {item.badge}
+                          </Badge>
+                        ) : null}
+                      </a>
+                    </Button>
+                  )
+                })}
+              </nav>
+              {sidebarFooter ? (
+                <>
+                  <Separator className="mt-auto mb-5" />
+                  <div>{sidebarFooter}</div>
+                </>
+              ) : null}
+            </div>
           </aside>
         ) : null}
 
         <section className="min-w-0 overflow-x-hidden">
           {hasSidebar ? (
-            <div className="border-b border-border/70 bg-background px-4 py-4 lg:hidden">
+            <div className="border-b border-border/70 bg-white/78 px-4 py-4 backdrop-blur lg:hidden">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground shadow-[0_18px_40px_-28px_rgba(24,38,62,0.65)]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground shadow-[0_18px_40px_-28px_rgba(24,38,62,0.65)]">
                     <Headphones className="h-4 w-4" aria-hidden={true} />
                   </div>
                   <div className="min-w-0">
@@ -173,12 +165,12 @@ export function WorkspaceShell({
                     <p className="truncate text-sm text-muted-foreground">{sidebarSubtitle}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="shrink-0 rounded-full px-2.5">
+                <Badge variant="outline" className="shrink-0 px-2.5">
                   {sidebarTag}
                 </Badge>
               </div>
 
-              <nav className="mt-4 flex flex-wrap gap-2">
+              <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {navItems.map((item) => {
                   const Icon = item.icon
 
@@ -189,7 +181,7 @@ export function WorkspaceShell({
                       size="sm"
                       variant={item.active ? "secondary" : "outline"}
                       className={cn(
-                        "rounded-full px-3",
+                        "shrink-0 rounded-lg px-3",
                         item.active && "shadow-[0_18px_40px_-34px_rgba(24,38,62,0.45)]"
                       )}
                     >
@@ -204,7 +196,7 @@ export function WorkspaceShell({
             </div>
           ) : null}
 
-          <header className="border-b border-border/70 bg-white/60 px-4 py-5 backdrop-blur-sm sm:px-6 lg:px-8">
+          <header className="border-b border-border/70 bg-white/68 px-4 py-5 backdrop-blur-sm sm:px-6 lg:px-8">
             {breadcrumbs.length > 0 ? (
               <Breadcrumb>
                 <BreadcrumbList>
@@ -231,7 +223,7 @@ export function WorkspaceShell({
                     {headerEyebrow}
                   </p>
                 ) : null}
-                <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-4xl">
+                <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
                   {headerTitle}
                 </h1>
                 {headerDescription ? (

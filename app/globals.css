@@ -30,17 +30,17 @@
 
 :root {
   color-scheme: light;
-  --background: #f3f6f4;
-  --foreground: #142033;
-  --card: rgba(255, 255, 255, 0.84);
+  --background: #f6f8f7;
+  --foreground: #182235;
+  --card: rgba(255, 255, 255, 0.92);
   --card-foreground: #162235;
   --popover: rgba(255, 255, 255, 0.96);
   --popover-foreground: #162235;
-  --muted: #e3ebe8;
-  --muted-foreground: #607186;
-  --border: rgba(124, 151, 163, 0.2);
-  --input: rgba(124, 151, 163, 0.22);
-  --primary: #128a84;
+  --muted: #e9efed;
+  --muted-foreground: #5b6c7f;
+  --border: rgba(112, 135, 145, 0.28);
+  --input: rgba(112, 135, 145, 0.26);
+  --primary: #168f8b;
   --primary-foreground: #f8ffff;
   --secondary: #18263e;
   --secondary-foreground: #f8fbff;
@@ -48,7 +48,7 @@
   --accent-foreground: #fff8f4;
   --destructive: #c2413a;
   --ring: #168f8b;
-  --radius: 1rem;
+  --radius: 0.5rem;
 }
 
 * {
@@ -63,7 +63,9 @@ body {
 
 body {
   margin: 0;
-  background: var(--background);
+  background:
+    linear-gradient(180deg, #eef4f2 0, var(--background) 360px),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

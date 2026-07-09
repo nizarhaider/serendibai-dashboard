@@ -2,6 +2,7 @@ import {
   Activity,
   Bot,
   Coins,
+  Download,
   LogOut,
   PhoneCall,
   Settings,
@@ -33,7 +34,7 @@ import { listSubscriptionPlans } from '@/lib/billing-data'
 import { getAuth } from '@/lib/auth/server'
 import { getSessionFromAuthRoute } from '@/lib/auth/session'
 import { getDashboardData } from '@/lib/dashboard-data'
-import type { DashboardData, SubscriptionPlan } from '@/lib/types'
+import type { CallRecord, DashboardData, SubscriptionPlan } from '@/lib/types'
 
 export type DashboardSection = 'calls' | 'agent' | 'customers' | 'settings'
 
@@ -130,12 +131,12 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
       userEmail={user?.email ?? null}
     >
       <Card className="overflow-hidden border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
-        <CardHeader className="gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <CardHeader className="gap-4 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
           <div className="max-w-2xl">
-            <Badge variant="outline" className="rounded-full border-white/15 bg-white/8 text-secondary-foreground">
+            <Badge variant="outline" className="border-white/15 bg-white/8 text-secondary-foreground">
               Workspace
             </Badge>
-            <CardTitle className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-4xl">
+            <CardTitle className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
               {titles[section]} for {data.customer.businessName}
             </CardTitle>
             <CardDescription className="mt-3 max-w-xl text-sm leading-6 text-secondary-foreground/72">
@@ -144,7 +145,7 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
           </div>
           <Badge
             variant="outline"
-            className="rounded-full border-white/15 bg-white/8 px-3 py-1.5 text-secondary-foreground"
+            className="w-fit border-white/15 bg-white/8 px-3 py-1.5 text-secondary-foreground lg:justify-self-end"
           >
             {data.dataSource === 'neon' ? 'Connected to Neon Postgres' : 'Previewing local mock data'}
           </Badge>
@@ -162,12 +163,23 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
 function CallsSection({ data }: { data: DashboardData }) {
   return (
     <Card className="overflow-hidden">
-      <CardHeader>
-        <CardTitle>Call history</CardTitle>
-        <CardDescription>Latest conversations handled by the AI agent.</CardDescription>
+      <CardHeader className="flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <CardTitle>Call history</CardTitle>
+          <CardDescription>Latest conversations handled by the AI agent.</CardDescription>
+        </div>
+        <Button variant="outline">
+          <Download className="h-4 w-4" aria-hidden={true} />
+          Export CSV
+        </Button>
       </CardHeader>
-      <CardContent className="px-0 sm:px-6">
-        <Table className="min-w-[680px] md:min-w-[820px]">
+      <CardContent className="px-4 sm:px-6">
+        <div className="space-y-3 md:hidden">
+          {data.calls.map((call) => (
+            <CallSummaryCard key={call.id} call={call} />
+          ))}
+        </div>
+        <Table className="hidden min-w-[680px] md:table md:min-w-[820px]">
           <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
             <TableRow>
               <TableHead>Time</TableHead>
@@ -362,7 +374,7 @@ function Panel({
   children: ReactNode
 }) {
   return (
-    <Card className="bg-white/72">
+    <Card className="bg-white/82">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         {description ? <CardDescription>{description}</CardDescription> : null}
@@ -381,6 +393,35 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
+function CallSummaryCard({ call }: { call: CallRecord }) {
+  return (
+    <article className="rounded-lg border border-border bg-white/82 p-4 shadow-[0_18px_55px_-45px_rgba(16,28,43,0.42)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium">{call.customerPhone ?? 'Unknown caller'}</p>
+          <p className="mt-1 font-mono text-xs text-muted-foreground">{formatDateTime(call.createdAt)}</p>
+        </div>
+        <Badge variant="outline" className={statusClassName(call.status)}>
+          {call.status}
+        </Badge>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+        {call.transcript ?? 'No transcript captured yet.'}
+      </p>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3 text-sm">
+        <span className="text-muted-foreground">Recording</span>
+        {call.recordingUrl ? (
+          <a href={call.recordingUrl} className="font-medium text-primary">
+            Open audio
+          </a>
+        ) : (
+          <span className="text-muted-foreground">None</span>
+        )}
+      </div>
+    </article>
+  )
+}
+
 type IconComponent = ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
 
 function MiniPanel({
@@ -393,9 +434,9 @@ function MiniPanel({
   text: string
 }) {
   return (
-    <Card className="bg-white/70">
+    <Card className="bg-white/78">
       <CardContent>
-        <div className="inline-flex rounded-2xl bg-primary/10 p-2 text-primary">
+        <div className="inline-flex rounded-lg bg-primary/10 p-2 text-primary">
           <Icon className="h-5 w-5" aria-hidden={true} />
         </div>
         <h3 className="mt-4 font-semibold">{title}</h3>

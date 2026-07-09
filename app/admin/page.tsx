@@ -179,122 +179,124 @@ export default async function AdminPage({
             <CardDescription>Auth users and their linked customer accounts.</CardDescription>
           </CardHeader>
           <CardContent className="px-0 sm:px-6">
-            <Table className="min-w-[880px] lg:min-w-[1060px]">
-              <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Plan</TableHead>
-                  <TableHead>Usage</TableHead>
-                  <TableHead>Password</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id} className="align-top">
-                    <TableCell>
-                      <p className="font-medium">{user.email}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{user.name}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{user.role ?? 'user'}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {user.businessName ?? 'Not linked'}
-                    </TableCell>
-                    <TableCell>
-                      {user.planName ? (
-                        <Badge variant="outline">{user.planName}</Badge>
-                      ) : (
-                        <span className="text-muted-foreground">None</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1 text-xs text-muted-foreground">
-                        <p className="flex items-center gap-1.5">
-                          <Coins className="h-3.5 w-3.5" aria-hidden={true} />
-                          {user.tokensUsed.toLocaleString()} tokens
-                        </p>
-                        <p className="flex items-center gap-1.5">
-                          <PhoneCall className="h-3.5 w-3.5" aria-hidden={true} />
-                          {user.callsMade.toLocaleString()} calls
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={user.hasPassword ? 'default' : 'outline'}>
-                        {user.hasPassword ? 'Set' : 'Pending'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {formatDate(user.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="icon" aria-label="Open user actions">
-                            <MoreHorizontal className="h-4 w-4" aria-hidden={true} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-64">
-                          {user.customerId ? (
-                            <>
-                              <DropdownMenuItem asChild>
-                                <a href={`/admin/customers/${user.customerId}`}>Manage customer</a>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <a href={`/admin/customers/${user.customerId}?mode=impersonate`}>
-                                  Log in as customer
-                                </a>
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <form
-                                action={`/admin/customers/${user.customerId}/subscription`}
-                                method="post"
-                                className="space-y-2 p-1"
-                              >
-                                <DropdownMenuLabel className="px-0">Subscription</DropdownMenuLabel>
-                                <Select name="planId" defaultValue={user.planId ?? ''}>
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select plan" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {plans.map((plan) => (
-                                      <SelectItem key={plan.id} value={plan.id}>
-                                        {plan.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Button className="w-full" size="sm">
-                                  Save plan
-                                </Button>
-                              </form>
-                            </>
-                          ) : null}
-                          <DropdownMenuSeparator />
-                          <form action="/admin/users/reset" method="post">
-                            <input type="hidden" name="email" value={user.email} />
-                            <DropdownMenuItem asChild>
-                              <Button
-                                type="submit"
-                                variant="ghost"
-                                className="h-7 w-full justify-start px-1.5"
-                              >
-                                Send password reset
-                              </Button>
-                            </DropdownMenuItem>
-                          </form>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[880px] lg:min-w-[1060px]">
+                <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Usage</TableHead>
+                    <TableHead>Password</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id} className="align-top">
+                      <TableCell>
+                        <p className="font-medium">{user.email}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{user.name}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{user.role ?? 'user'}</Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {user.businessName ?? 'Not linked'}
+                      </TableCell>
+                      <TableCell>
+                        {user.planName ? (
+                          <Badge variant="outline">{user.planName}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">None</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                          <p className="flex items-center gap-1.5">
+                            <Coins className="h-3.5 w-3.5" aria-hidden={true} />
+                            {user.tokensUsed.toLocaleString()} tokens
+                          </p>
+                          <p className="flex items-center gap-1.5">
+                            <PhoneCall className="h-3.5 w-3.5" aria-hidden={true} />
+                            {user.callsMade.toLocaleString()} calls
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.hasPassword ? 'default' : 'outline'}>
+                          {user.hasPassword ? 'Set' : 'Pending'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                        {formatDate(user.createdAt)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" aria-label="Open user actions">
+                              <MoreHorizontal className="h-4 w-4" aria-hidden={true} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-64">
+                            {user.customerId ? (
+                              <>
+                                <DropdownMenuItem asChild>
+                                  <a href={`/admin/customers/${user.customerId}`}>Manage customer</a>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <a href={`/admin/customers/${user.customerId}?mode=impersonate`}>
+                                    Log in as customer
+                                  </a>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <form
+                                  action={`/admin/customers/${user.customerId}/subscription`}
+                                  method="post"
+                                  className="space-y-2 p-1"
+                                >
+                                  <DropdownMenuLabel className="px-0">Subscription</DropdownMenuLabel>
+                                  <Select name="planId" defaultValue={user.planId ?? ''}>
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select plan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {plans.map((plan) => (
+                                        <SelectItem key={plan.id} value={plan.id}>
+                                          {plan.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button className="w-full" size="sm">
+                                    Save plan
+                                  </Button>
+                                </form>
+                              </>
+                            ) : null}
+                            <DropdownMenuSeparator />
+                            <form action="/admin/users/reset" method="post">
+                              <input type="hidden" name="email" value={user.email} />
+                              <DropdownMenuItem asChild>
+                                <Button
+                                  type="submit"
+                                  variant="ghost"
+                                  className="h-7 w-full justify-start px-1.5"
+                                >
+                                  Send password reset
+                                </Button>
+                              </DropdownMenuItem>
+                            </form>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </section>

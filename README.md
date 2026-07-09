@@ -2,6 +2,9 @@
 
 Customer dashboard for tracking AI-powered WhatsApp calls, agent configuration, transcripts, and recordings.
 
+For client provisioning, route checks, and handoff steps, see
+[`docs/client-onboarding.md`](docs/client-onboarding.md).
+
 ## Local Development
 
 ```bash
@@ -65,6 +68,16 @@ Recommended process manager:
 ```bash
 pm2 start "pnpm start" --name serendibai-dashboard
 ```
+
+## Netlify Deployment
+
+The repo includes `netlify.toml` for the Next.js runtime:
+
+```bash
+pnpm build
+```
+
+Set `DATABASE_URL`, `NEON_AUTH_BASE_URL`, and `NEON_AUTH_COOKIE_SECRET` in Netlify environment variables. Do not commit production secrets.
 
 ## Domain Note
 

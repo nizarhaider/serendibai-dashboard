@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Clock3,
   Coins,
+  Download,
   LogOut,
   MessageSquareText,
   PhoneCall,
@@ -36,6 +37,7 @@ import {
 import { getAuth } from '@/lib/auth/server'
 import { getSessionFromAuthRoute } from '@/lib/auth/session'
 import { getDashboardData } from '@/lib/dashboard-data'
+import type { CallRecord } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -122,24 +124,29 @@ export default async function Home() {
       sidebarTag="Customer"
       userEmail={user?.email ?? null}
     >
-      <Card className="overflow-hidden border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
-        <CardHeader className="gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <Badge variant="outline" className="rounded-full border-white/15 bg-white/8 text-secondary-foreground">
-              Operations overview
-            </Badge>
-            <CardTitle className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-4xl">
-              Track live call activity, agent health, and account usage in one place.
+      <Card className="overflow-hidden border-border bg-secondary text-secondary-foreground shadow-[0_28px_70px_-44px_rgba(16,28,43,0.5)]">
+        <CardHeader className="gap-5 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="border-white/15 bg-white/8 text-secondary-foreground">
+                Live inbound desk
+              </Badge>
+              <Badge variant="outline" className="border-white/15 bg-white/8 text-secondary-foreground">
+                Sinhala / Tamil / English
+              </Badge>
+            </div>
+            <CardTitle className="mt-4 max-w-3xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              WhatsApp voice agent performance for today&apos;s front desk.
             </CardTitle>
-            <CardDescription className="mt-3 max-w-xl text-sm leading-6 text-secondary-foreground/72">
-              Review customer conversations, monitor escalations, and manage the WhatsApp AI
-              runtime from a single operational dashboard.
+            <CardDescription className="mt-3 max-w-2xl text-sm leading-6 text-secondary-foreground/72">
+              Monitor answered calls, handoffs, transcripts, and quota usage for the managed
+              SerendibAI setup backing this customer workspace.
             </CardDescription>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[360px]">
+          <div className="grid grid-cols-3 gap-2 lg:min-w-[360px]">
             <HeroStat label="Plan" value={data.subscription.planName} />
-            <HeroStat label="Calls" value={data.usage.callsMade.toLocaleString()} />
-            <HeroStat label="Tokens" value={data.usage.tokensUsed.toLocaleString()} />
+            <HeroStat label="Calls" value={data.stats.completedCalls.toString()} />
+            <HeroStat label="Handoff" value={data.stats.escalatedCalls.toString()} />
           </div>
         </CardHeader>
       </Card>
@@ -185,6 +192,7 @@ export default async function Home() {
             (data.usage.tokensUsed / Math.max(data.usage.tokenLimit, 1)) * 100
           )}% of ${data.usage.tokenLimit.toLocaleString()}`}
           icon={Coins}
+          progress={data.usage.tokensUsed / Math.max(data.usage.tokenLimit, 1)}
         />
         <MetricCard
           label="Calls this month"
@@ -193,6 +201,7 @@ export default async function Home() {
             (data.usage.callsMade / Math.max(data.usage.callLimit, 1)) * 100
           )}% of ${data.usage.callLimit.toLocaleString()}`}
           icon={PhoneCall}
+          progress={data.usage.callsMade / Math.max(data.usage.callLimit, 1)}
         />
       </section>
 
@@ -245,10 +254,18 @@ export default async function Home() {
               Latest customer conversations handled by the AI agent
             </CardDescription>
           </div>
-          <Button variant="outline">Export CSV</Button>
+          <Button variant="outline">
+            <Download className="h-4 w-4" aria-hidden={true} />
+            Export CSV
+          </Button>
         </CardHeader>
-        <CardContent className="px-0 sm:px-6">
-          <Table className="min-w-[680px] md:min-w-[820px]">
+        <CardContent className="px-4 sm:px-6">
+          <div className="space-y-3 md:hidden">
+            {data.calls.map((call) => (
+              <CallSummaryCard key={call.id} call={call} />
+            ))}
+          </div>
+          <Table className="hidden min-w-[680px] md:table md:min-w-[820px]">
             <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
               <TableRow>
                 <TableHead>Time</TableHead>
@@ -362,14 +379,16 @@ function MetricCard({
   value,
   detail,
   icon: Icon,
+  progress,
 }: {
   label: string
   value: string
   detail: string
   icon: IconComponent
+  progress?: number
 }) {
   return (
-    <Card className="bg-white/72">
+    <Card className="bg-white/82 shadow-[0_18px_55px_-45px_rgba(16,28,43,0.42)]">
       <CardContent>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -383,6 +402,7 @@ function MetricCard({
           </div>
         </div>
         <p className="mt-4 text-sm text-muted-foreground">{detail}</p>
+        {typeof progress === 'number' ? <PercentBar value={progress} /> : null}
       </CardContent>
     </Card>
   )
@@ -407,9 +427,9 @@ function MiniPanel({
   text: string
 }) {
   return (
-    <Card className="bg-white/70">
+    <Card className="bg-white/78">
       <CardContent>
-        <div className="inline-flex rounded-2xl bg-primary/10 p-2 text-primary">
+        <div className="inline-flex rounded-lg bg-primary/10 p-2 text-primary">
           <Icon className="h-5 w-5" aria-hidden={true} />
         </div>
         <h3 className="mt-4 font-semibold">{title}</h3>
@@ -421,11 +441,50 @@ function MiniPanel({
 
 function HeroStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/8 px-4 py-3">
-      <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-secondary-foreground/58">
+    <div className="min-w-0 rounded-lg border border-white/10 bg-white/8 px-3 py-3 sm:px-4">
+      <p className="truncate text-[10px] font-medium uppercase tracking-[0.18em] text-secondary-foreground/58 sm:text-[11px] sm:tracking-[0.24em]">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
+      <p className="mt-2 text-lg font-semibold text-white sm:text-2xl">{value}</p>
     </div>
+  )
+}
+
+function PercentBar({ value }: { value: number }) {
+  const width = Math.max(0, Math.min(100, Math.round(value * 100)))
+
+  return (
+    <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
+      <div className="h-full rounded-full bg-primary" style={{ width: `${width}%` }} />
+    </div>
+  )
+}
+
+function CallSummaryCard({ call }: { call: CallRecord }) {
+  return (
+    <article className="rounded-lg border border-border bg-white/82 p-4 shadow-[0_18px_55px_-45px_rgba(16,28,43,0.42)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium">{call.customerPhone ?? 'Unknown caller'}</p>
+          <p className="mt-1 font-mono text-xs text-muted-foreground">{formatDateTime(call.createdAt)}</p>
+        </div>
+        <Badge variant="outline" className={statusClassName(call.status)}>
+          {call.status}
+        </Badge>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+        {call.transcript ?? 'No transcript captured yet.'}
+      </p>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3 text-sm">
+        <span className="text-muted-foreground">Recording</span>
+        {call.recordingUrl ? (
+          <a href={call.recordingUrl} className="font-medium text-primary">
+            Open audio
+          </a>
+        ) : (
+          <span className="text-muted-foreground">None</span>
+        )}
+      </div>
+    </article>
   )
 }
