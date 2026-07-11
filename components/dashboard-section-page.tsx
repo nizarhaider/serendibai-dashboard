@@ -130,13 +130,13 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
       sidebarTag="Customer"
       userEmail={user?.email ?? null}
     >
-      <Card className="overflow-hidden border-border bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.4)]">
-        <CardHeader className="gap-4 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+      <Card className="dashboard-hero overflow-hidden border-white/5 bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.55)] ring-0">
+        <CardHeader className="gap-4 px-6 py-2 sm:px-8 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
           <div className="max-w-2xl">
             <Badge variant="outline" className="border-white/15 bg-white/8 text-secondary-foreground">
               Workspace
             </Badge>
-            <CardTitle className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            <CardTitle className="mt-4 text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
               {titles[section]} for {data.customer.businessName}
             </CardTitle>
             <CardDescription className="mt-3 max-w-xl text-sm leading-6 text-secondary-foreground/72">
@@ -334,10 +334,10 @@ function SettingsSection({ data, plans }: { data: DashboardData; plans: Subscrip
 
 function SidebarStatus({ dataSource }: { dataSource: string }) {
   return (
-    <Card className="border-border/80 bg-muted/55 shadow-none">
+    <Card className="border-white/10 bg-white/5 text-white shadow-none ring-0">
       <CardHeader>
         <CardTitle className="text-sm">Data source</CardTitle>
-        <CardDescription className="leading-6">
+        <CardDescription className="leading-6 text-white/42">
           {dataSource === 'neon'
             ? 'Connected to Neon Postgres.'
             : 'Using local mock data. Set DATABASE_URL to read Neon.'}
@@ -374,7 +374,7 @@ function Panel({
   children: ReactNode
 }) {
   return (
-    <Card className="bg-white/82">
+    <Card className="border-white bg-white/92">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         {description ? <CardDescription>{description}</CardDescription> : null}
@@ -434,13 +434,13 @@ function MiniPanel({
   text: string
 }) {
   return (
-    <Card className="bg-white/78">
+    <Card className="border-white bg-white/9 text-white ring-0">
       <CardContent>
-        <div className="inline-flex rounded-lg bg-primary/10 p-2 text-primary">
+        <div className="inline-flex rounded-xl bg-[#69e0c1] p-2 text-[#0b1714]">
           <Icon className="h-5 w-5" aria-hidden={true} />
         </div>
         <h3 className="mt-4 font-semibold">{title}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
+        <p className="mt-2 text-sm leading-relaxed text-white/42">{text}</p>
       </CardContent>
     </Card>
   )

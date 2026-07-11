@@ -124,23 +124,23 @@ export default async function Home() {
       sidebarTag="Customer"
       userEmail={user?.email ?? null}
     >
-      <Card className="overflow-hidden border-border bg-secondary text-secondary-foreground shadow-[0_28px_70px_-44px_rgba(16,28,43,0.5)]">
-        <CardHeader className="gap-5 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+      <Card className="dashboard-hero overflow-hidden border-white/5 bg-secondary text-secondary-foreground shadow-[0_34px_80px_-42px_rgba(9,24,19,.65)] ring-0">
+        <CardHeader className="gap-7 px-6 py-2 sm:px-8 lg:grid lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="border-white/15 bg-white/8 text-secondary-foreground">
-                Live inbound desk
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[#69e0c1] shadow-[0_0_10px_#69e0c1]" /> Live operations
               </Badge>
               <Badge variant="outline" className="border-white/15 bg-white/8 text-secondary-foreground">
                 Sinhala / Tamil / English
               </Badge>
             </div>
-            <CardTitle className="mt-4 max-w-3xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              WhatsApp voice agent performance for today&apos;s front desk.
+            <CardTitle className="mt-5 max-w-3xl text-3xl font-semibold leading-tight tracking-[-.045em] text-white sm:text-4xl">
+              Every customer conversation, in one clear view.
             </CardTitle>
             <CardDescription className="mt-3 max-w-2xl text-sm leading-6 text-secondary-foreground/72">
-              Monitor answered calls, handoffs, transcripts, and quota usage for the managed
-              SerendibAI setup backing this customer workspace.
+              Monitor answered calls, handoffs, transcripts, and usage for the multilingual
+              SerendibAI agent running your front desk.
             </CardDescription>
           </div>
           <div className="grid grid-cols-3 gap-2 lg:min-w-[360px]">
@@ -206,7 +206,7 @@ export default async function Home() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.45fr_0.85fr]">
-        <Card>
+        <Card className="border-white bg-white/90">
           <CardHeader className="flex-row items-center justify-between">
             <div>
               <CardTitle>Call volume</CardTitle>
@@ -219,7 +219,7 @@ export default async function Home() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-white bg-white/90">
           <CardHeader>
             <CardTitle>Agent configuration</CardTitle>
             <CardDescription>Current live setup for the active AI agent.</CardDescription>
@@ -246,7 +246,7 @@ export default async function Home() {
         </Card>
       </section>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border-white bg-white/92">
         <CardHeader className="flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle>Recent calls</CardTitle>
@@ -331,10 +331,10 @@ export default async function Home() {
 
 function SidebarStatus({ dataSource }: { dataSource: string }) {
   return (
-    <Card className="border-border/80 bg-muted/55 shadow-none">
+    <Card className="border-white/10 bg-white/5 text-white shadow-none ring-0">
       <CardHeader>
         <CardTitle className="text-sm">Data source</CardTitle>
-        <CardDescription className="leading-6">
+        <CardDescription className="leading-6 text-white/42">
           {dataSource === 'neon'
             ? 'Connected to Neon Postgres.'
             : 'Using local mock data. Set DATABASE_URL to read Neon.'}
@@ -388,7 +388,7 @@ function MetricCard({
   progress?: number
 }) {
   return (
-    <Card className="bg-white/82 shadow-[0_18px_55px_-45px_rgba(16,28,43,0.42)]">
+    <Card className="border-white bg-white/92 shadow-[0_18px_55px_-40px_rgba(16,38,31,.36)] transition-transform duration-300 hover:-translate-y-1">
       <CardContent>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -397,7 +397,7 @@ function MetricCard({
             </p>
             <p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p>
           </div>
-          <div className="rounded-2xl bg-primary/10 p-2.5 text-primary ring-1 ring-primary/10">
+          <div className="rounded-2xl bg-[#e1f6ef] p-2.5 text-primary ring-1 ring-primary/10">
             <Icon className="h-5 w-5" aria-hidden={true} />
           </div>
         </div>
@@ -427,7 +427,7 @@ function MiniPanel({
   text: string
 }) {
   return (
-    <Card className="bg-white/78">
+    <Card className="border-white bg-white/88">
       <CardContent>
         <div className="inline-flex rounded-lg bg-primary/10 p-2 text-primary">
           <Icon className="h-5 w-5" aria-hidden={true} />
@@ -441,7 +441,7 @@ function MiniPanel({
 
 function HeroStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border border-white/10 bg-white/8 px-3 py-3 sm:px-4">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[.065] px-3 py-3.5 backdrop-blur sm:px-4">
       <p className="truncate text-[10px] font-medium uppercase tracking-[0.18em] text-secondary-foreground/58 sm:text-[11px] sm:tracking-[0.24em]">
         {label}
       </p>

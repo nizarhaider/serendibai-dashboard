@@ -83,28 +83,28 @@ export function WorkspaceShell({
       <div
         className={cn(
           "min-h-screen overflow-x-clip",
-          hasSidebar ? "grid lg:grid-cols-[290px_1fr]" : "block"
+          hasSidebar ? "grid lg:grid-cols-[268px_1fr]" : "block"
         )}
       >
         {hasSidebar ? (
-          <aside className="hidden border-b border-border/70 bg-white/72 px-4 py-4 backdrop-blur lg:sticky lg:top-0 lg:block lg:h-screen lg:border-r lg:border-b-0 lg:px-5 lg:py-5">
+          <aside className="hidden bg-[#0b1714] px-4 py-5 text-white lg:sticky lg:top-0 lg:block lg:h-screen lg:px-5 lg:py-6">
             <div className="flex h-full flex-col">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary text-secondary-foreground shadow-[0_18px_40px_-28px_rgba(24,38,62,0.65)]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#69e0c1] text-[#0b1714] shadow-[0_18px_40px_-24px_rgba(105,224,193,.5)]">
                     <Headphones className="h-5 w-5" aria-hidden={true} />
                   </div>
                   <div>
                     <p className="font-semibold">SerendibAI</p>
-                    <p className="text-sm leading-5 text-muted-foreground">{sidebarSubtitle}</p>
+                    <p className="text-sm leading-5 text-white/42">{sidebarSubtitle}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <Badge variant="outline" className="px-2.5">
+                  <Badge variant="outline" className="border-white/12 bg-white/5 px-2.5 text-white/55">
                     {sidebarTag}
                   </Badge>
                   {userEmail ? (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs text-white/45">
                       <Avatar size="sm">
                         <AvatarFallback>{getInitials(userEmail)}</AvatarFallback>
                       </Avatar>
@@ -114,7 +114,7 @@ export function WorkspaceShell({
                 </div>
               </div>
 
-              <Separator className="my-5" />
+              <Separator className="my-5 bg-white/10" />
               <nav className="flex gap-2 overflow-x-auto lg:block lg:space-y-1.5">
                 {navItems.map((item) => {
                   const Icon = item.icon
@@ -123,10 +123,10 @@ export function WorkspaceShell({
                     <Button
                       asChild
                       key={item.href}
-                      variant={item.active ? "secondary" : "ghost"}
+                      variant="ghost"
                       className={cn(
-                        "min-w-max justify-start gap-3 rounded-lg px-3 py-2.5",
-                        item.active && "shadow-[0_18px_40px_-34px_rgba(24,38,62,0.45)]"
+                        "min-w-max justify-start gap-3 rounded-xl px-3 py-2.5 text-white/52 hover:bg-white/7 hover:text-white",
+                        item.active && "bg-[#69e0c1] text-[#0b1714] shadow-[0_16px_40px_-24px_rgba(105,224,193,.7)] hover:bg-[#69e0c1] hover:text-[#0b1714]"
                       )}
                     >
                       <a href={item.href}>
@@ -144,7 +144,7 @@ export function WorkspaceShell({
               </nav>
               {sidebarFooter ? (
                 <>
-                  <Separator className="mt-auto mb-5" />
+                  <Separator className="mt-auto mb-5 bg-white/10" />
                   <div>{sidebarFooter}</div>
                 </>
               ) : null}
@@ -154,18 +154,18 @@ export function WorkspaceShell({
 
         <section className="min-w-0 overflow-x-hidden">
           {hasSidebar ? (
-            <div className="border-b border-border/70 bg-white/78 px-4 py-4 backdrop-blur lg:hidden">
+            <div className="border-b border-white/10 bg-[#0b1714] px-4 py-4 text-white lg:hidden">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground shadow-[0_18px_40px_-28px_rgba(24,38,62,0.65)]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#69e0c1] text-[#0b1714]">
                     <Headphones className="h-4 w-4" aria-hidden={true} />
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-base font-semibold">SerendibAI</p>
-                    <p className="truncate text-sm text-muted-foreground">{sidebarSubtitle}</p>
+                    <p className="truncate text-sm text-white/45">{sidebarSubtitle}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="shrink-0 px-2.5">
+                <Badge variant="outline" className="shrink-0 border-white/15 bg-white/5 px-2.5 text-white/55">
                   {sidebarTag}
                 </Badge>
               </div>
@@ -179,10 +179,10 @@ export function WorkspaceShell({
                       asChild
                       key={item.href}
                       size="sm"
-                      variant={item.active ? "secondary" : "outline"}
+                      variant="ghost"
                       className={cn(
-                        "shrink-0 rounded-lg px-3",
-                        item.active && "shadow-[0_18px_40px_-34px_rgba(24,38,62,0.45)]"
+                        "shrink-0 rounded-xl px-3 text-white/55 hover:bg-white/10 hover:text-white",
+                        item.active && "bg-[#69e0c1] text-[#0b1714] hover:bg-[#69e0c1] hover:text-[#0b1714]"
                       )}
                     >
                       <a href={item.href}>
@@ -196,7 +196,7 @@ export function WorkspaceShell({
             </div>
           ) : null}
 
-          <header className="border-b border-border/70 bg-white/68 px-4 py-5 backdrop-blur-sm sm:px-6 lg:px-8">
+          <header className="border-b border-border/60 bg-white/65 px-4 py-5 backdrop-blur-xl sm:px-7 lg:px-10">
             {breadcrumbs.length > 0 ? (
               <Breadcrumb>
                 <BreadcrumbList>
@@ -238,7 +238,7 @@ export function WorkspaceShell({
             </div>
           </header>
 
-          <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+          <div className="mx-auto max-w-[1560px] space-y-6 px-4 py-6 sm:px-7 lg:px-10 lg:py-8">{children}</div>
         </section>
       </div>
     </main>

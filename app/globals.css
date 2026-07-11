@@ -2,83 +2,38 @@
 @import "tw-animate-css";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) * 0.75);
-  --radius-md: calc(var(--radius) * 0.875);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.5);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --color-background: var(--background); --color-foreground: var(--foreground);
+  --color-card: var(--card); --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground);
+  --color-popover: var(--popover); --color-popover-foreground: var(--popover-foreground);
+  --color-border: var(--border); --color-input: var(--input);
+  --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive); --color-ring: var(--ring);
+  --radius-sm: .5rem; --radius-md: .75rem; --radius-lg: 1rem; --radius-xl: 1.4rem;
 }
 
 :root {
   color-scheme: light;
-  --background: #f6f8f7;
-  --foreground: #182235;
-  --card: rgba(255, 255, 255, 0.92);
-  --card-foreground: #162235;
-  --popover: rgba(255, 255, 255, 0.96);
-  --popover-foreground: #162235;
-  --muted: #e9efed;
-  --muted-foreground: #5b6c7f;
-  --border: rgba(112, 135, 145, 0.28);
-  --input: rgba(112, 135, 145, 0.26);
-  --primary: #168f8b;
-  --primary-foreground: #f8ffff;
-  --secondary: #18263e;
-  --secondary-foreground: #f8fbff;
-  --accent: #ef7c4c;
-  --accent-foreground: #fff8f4;
-  --destructive: #c2413a;
-  --ring: #168f8b;
-  --radius: 0.5rem;
+  --background: #f2f4f0; --foreground: #10201c;
+  --card: rgba(255,255,255,.94); --card-foreground: #10201c;
+  --popover: #fff; --popover-foreground: #10201c;
+  --muted: #e9ede8; --muted-foreground: #65736e;
+  --border: rgba(92,110,102,.22); --input: rgba(92,110,102,.28);
+  --primary: #17876f; --primary-foreground: #f5fffb;
+  --secondary: #0c1815; --secondary-foreground: #f6fbf8;
+  --accent: #f27645; --accent-foreground: #21100a;
+  --destructive: #c2473f; --ring: #17876f; --radius: .9rem;
 }
 
-* {
-  box-sizing: border-box;
-  border-color: var(--border);
-}
+* { box-sizing: border-box; border-color: var(--border); }
+html, body { min-height: 100%; }
+body { margin: 0; background: radial-gradient(circle at 70% -20%, rgba(105,224,193,.15), transparent 35rem), var(--background); color: var(--foreground); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button, input, select, textarea { font: inherit; }
+::selection { background: #69e0c1; color: #08110f; }
 
-html,
-body {
-  min-height: 100%;
-}
-
-body {
-  margin: 0;
-  background:
-    linear-gradient(180deg, #eef4f2 0, var(--background) 360px),
-    var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-::selection {
-  background: color-mix(in srgb, var(--primary) 20%, white);
-}
+.dashboard-hero { position: relative; isolation: isolate; background-color: #0c1815; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 32px 32px; }
+.dashboard-hero::after { content: ''; position: absolute; inset: auto -4rem -10rem auto; z-index: -1; width: 25rem; height: 25rem; border-radius: 50%; background: rgba(105,224,193,.18); filter: blur(70px); }
