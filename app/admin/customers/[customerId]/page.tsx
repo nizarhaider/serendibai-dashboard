@@ -25,6 +25,7 @@ import {
 import { getCurrentAdminUser } from '@/lib/admin-data'
 import { listSubscriptionPlans } from '@/lib/billing-data'
 import { getDashboardDataForCustomer } from '@/lib/dashboard-data'
+import type { CallRecord } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -125,7 +126,7 @@ export default async function AdminCustomerPage({ params, searchParams }: PagePr
         </Alert>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <SummaryCard icon={Settings} label="Plan" value={data.subscription.planName} />
         <SummaryCard
           icon={Coins}
@@ -171,7 +172,7 @@ export default async function AdminCustomerPage({ params, searchParams }: PagePr
                   ))}
                 </SelectContent>
               </Select>
-              <Button>Update plan</Button>
+              <Button className="w-full sm:w-auto">Update plan</Button>
             </form>
           </CardContent>
         </Card>
@@ -197,8 +198,13 @@ export default async function AdminCustomerPage({ params, searchParams }: PagePr
           <CardTitle>Recent calls</CardTitle>
           <CardDescription>Latest calls for this customer.</CardDescription>
         </CardHeader>
-        <CardContent className="px-0 sm:px-6">
-          <Table className="min-w-[640px] md:min-w-[760px]">
+        <CardContent className="px-4 sm:px-6">
+          <div className="space-y-3 md:hidden">
+            {data.calls.map((call) => (
+              <AdminCallCard key={call.id} call={call} />
+            ))}
+          </div>
+          <Table className="hidden min-w-[760px] md:table">
             <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
               <TableRow>
                 <TableHead>Time</TableHead>
@@ -278,5 +284,26 @@ function Info({ label, value }: { label: string; value: string }) {
       <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
       <p className="mt-1 break-words font-medium">{value}</p>
     </div>
+  )
+}
+
+function AdminCallCard({ call }: { call: CallRecord }) {
+  return (
+    <article className="rounded-2xl border border-border bg-white/80 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="break-words font-medium">{call.customerPhone ?? 'Unknown caller'}</p>
+          <p className="mt-1 font-mono text-xs text-muted-foreground">
+            {formatDateTime(call.createdAt)}
+          </p>
+        </div>
+        <Badge variant="outline" className="shrink-0">
+          {call.status}
+        </Badge>
+      </div>
+      <p className="mt-3 border-t border-border pt-3 text-sm leading-6 text-muted-foreground">
+        {call.transcript ?? 'No transcript captured.'}
+      </p>
+    </article>
   )
 }

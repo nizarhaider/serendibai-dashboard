@@ -31,8 +31,10 @@
 
 * { box-sizing: border-box; border-color: var(--border); }
 html, body { min-height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: radial-gradient(circle at 70% -20%, rgba(105,224,193,.15), transparent 35rem), var(--background); color: var(--foreground); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 button, input, select, textarea { font: inherit; }
+a, button { -webkit-tap-highlight-color: transparent; }
 ::selection { background: #69e0c1; color: #08110f; }
 
 .dashboard-hero { position: relative; isolation: isolate; background-color: #0c1815; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 32px 32px; }

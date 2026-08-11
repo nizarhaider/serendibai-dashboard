@@ -79,10 +79,10 @@ export function WorkspaceShell({
   const hasSidebar = navItems.length > 0
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-background text-foreground">
+    <main className="min-h-svh overflow-x-clip bg-background text-foreground">
       <div
         className={cn(
-          "min-h-screen overflow-x-clip",
+          "min-h-svh overflow-x-clip",
           hasSidebar ? "grid lg:grid-cols-[268px_1fr]" : "block"
         )}
       >
@@ -154,10 +154,10 @@ export function WorkspaceShell({
 
         <section className="min-w-0 overflow-x-hidden">
           {hasSidebar ? (
-            <div className="border-b border-white/10 bg-[#0b1714] px-4 py-4 text-white lg:hidden">
+            <div className="sticky top-0 z-40 border-b border-white/10 bg-[#0b1714]/96 px-3 pb-2.5 pt-[max(.75rem,env(safe-area-inset-top))] text-white shadow-lg shadow-black/5 backdrop-blur-xl lg:hidden">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#69e0c1] text-[#0b1714]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#69e0c1] text-[#0b1714]">
                     <Headphones className="h-4 w-4" aria-hidden={true} />
                   </div>
                   <div className="min-w-0">
@@ -165,12 +165,22 @@ export function WorkspaceShell({
                     <p className="truncate text-sm text-white/45">{sidebarSubtitle}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="shrink-0 border-white/15 bg-white/5 px-2.5 text-white/55">
-                  {sidebarTag}
-                </Badge>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge variant="outline" className="border-white/15 bg-white/5 px-2.5 text-white/55">
+                    {sidebarTag}
+                  </Badge>
+                  {userEmail ? (
+                    <Avatar size="sm" aria-label={userEmail}>
+                      <AvatarFallback>{getInitials(userEmail)}</AvatarFallback>
+                    </Avatar>
+                  ) : null}
+                </div>
               </div>
 
-              <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <nav
+                aria-label="Workspace navigation"
+                className="-mx-3 mt-2.5 flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-3 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
                 {navItems.map((item) => {
                   const Icon = item.icon
 
@@ -181,7 +191,7 @@ export function WorkspaceShell({
                       size="sm"
                       variant="ghost"
                       className={cn(
-                        "shrink-0 rounded-xl px-3 text-white/55 hover:bg-white/10 hover:text-white",
+                        "h-11 shrink-0 snap-start rounded-xl px-3 text-white/55 hover:bg-white/10 hover:text-white",
                         item.active && "bg-[#69e0c1] text-[#0b1714] hover:bg-[#69e0c1] hover:text-[#0b1714]"
                       )}
                     >
@@ -196,7 +206,7 @@ export function WorkspaceShell({
             </div>
           ) : null}
 
-          <header className="border-b border-border/60 bg-white/65 px-4 py-5 backdrop-blur-xl sm:px-7 lg:px-10">
+          <header className="border-b border-border/60 bg-white/65 px-4 py-4 backdrop-blur-xl sm:px-7 sm:py-5 lg:px-10">
             {breadcrumbs.length > 0 ? (
               <Breadcrumb>
                 <BreadcrumbList>
@@ -233,12 +243,14 @@ export function WorkspaceShell({
                 ) : null}
               </div>
               {headerActions ? (
-                <div className="flex flex-wrap items-center gap-2 text-sm">{headerActions}</div>
+                <div className="flex w-full flex-wrap items-center gap-2 text-sm sm:w-auto [&>form]:grow sm:[&>form]:grow-0 [&>form>button]:w-full">
+                  {headerActions}
+                </div>
               ) : null}
             </div>
           </header>
 
-          <div className="mx-auto max-w-[1560px] space-y-6 px-4 py-6 sm:px-7 lg:px-10 lg:py-8">{children}</div>
+          <div className="mx-auto max-w-[1560px] space-y-4 px-3 py-4 sm:space-y-6 sm:px-7 sm:py-6 lg:px-10 lg:py-8">{children}</div>
         </section>
       </div>
     </main>

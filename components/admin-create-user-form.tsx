@@ -38,7 +38,7 @@ export function AdminCreateUserForm() {
         </div>
       </div>
 
-      <Button type="submit">
+      <Button type="submit" className="w-full sm:w-auto">
         Create user and send reset
       </Button>
     </form>

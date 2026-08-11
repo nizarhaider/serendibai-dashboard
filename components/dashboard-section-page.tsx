@@ -131,7 +131,7 @@ export async function DashboardSectionPage({ section }: { section: DashboardSect
       userEmail={user?.email ?? null}
     >
       <Card className="dashboard-hero overflow-hidden border-white/5 bg-secondary text-secondary-foreground shadow-[0_35px_80px_-45px_rgba(16,28,43,0.55)] ring-0">
-        <CardHeader className="gap-4 px-6 py-2 sm:px-8 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+        <CardHeader className="gap-4 px-5 py-2 sm:px-8 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
           <div className="max-w-2xl">
             <Badge variant="outline" className="border-white/15 bg-white/8 text-secondary-foreground">
               Workspace
@@ -168,7 +168,7 @@ function CallsSection({ data }: { data: DashboardData }) {
           <CardTitle>Call history</CardTitle>
           <CardDescription>Latest conversations handled by the AI agent.</CardDescription>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" className="w-full sm:w-auto">
           <Download className="h-4 w-4" aria-hidden={true} />
           Export CSV
         </Button>
@@ -395,7 +395,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 function CallSummaryCard({ call }: { call: CallRecord }) {
   return (
-    <article className="rounded-lg border border-border bg-white/82 p-4 shadow-[0_18px_55px_-45px_rgba(16,28,43,0.42)]">
+    <article className="rounded-2xl border border-border bg-white/82 p-4 shadow-[0_18px_55px_-45px_rgba(16,28,43,0.42)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-medium">{call.customerPhone ?? 'Unknown caller'}</p>

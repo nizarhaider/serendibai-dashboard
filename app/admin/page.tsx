@@ -37,7 +37,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { listSubscriptionPlans } from '@/lib/billing-data'
-import { getCurrentAdminUser, listAdminUsers } from '@/lib/admin-data'
+import { getCurrentAdminUser, listAdminUsers, type AdminUser } from '@/lib/admin-data'
+import type { SubscriptionPlan } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -178,8 +179,13 @@ export default async function AdminPage({
             <CardTitle>Users</CardTitle>
             <CardDescription>Auth users and their linked customer accounts.</CardDescription>
           </CardHeader>
-          <CardContent className="px-0 sm:px-6">
-            <div className="overflow-x-auto">
+          <CardContent className="px-4 sm:px-6">
+            <div className="space-y-3 2xl:hidden">
+              {users.map((user) => (
+                <AdminUserCard key={user.id} user={user} plans={plans} />
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto 2xl:block">
               <Table className="min-w-[880px] lg:min-w-[1060px]">
                 <TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
                   <TableRow>
@@ -314,5 +320,78 @@ function AdminSidebarSummary({ count }: { count: number }) {
         </CardDescription>
       </CardHeader>
     </Card>
+  )
+}
+
+function AdminUserCard({ user, plans }: { user: AdminUser; plans: SubscriptionPlan[] }) {
+  return (
+    <article className="rounded-2xl border border-border bg-white/80 p-4 shadow-[0_18px_45px_-38px_rgba(16,28,43,.35)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="break-words font-medium">{user.email}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{user.name}</p>
+        </div>
+        <Badge variant="secondary" className="shrink-0">
+          {user.role ?? 'user'}
+        </Badge>
+      </div>
+
+      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <UserDetail label="Customer" value={user.businessName ?? 'Not linked'} />
+        <UserDetail label="Plan" value={user.planName ?? 'None'} />
+        <UserDetail label="Usage" value={`${user.tokensUsed.toLocaleString()} tokens`} />
+        <UserDetail label="Calls" value={user.callsMade.toLocaleString()} />
+        <UserDetail label="Password" value={user.hasPassword ? 'Set' : 'Pending'} />
+        <UserDetail label="Created" value={formatDate(user.createdAt)} />
+      </dl>
+
+      {user.customerId ? (
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
+          <div className="grid grid-cols-2 gap-2">
+            <Button asChild variant="outline">
+              <a href={`/admin/customers/${user.customerId}`}>Manage</a>
+            </Button>
+            <Button asChild variant="outline">
+              <a href={`/admin/customers/${user.customerId}?mode=impersonate`}>View as user</a>
+            </Button>
+          </div>
+          <form
+            action={`/admin/customers/${user.customerId}/subscription`}
+            method="post"
+            className="grid gap-2 sm:grid-cols-[1fr_auto]"
+          >
+            <Select name="planId" defaultValue={user.planId ?? ''}>
+              <SelectTrigger className="w-full" aria-label="Subscription plan">
+                <SelectValue placeholder="Select plan" />
+              </SelectTrigger>
+              <SelectContent>
+                {plans.map((plan) => (
+                  <SelectItem key={plan.id} value={plan.id}>
+                    {plan.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button type="submit">Save plan</Button>
+          </form>
+        </div>
+      ) : null}
+
+      <form action="/admin/users/reset" method="post" className="mt-3">
+        <input type="hidden" name="email" value={user.email} />
+        <Button type="submit" variant="ghost" className="w-full">
+          Send password reset
+        </Button>
+      </form>
+    </article>
+  )
+}
+
+function UserDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-xl bg-muted/65 px-3 py-2.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 break-words font-medium">{value}</dd>
+    </div>
   )
 }

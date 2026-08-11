@@ -125,7 +125,7 @@ export default async function Home() {
       userEmail={user?.email ?? null}
     >
       <Card className="dashboard-hero overflow-hidden border-white/5 bg-secondary text-secondary-foreground shadow-[0_34px_80px_-42px_rgba(9,24,19,.65)] ring-0">
-        <CardHeader className="gap-7 px-6 py-2 sm:px-8 lg:grid lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+        <CardHeader className="gap-6 px-5 py-2 sm:px-8 lg:grid lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="border-white/15 bg-white/8 text-secondary-foreground">
@@ -143,7 +143,7 @@ export default async function Home() {
               SerendibAI agent running your front desk.
             </CardDescription>
           </div>
-          <div className="grid grid-cols-3 gap-2 lg:min-w-[360px]">
+          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-3 lg:min-w-[360px]">
             <HeroStat label="Plan" value={data.subscription.planName} />
             <HeroStat label="Calls" value={data.stats.completedCalls.toString()} />
             <HeroStat label="Handoff" value={data.stats.escalatedCalls.toString()} />
@@ -207,12 +207,12 @@ export default async function Home() {
 
       <section className="grid gap-6 xl:grid-cols-[1.45fr_0.85fr]">
         <Card className="border-white bg-white/90">
-          <CardHeader className="flex-row items-center justify-between">
+          <CardHeader className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Call volume</CardTitle>
               <CardDescription>Recent WhatsApp call activity by day</CardDescription>
             </div>
-            <Badge variant="secondary">Asia/Colombo</Badge>
+            <Badge variant="secondary" className="w-fit">Asia/Colombo</Badge>
           </CardHeader>
           <CardContent>
             <CallsChart data={data.dailyCalls} />
@@ -254,7 +254,7 @@ export default async function Home() {
               Latest customer conversations handled by the AI agent
             </CardDescription>
           </div>
-          <Button variant="outline">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Download className="h-4 w-4" aria-hidden={true} />
             Export CSV
           </Button>
@@ -388,7 +388,7 @@ function MetricCard({
   progress?: number
 }) {
   return (
-    <Card className="border-white bg-white/92 shadow-[0_18px_55px_-40px_rgba(16,38,31,.36)] transition-transform duration-300 hover:-translate-y-1">
+    <Card className="border-white bg-white/92 shadow-[0_18px_55px_-40px_rgba(16,38,31,.36)] transition-transform duration-300 md:hover:-translate-y-1">
       <CardContent>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -410,9 +410,9 @@ function MetricCard({
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-border pb-3 last:border-0 last:pb-0">
+    <div className="flex flex-col gap-1 border-b border-border pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="max-w-[60%] text-right text-sm font-medium">{value}</p>
+      <p className="break-words text-sm font-medium sm:max-w-[60%] sm:text-right">{value}</p>
     </div>
   )
 }
@@ -462,7 +462,7 @@ function PercentBar({ value }: { value: number }) {
 
 function CallSummaryCard({ call }: { call: CallRecord }) {
   return (
-    <article className="rounded-lg border border-border bg-white/82 p-4 shadow-[0_18px_55px_-45px_rgba(16,28,43,0.42)]">
+    <article className="rounded-2xl border border-border bg-white/82 p-4 shadow-[0_18px_55px_-45px_rgba(16,28,43,0.42)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-medium">{call.customerPhone ?? 'Unknown caller'}</p>
