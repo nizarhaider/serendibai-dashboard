@@ -1,0 +1,120 @@
+import { z } from "zod";
+import { db } from "@/lib/db";
+import { digest, ApiError } from "@/lib/auth";
+import { runtimeSecrets } from "@/lib/vast";
+
+export const runtime = "nodejs";
+async function handler(
+  request: Request,
+  { params }: { params: Promise<{ operation: string }> },
+) {
+  try {
+    const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
+    if (!token) throw new ApiError("Unauthorized", 401);
+    const sql = db(),
+      [agent] =
+        await sql`select * from portal_agents where runtime_token_hash=${digest(token)}`;
+    if (!agent) throw new ApiError("Unauthorized", 401);
+    const { operation } = await params;
+    if (operation === "config" && request.method === "GET")
+      return Response.json(
+        {
+          id: agent.id,
+          name: agent.name,
+          instructions: agent.system_prompt,
+          greeting: agent.greeting,
+          voice: agent.voice,
+          languages: agent.languages,
+          enabled_tools: agent.tools,
+          max_calls: agent.max_calls,
+          version: agent.version,
+          env: runtimeSecrets(agent),
+        },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    const body = await request.json();
+    if (operation === "heartbeat") {
+      const b = z
+        .object({
+          version: z.number().int(),
+          active_calls: z.number().int().nonnegative(),
+          cpu_percent: z.number().min(0).max(100),
+          memory_mb: z.number().nonnegative(),
+          status: z.enum(["ready", "warming_up", "error"]),
+          error: z.string().max(300).default(""),
+          runtime_url: z.string().max(300).default(""),
+        })
+        .parse(body);
+      if (
+        b.runtime_url &&
+        !/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(b.runtime_url)
+      )
+        throw new ApiError("Invalid runtime URL.");
+      const restart = agent.deployed_version === -1;
+      await sql`update portal_agents set heartbeat_at=now(),telemetry=${JSON.stringify(b)}::jsonb,status=${restart ? "restarting" : b.status},deployed_version=${b.version} where id=${agent.id}`;
+      return Response.json({ ok: true, restart, max_calls: agent.max_calls });
+    }
+    if (operation === "search") {
+      const b = z
+        .object({
+          tool: z.enum(["search_knowledge", "search_products"]),
+          query: z.string().max(500),
+        })
+        .parse(body);
+      if (!agent.tools.includes(b.tool))
+        throw new ApiError("This tool is disabled.", 403);
+      const terms = b.query
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 12)
+        .join(" OR ");
+      const results =
+        b.tool === "search_knowledge"
+          ? await sql`select id,name,left(content,18000) as content from portal_documents where customer_id=${agent.customer_id} and (to_tsvector('simple',content) @@ websearch_to_tsquery('simple',${terms}) or name ilike ${"%" + b.query.replace(/[%_]/g, "") + "%"}) order by ts_rank(to_tsvector('simple',content),websearch_to_tsquery('simple',${terms})) desc limit 5`
+          : await sql`select name,sku,description,category,price,currency,stock,status from portal_products where customer_id=${agent.customer_id} and status='active' and (to_tsvector('simple',name || ' ' || description || ' ' || category || ' ' || sku) @@ websearch_to_tsquery('simple',${terms}) or name ilike ${"%" + b.query.replace(/[%_]/g, "") + "%"}) limit 15`;
+      return Response.json({ ok: true, results });
+    }
+    if (operation === "calls") {
+      const b = z
+        .object({
+          id: z.string().min(1).max(250),
+          customer_phone: z.string().max(50),
+          status: z.enum([
+            "connecting",
+            "active",
+            "ended",
+            "completed",
+            "error",
+          ]),
+          transcript: z.string().max(200000),
+          duration_seconds: z.number().nonnegative().max(86400).nullable(),
+          tokens: z.number().int().nonnegative().max(10000000).nullable(),
+          started_at: z.number().positive(),
+        })
+        .parse(body);
+      const callId = `${agent.id}:${b.id}`;
+      await sql`insert into portal_calls(id,customer_id,agent_id,customer_phone,status,transcript,duration_seconds,tokens,created_at) values(${callId},${agent.customer_id},${agent.id},${b.customer_phone},${b.status},${b.transcript},${b.duration_seconds},${b.tokens},to_timestamp(${b.started_at})) on conflict(id) do update set status=excluded.status,transcript=excluded.transcript,duration_seconds=excluded.duration_seconds,tokens=excluded.tokens,updated_at=now() where portal_calls.customer_id=${agent.customer_id} and portal_calls.agent_id=${agent.id}`;
+      return Response.json({ ok: true });
+    }
+    throw new ApiError("Not found.", 404);
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof ApiError
+            ? error.message
+            : "Runtime request rejected.",
+      },
+      {
+        status:
+          error instanceof ApiError
+            ? error.status
+            : error instanceof z.ZodError
+              ? 400
+              : 500,
+      },
+    );
+  }
+}
+export { handler as GET, handler as POST };

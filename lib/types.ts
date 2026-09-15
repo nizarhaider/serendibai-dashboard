@@ -1,90 +1,76 @@
-export type Customer = {
-  id: string
-  authUserId: string | null
-  businessName: string
-  contactName: string | null
-  email: string | null
-  phone: string | null
-  createdAt: string
-}
-
-export type WhatsAppNumber = {
-  id: string
-  customerId: string
-  phoneNumber: string
-  phoneNumberId: string | null
-  wabaId: string | null
-  status: string
-  createdAt: string
-}
-
-export type AgentConfig = {
-  id: string
-  customerId: string
-  name: string
-  languages: string[]
-  systemPrompt: string | null
-  createdAt: string
-}
-
-export type CallRecord = {
-  id: string
-  customerId: string
-  whatsappNumberId: string | null
-  customerPhone: string | null
-  status: string
-  transcript: string | null
-  recordingUrl: string | null
-  createdAt: string
-}
-
-export type DailyCallCount = {
-  date: string
-  calls: number
-}
-
-export type SubscriptionPlan = {
-  id: string
-  name: string
-  monthlyPriceCents: number
-  tokenLimit: number
-  callLimit: number
-  isActive: boolean
-}
-
-export type CustomerSubscription = {
-  planId: string
-  planName: string
-  monthlyPriceCents: number
-  tokenLimit: number
-  callLimit: number
-  status: string
-  currentPeriodStart: string
-  currentPeriodEnd: string
-}
-
-export type UsageSummary = {
-  periodStart: string
-  periodEnd: string
-  tokensUsed: number
-  callsMade: number
-  tokenLimit: number
-  callLimit: number
-}
-
-export type DashboardData = {
-  customer: Customer
-  whatsappNumber: WhatsAppNumber | null
-  agentConfig: AgentConfig | null
-  calls: CallRecord[]
-  dailyCalls: DailyCallCount[]
-  subscription: CustomerSubscription
-  usage: UsageSummary
-  stats: {
-    totalCalls: number
-    completedCalls: number
-    escalatedCalls: number
-    recordingsAvailable: number
-  }
-  dataSource: 'neon' | 'mock'
-}
+export type Agent = {
+  id: string;
+  name: string;
+  company_url: string;
+  system_prompt: string;
+  greeting: string;
+  voice: string;
+  languages: string[];
+  tools: string[];
+  max_calls: number;
+  hourly_budget: number;
+  phone_number_id: string;
+  instance_id: number | null;
+  status: string;
+  version: number;
+  deployed_version: number;
+  heartbeat_at: string | null;
+  telemetry: Record<string, number | string>;
+  has_credentials: boolean;
+  created_at: string;
+};
+export type Product = {
+  id?: string;
+  name: string;
+  sku: string;
+  description: string;
+  category: string;
+  price: number | null;
+  currency: string;
+  stock: number | null;
+  status: string;
+};
+export type Document = {
+  id: string;
+  name: string;
+  bytes: number;
+  type: string;
+  created_at: string;
+  characters: number;
+};
+export type Call = {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  customer_phone: string;
+  status: string;
+  transcript: string | null;
+  duration_seconds: number | null;
+  tokens: number | null;
+  created_at: string;
+  source: string;
+};
+export type PortalData = {
+  generatedAt: number;
+  email: string;
+  agents: Agent[];
+  documents: Document[];
+  products: Product[];
+  calls: Call[];
+  daily: {
+    date: string;
+    calls: number;
+    minutes: number | null;
+    tokens: number | null;
+  }[];
+  totals: {
+    calls: number;
+    answered: number;
+    minutes: number | null;
+    tokens: number | null;
+    measured_minutes: number;
+    measured_tokens: number;
+  };
+  quotas: { tokens: number; minutes: number; calls: number; label: string };
+  events: { id: string; action: string; detail: string; created_at: string }[];
+};

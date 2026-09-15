@@ -1,7 +1,0 @@
-import { DashboardSectionPage } from '@/components/dashboard-section-page'
-
-export const dynamic = 'force-dynamic'
-
-export default function CustomersPage() {
-  return <DashboardSectionPage section="customers" />
-}

@@ -1,30 +1,20 @@
-import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
-import './globals.css'
+import type { Metadata } from "next";
+import { Bricolage_Grotesque, Inter, Geist_Mono } from "next/font/google";
+import "./globals.css";
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
-
+const heading = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-heading" });
+const sans = Inter({ subsets: ["latin"], variable: "--font-geist" });
+const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 export const metadata: Metadata = {
-  title: 'SerendibAI Dashboard',
-  description: 'Customer dashboard for AI-powered WhatsApp call agents.',
-}
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+  title: "SerendibAI · Customer Portal",
+  description:
+    "Your voice agents, knowledge and operations. One connected workspace.",
+  robots: { index: false, follow: false },
+};
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="antialiased">{children}</body>
+    <html lang="en" className={`${sans.variable} ${mono.variable} ${heading.variable}`}>
+      <body>{children}</body>
     </html>
-  )
+  );
 }
