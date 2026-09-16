@@ -75,6 +75,28 @@ async function handler(
           : await sql`select name,sku,description,category,price,currency,stock,status from portal_products where customer_id=${agent.customer_id} and status='active' and (to_tsvector('simple',name || ' ' || description || ' ' || category || ' ' || sku) @@ websearch_to_tsquery('simple',${terms}) or name ilike ${"%" + b.query.replace(/[%_]/g, "") + "%"}) limit 15`;
       return Response.json({ ok: true, results });
     }
+    if (operation === "appointments") {
+      if (!agent.tools.includes("book_appointment"))
+        throw new ApiError("This tool is disabled.", 403);
+      const b = z
+        .object({
+          call_id: z.string().min(1).max(250),
+          customer_phone: z.string().max(50).default(""),
+          customer_name: z.string().trim().min(1).max(150),
+          service: z.string().trim().min(1).max(200),
+          appointment_at: z.iso.datetime({ offset: true }),
+          duration_minutes: z.number().int().min(15).max(240).default(30),
+          notes: z.string().max(2000).default(""),
+        })
+        .parse(body);
+      const appointmentAt = new Date(b.appointment_at);
+      if (appointmentAt <= new Date() || appointmentAt > new Date(Date.now() + 2 * 365 * 86400000))
+        throw new ApiError("Choose a future appointment within two years.");
+      const rows = await sql`insert into portal_appointments(customer_id,agent_id,call_id,customer_phone,customer_name,service,appointment_at,duration_minutes,notes) values(${agent.customer_id},${agent.id},${b.call_id},${b.customer_phone},${b.customer_name},${b.service},${appointmentAt.toISOString()},${b.duration_minutes},${b.notes}) on conflict(agent_id,appointment_at) where status='booked' do nothing returning id,customer_name,service,appointment_at,duration_minutes,status`;
+      if (!rows[0]) throw new ApiError("That time is already booked. Please choose another time.", 409);
+      await sql`insert into portal_events(customer_id,agent_id,action,detail) values(${agent.customer_id},${agent.id},'appointment.booked',${`${b.customer_name} · ${b.service}`})`;
+      return Response.json({ ok: true, appointment: rows[0] });
+    }
     if (operation === "calls") {
       const b = z
         .object({

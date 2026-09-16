@@ -10,6 +10,7 @@ import {
   AudioLines,
   BookOpen,
   Box,
+  CalendarDays,
   Check,
   ChevronDown,
   CircleHelp,
@@ -29,6 +30,7 @@ import {
 import type { PortalData, Call } from "@/lib/types";
 import { Resources } from "./resources";
 import { Agents } from "./agents";
+import { Appointments } from "./appointments";
 
 const Chart = dynamic(() => import("./chart"), {
   ssr: false,
@@ -137,6 +139,7 @@ export function Portal({
     [help, setHelp] = useState(false);
   const nav = [
     { href: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "appointments", label: "Appointments", icon: CalendarDays },
     { href: "knowledge", label: "Knowledge Base", icon: BookOpen },
     { href: "catalogue", label: "Product Catalogue", icon: Box },
     { href: "agents", label: "Agent Management", icon: AudioLines },
@@ -270,6 +273,8 @@ export function Portal({
               <div className="eyebrow">
                 {section === "dashboard"
                   ? "YOUR BUSINESS, IN CONVERSATION"
+                  : section === "appointments"
+                    ? "EVERY BOOKING, IN ONE PLACE"
                   : section === "agents"
                     ? "MEET YOUR DIGITAL TEAM"
                     : section === "knowledge"
@@ -284,6 +289,8 @@ export function Portal({
               <p>
                 {section === "dashboard"
                   ? "See how your voice agents are showing up for your business."
+                  : section === "appointments"
+                    ? "See appointments booked by your voice agents in Sri Lanka time."
                   : section === "knowledge"
                     ? "A shared source of truth. Add your documents and keep every answer current."
                     : section === "catalogue"
@@ -332,6 +339,8 @@ export function Portal({
             />
           ) : section === "agents" ? (
             <Agents data={data} refresh={refresh} notify={notify} />
+          ) : section === "appointments" ? (
+            <Appointments data={data} />
           ) : (
             <Resources
               section={section}

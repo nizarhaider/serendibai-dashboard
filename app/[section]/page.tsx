@@ -10,7 +10,7 @@ export default async function Page({
   params: Promise<{ section: string }>;
 }) {
   const { section } = await params;
-  if (!["dashboard", "knowledge", "catalogue", "agents"].includes(section))
+  if (!["dashboard", "appointments", "knowledge", "catalogue", "agents"].includes(section))
     notFound();
   const user = await session();
   if (!user) redirect("/login");

@@ -261,7 +261,13 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
     }
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 1000 });
-      for (const section of ["dashboard", "knowledge", "catalogue", "agents"]) {
+      for (const section of [
+        "dashboard",
+        "appointments",
+        "knowledge",
+        "catalogue",
+        "agents",
+      ]) {
         await page.goto(`/${section}`);
         await expect(page.locator("main h1")).toBeVisible();
         expect(

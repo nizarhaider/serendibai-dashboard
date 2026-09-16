@@ -50,6 +50,20 @@ export type Call = {
   created_at: string;
   source: string;
 };
+export type Appointment = {
+  id: string;
+  agent_id: string | null;
+  agent_name: string | null;
+  call_id: string;
+  customer_phone: string;
+  customer_name: string;
+  service: string;
+  appointment_at: string;
+  duration_minutes: number;
+  notes: string;
+  status: string;
+  created_at: string;
+};
 export type PortalData = {
   generatedAt: number;
   email: string;
@@ -57,6 +71,7 @@ export type PortalData = {
   documents: Document[];
   products: Product[];
   calls: Call[];
+  appointments: Appointment[];
   daily: {
     date: string;
     calls: number;
