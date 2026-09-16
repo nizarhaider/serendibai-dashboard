@@ -33,9 +33,15 @@ async function handler(
       !timingSafeEqual(expected, supplied)
     )
       return new Response("Invalid signature", { status: 403 });
-  } else if (url.searchParams.get("key") !== env.VERIFY_TOKEN)
-    return new Response("Invalid callback key", { status: 403 });
-  if (id === process.env.DEMO_AGENT_ID) await handleDemoWebhook(JSON.parse(body));
+  }
+  const payload = JSON.parse(body);
+  if (
+    payload.object !== "whatsapp_business_account" ||
+    (id === process.env.DEMO_AGENT_ID &&
+      !payload.entry?.every((entry: { id?: string }) => entry.id === "2397798740726496"))
+  )
+    return new Response("Invalid webhook", { status: 400 });
+  if (id === process.env.DEMO_AGENT_ID) await handleDemoWebhook(payload);
   const target = agent.telemetry?.runtime_url;
   if (
     !target ||
