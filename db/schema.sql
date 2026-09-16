@@ -12,3 +12,5 @@ create index if not exists portal_calls_customer_date on portal_calls(customer_i
 create table if not exists portal_quotas (customer_id uuid primary key references customers(id), tokens integer not null default 1000000 check(tokens>0), minutes integer not null default 1000 check(minutes>0), calls integer not null default 500 check(calls>0), label text not null default 'Workspace limits');
 create table if not exists portal_events (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), agent_id uuid references portal_agents(id), action text not null, detail text not null, created_at timestamptz not null default now());
 create index if not exists portal_events_customer_date on portal_events(customer_id,created_at desc);
+
+create table if not exists portal_demo_requests (id text primary key, phone text not null, state text not null, message_id text unique, call_id text unique, expires_at timestamptz not null, created_at timestamptz not null default now());

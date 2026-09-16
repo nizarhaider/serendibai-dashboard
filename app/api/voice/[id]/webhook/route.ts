@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
 import { runtimeSecrets } from "@/lib/vast";
+import { handleDemoWebhook } from "@/lib/demo";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -33,6 +34,7 @@ async function handler(
     !timingSafeEqual(expected, supplied)
   )
     return new Response("Invalid signature", { status: 403 });
+  if (id === process.env.DEMO_AGENT_ID) await handleDemoWebhook(JSON.parse(body));
   const target = agent.telemetry?.runtime_url;
   if (
     !target ||
