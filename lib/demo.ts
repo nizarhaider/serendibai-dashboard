@@ -67,7 +67,7 @@ async function startDemo(id: string) {
     const permission = await graph(`call_permissions?user_wa_id=${row.phone}`);
     if (!permission.actions?.some((a: { action_name: string; can_perform_action: boolean }) => a.action_name === "start_call" && a.can_perform_action)) throw new Error("Permission unavailable");
     const body = JSON.stringify({ id, phone: row.phone, timestamp: Math.floor(Date.now() / 1000) });
-    const signature = createHmac("sha256", runtimeSecrets(agent).WHATSAPP_APP_SECRET).update(body).digest("hex");
+    const signature = createHmac("sha256", runtimeSecrets(agent).VERIFY_TOKEN).update(body).digest("hex");
     const response = await fetch(`${agent.telemetry.runtime_url}/demo/call`, { method: "POST", headers: { "Content-Type": "application/json", "x-demo-signature": signature }, body, signal: AbortSignal.timeout(25000), redirect: "error" });
     if (!response.ok) throw new Error("Call unavailable");
     const result = await response.json();

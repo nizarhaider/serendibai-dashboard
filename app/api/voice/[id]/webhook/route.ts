@@ -22,18 +22,19 @@ async function handler(
       url.searchParams.get("hub.verify_token") === env.VERIFY_TOKEN
       ? new Response(url.searchParams.get("hub.challenge"))
       : new Response("Verification failed", { status: 403 });
-  if (!env.WHATSAPP_APP_SECRET)
-    return new Response("Configure Meta app secret", { status: 503 });
   const body = await request.text(),
     expected = Buffer.from(
       `sha256=${createHmac("sha256", env.WHATSAPP_APP_SECRET).update(body).digest("hex")}`,
     ),
     supplied = Buffer.from(request.headers.get("x-hub-signature-256") || "");
-  if (
-    expected.length !== supplied.length ||
-    !timingSafeEqual(expected, supplied)
-  )
-    return new Response("Invalid signature", { status: 403 });
+  if (env.WHATSAPP_APP_SECRET) {
+    if (
+      expected.length !== supplied.length ||
+      !timingSafeEqual(expected, supplied)
+    )
+      return new Response("Invalid signature", { status: 403 });
+  } else if (url.searchParams.get("key") !== env.VERIFY_TOKEN)
+    return new Response("Invalid callback key", { status: 403 });
   if (id === process.env.DEMO_AGENT_ID) await handleDemoWebhook(JSON.parse(body));
   const target = agent.telemetry?.runtime_url;
   if (
