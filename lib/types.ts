@@ -64,6 +64,32 @@ export type Appointment = {
   status: string;
   created_at: string;
 };
+export type Order = {
+  id: string;
+  agent_id: string | null;
+  agent_name: string | null;
+  call_id: string;
+  customer_phone: string;
+  customer_name: string;
+  items: { name: string; quantity: number }[];
+  delivery_address: string;
+  notes: string;
+  status: string;
+  created_at: string;
+};
+export type Ticket = {
+  id: string;
+  agent_id: string | null;
+  agent_name: string | null;
+  call_id: string;
+  customer_phone: string;
+  customer_name: string;
+  subject: string;
+  description: string;
+  priority: string;
+  status: string;
+  created_at: string;
+};
 export type PortalData = {
   generatedAt: number;
   email: string;
@@ -72,6 +98,8 @@ export type PortalData = {
   products: Product[];
   calls: Call[];
   appointments: Appointment[];
+  orders: Order[];
+  tickets: Ticket[];
   daily: {
     date: string;
     calls: number;

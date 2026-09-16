@@ -2423,6 +2423,7 @@ tr.clickable:hover {
   }
 }
 @media (max-width: 650px) {
+  .app-shell { max-width: 100%; overflow-x: clip; }
   .sidebar {
     top: 59px;
     visibility: hidden;
@@ -2616,6 +2617,7 @@ tr.clickable:hover {
   .resource-summary {
     padding: 15px;
     gap: 20px;
+    flex-wrap: wrap;
   }
   .resource-stat {
     min-width: 0;
@@ -2982,6 +2984,27 @@ td small, .resource-stat span:not(.icon-tile), .catalogue-banner p, .upload-zone
 .appointments-empty { display: flex; min-height: 280px; padding: 38px; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--muted); }
 .appointments-empty strong { margin-top: 13px; color: var(--ink); font-size: 14px; }
 .appointments-empty p { max-width: 220px; font-size: 11px; line-height: 1.6; }
+.records-panel { max-width: 1000px; }
+.records-panel .panel-heading { padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.records-list { display: grid; }
+.record-card { padding: 20px 22px; border-bottom: 1px solid var(--line); }
+.record-card:last-child { border-bottom: 0; }
+.record-main { max-width: 760px; }
+.record-title { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.record-title h3 { margin: 0; font-size: 15px; }
+.record-title p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.record-items, .record-description { margin: 8px 0; color: var(--ink); font-size: 13px; line-height: 1.55; }
+.record-meta { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 11px; }
+.record-meta span { display: inline-flex; align-items: center; gap: 4px; }
+.record-detail, .record-notes { display: flex; gap: 6px; margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.record-notes { color: #697572; }
+.record-badges { display: flex; align-items: center; gap: 8px; }
+.priority { border-radius: 999px; padding: 4px 8px; background: #eef4f3; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: capitalize; }
+.priority.high { background: #fff0db; color: #a35d18; }
+.priority.urgent { background: #ffebeb; color: #b33d3d; }
+.records-empty { display: flex; min-height: 320px; padding: 38px; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--muted); }
+.records-empty strong { margin-top: 13px; color: var(--ink); font-size: 14px; }
+.records-empty p { max-width: 280px; font-size: 12px; line-height: 1.6; }
 @media (max-width: 1050px) { .appointments-layout { grid-template-columns: 1fr; } }
 @media (max-width: 640px) {
   .calendar-toolbar { padding: 16px; }

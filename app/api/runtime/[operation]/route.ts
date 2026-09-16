@@ -97,6 +97,40 @@ async function handler(
       await sql`insert into portal_events(customer_id,agent_id,action,detail) values(${agent.customer_id},${agent.id},'appointment.booked',${`${b.customer_name} · ${b.service}`})`;
       return Response.json({ ok: true, appointment: rows[0] });
     }
+    if (operation === "orders") {
+      if (!agent.tools.includes("create_order"))
+        throw new ApiError("This tool is disabled.", 403);
+      const b = z
+        .object({
+          call_id: z.string().min(1).max(250),
+          customer_phone: z.string().max(50).default(""),
+          customer_name: z.string().trim().min(1).max(150),
+          items: z.array(z.object({ name: z.string().trim().min(1).max(200), quantity: z.number().int().min(1).max(999) })).min(1).max(50),
+          delivery_address: z.string().max(1000).default(""),
+          notes: z.string().max(2000).default(""),
+        })
+        .parse(body);
+      const rows = await sql`insert into portal_orders(customer_id,agent_id,call_id,customer_phone,customer_name,items,delivery_address,notes) values(${agent.customer_id},${agent.id},${b.call_id},${b.customer_phone},${b.customer_name},${JSON.stringify(b.items)}::jsonb,${b.delivery_address},${b.notes}) on conflict(customer_id,call_id) do update set customer_phone=excluded.customer_phone,customer_name=excluded.customer_name,items=excluded.items,delivery_address=excluded.delivery_address,notes=excluded.notes,updated_at=now() returning id,customer_name,items,status`;
+      await sql`insert into portal_events(customer_id,agent_id,action,detail) values(${agent.customer_id},${agent.id},'order.placed',${`${b.customer_name} · ${b.items.length} item${b.items.length === 1 ? "" : "s"}`})`;
+      return Response.json({ ok: true, order: rows[0] });
+    }
+    if (operation === "tickets") {
+      if (!agent.tools.includes("create_ticket"))
+        throw new ApiError("This tool is disabled.", 403);
+      const b = z
+        .object({
+          call_id: z.string().min(1).max(250),
+          customer_phone: z.string().max(50).default(""),
+          customer_name: z.string().trim().min(1).max(150),
+          subject: z.string().trim().min(1).max(200),
+          description: z.string().trim().min(1).max(5000),
+          priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
+        })
+        .parse(body);
+      const rows = await sql`insert into portal_tickets(customer_id,agent_id,call_id,customer_phone,customer_name,subject,description,priority) values(${agent.customer_id},${agent.id},${b.call_id},${b.customer_phone},${b.customer_name},${b.subject},${b.description},${b.priority}) on conflict(customer_id,call_id) do update set customer_phone=excluded.customer_phone,customer_name=excluded.customer_name,subject=excluded.subject,description=excluded.description,priority=excluded.priority,updated_at=now() returning id,customer_name,subject,priority,status`;
+      await sql`insert into portal_events(customer_id,agent_id,action,detail) values(${agent.customer_id},${agent.id},'ticket.created',${`${b.customer_name} · ${b.subject}`})`;
+      return Response.json({ ok: true, ticket: rows[0] });
+    }
     if (operation === "calls") {
       const b = z
         .object({

@@ -31,9 +31,7 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
     page.getByRole("heading", { name: "Conversation activity" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Minutes", exact: true }).click();
-  await expect(
-    page.getByText("Measurement starts with your next call."),
-  ).toBeVisible();
+  await expect(page.locator(".chart-summary")).toBeVisible();
   await page.getByRole("button", { name: "Calls", exact: true }).click();
   await page.getByLabel("Date range").selectOption("90");
   await expect(page.getByText("over the last 90 days")).toBeVisible();
@@ -66,7 +64,7 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
         ),
       });
     await expect(
-      page.getByRole("button", { name: new RegExp(marker) }),
+      page.getByRole("button", { name: `${marker}.txt 0.1 KB` }),
     ).toBeVisible();
     let state = await (await page.request.get("/api/portal/data")).json();
     testDoc = state.documents.find(
@@ -115,6 +113,10 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
     ).toBeVisible();
     await page.getByRole("button", { name: "Import 1 items" }).click();
     await expect(page.getByText(marker, { exact: true })).toBeVisible();
+    await expect.poll(async () => {
+      const latest = await (await page.request.get("/api/portal/data")).json();
+      return latest.products.some((p: { name: string }) => p.name === marker);
+    }).toBe(true);
     state = await (await page.request.get("/api/portal/data")).json();
     testProduct = state.products.find(
       (p: { name: string }) => p.name === marker,
@@ -248,6 +250,19 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
         await sql`select count(*)::int as count from portal_calls where id=${id}`;
       expect(count.count).toBe(1);
       await sql`delete from portal_calls where id=${id}`;
+      await sql`update portal_agents set tools=array['create_order','create_ticket'] where id=${testAgent}`;
+      const order = { call_id: "qa-order", customer_phone: "+94770000000", customer_name: marker, items: [{ name: "QA product", quantity: 2 }], delivery_address: "Colombo", notes: "QA order" };
+      expect((await request.post("/api/runtime/orders", { headers, data: order })).status()).toBe(200);
+      expect((await request.post("/api/runtime/orders", { headers, data: order })).status()).toBe(200);
+      const [orderCount] = await sql`select count(*)::int as count from portal_orders where customer_id='908153ff-146c-418f-b8ca-2c88ba314c44' and call_id='qa-order'`;
+      expect(orderCount.count).toBe(1);
+      const ticket = { call_id: "qa-ticket", customer_phone: "+94770000000", customer_name: marker, subject: "QA issue", description: "Automated support ticket", priority: "high" };
+      expect((await request.post("/api/runtime/tickets", { headers, data: ticket })).status()).toBe(200);
+      const stateWithRecords = await (await page.request.get("/api/portal/data")).json();
+      expect(stateWithRecords.orders.some((o: { call_id: string }) => o.call_id === "qa-order")).toBe(true);
+      expect(stateWithRecords.tickets.some((t: { call_id: string }) => t.call_id === "qa-ticket")).toBe(true);
+      await sql`delete from portal_orders where customer_id='908153ff-146c-418f-b8ca-2c88ba314c44' and call_id='qa-order'`;
+      await sql`delete from portal_tickets where customer_id='908153ff-146c-418f-b8ca-2c88ba314c44' and call_id='qa-ticket'`;
       const foreign = "9930bc78-d2d0-4b46-bd86-b667373d2164";
       const [doc] =
         await sql`insert into portal_documents(customer_id,name,content,bytes,type) values(${foreign},${marker},${marker},30,'txt') returning id`;
@@ -264,6 +279,8 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
       for (const section of [
         "dashboard",
         "appointments",
+        "orders",
+        "tickets",
         "knowledge",
         "catalogue",
         "agents",

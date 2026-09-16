@@ -48,10 +48,12 @@ const agentSchema = z.object({
         "search_knowledge",
         "search_products",
         "book_appointment",
+        "create_order",
+        "create_ticket",
         "send_whatsapp_message",
       ]),
     )
-    .default(["search_knowledge", "search_products", "book_appointment"]),
+    .default(["search_knowledge", "search_products", "book_appointment", "create_order", "create_ticket"]),
   max_calls: z.coerce.number().int().min(1).max(20).default(3),
   hourly_budget: z.coerce.number().min(0.02).max(2).default(0.2),
   phone_number_id: z.string().regex(/^\d*$/).max(30).default(""),

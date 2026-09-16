@@ -20,17 +20,21 @@ import {
   LogOut,
   Menu,
   PhoneIncoming,
+  PackageCheck,
   Plus,
   RefreshCw,
   Settings2,
   Sparkles,
   X,
+  Ticket,
   Zap,
 } from "lucide-react";
 import type { PortalData, Call } from "@/lib/types";
 import { Resources } from "./resources";
 import { Agents } from "./agents";
 import { Appointments } from "./appointments";
+import { Orders } from "./orders";
+import { Tickets } from "./tickets";
 
 const Chart = dynamic(() => import("./chart"), {
   ssr: false,
@@ -140,6 +144,8 @@ export function Portal({
   const nav = [
     { href: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "appointments", label: "Appointments", icon: CalendarDays },
+    { href: "orders", label: "Orders", icon: PackageCheck },
+    { href: "tickets", label: "Tickets", icon: Ticket },
     { href: "knowledge", label: "Knowledge Base", icon: BookOpen },
     { href: "catalogue", label: "Product Catalogue", icon: Box },
     { href: "agents", label: "Agent Management", icon: AudioLines },
@@ -275,6 +281,10 @@ export function Portal({
                   ? "YOUR BUSINESS, IN CONVERSATION"
                   : section === "appointments"
                     ? "EVERY BOOKING, IN ONE PLACE"
+                    : section === "orders"
+                      ? "CONFIRMED DURING A CALL"
+                      : section === "tickets"
+                        ? "ISSUES THAT NEED FOLLOW-UP"
                   : section === "agents"
                     ? "MEET YOUR DIGITAL TEAM"
                     : section === "knowledge"
@@ -291,6 +301,10 @@ export function Portal({
                   ? "See how your voice agents are showing up for your business."
                   : section === "appointments"
                     ? "See appointments booked by your voice agents in Sri Lanka time."
+                    : section === "orders"
+                      ? "See confirmed customer orders as soon as your voice agent places them."
+                      : section === "tickets"
+                        ? "Keep every customer issue visible and ready for your team."
                   : section === "knowledge"
                     ? "A shared source of truth. Add your documents and keep every answer current."
                     : section === "catalogue"
@@ -341,6 +355,10 @@ export function Portal({
             <Agents data={data} refresh={refresh} notify={notify} />
           ) : section === "appointments" ? (
             <Appointments data={data} />
+          ) : section === "orders" ? (
+            <Orders data={data} />
+          ) : section === "tickets" ? (
+            <Tickets data={data} />
           ) : (
             <Resources
               section={section}
