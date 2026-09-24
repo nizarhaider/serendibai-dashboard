@@ -93,9 +93,12 @@ export function Agents({
     [secrets, setSecrets] = useState<Record<string, string>>({});
   const current = data.agents.find((a) => a.id === selected),
     instance = instances.find((i) => i.id === Number(current?.instance_id));
-  const hasCompute = data.agents.some((a) => a.instance_id);
+  const computePending = ["provisioning", "starting", "restarting"].includes(current?.status || "");
   useEffect(() => {
     let active = true;
+    if (tab !== "compute" || !current?.instance_id) {
+      return () => { active = false; };
+    }
     async function sync() {
       try {
         const r = await api("compute");
@@ -105,17 +108,17 @@ export function Agents({
       }
     }
     void sync();
-    const timer = hasCompute
+    const timer = computePending
       ? setInterval(() => {
           void sync();
           void refresh();
-        }, 15000)
+        }, 30000)
       : undefined;
     return () => {
       active = false;
       if (timer) clearInterval(timer);
     };
-  }, [hasCompute, refresh]);
+  }, [computePending, current?.instance_id, refresh, tab]);
   function choose(a: Agent) {
     setSelected(a.id);
     setEdit(a);
