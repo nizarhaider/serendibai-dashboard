@@ -2999,6 +2999,9 @@ td small, .resource-stat span:not(.icon-tile), .catalogue-banner p, .upload-zone
 .record-detail, .record-notes { display: flex; gap: 6px; margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .record-notes { color: #697572; }
 .record-badges { display: flex; align-items: center; gap: 8px; }
+.record-status select { min-height: 32px; max-width: 140px; padding: 5px 24px 5px 9px; border: 1px solid var(--border); border-radius: 7px; background: #fff; color: var(--ink); font-size: 11px; text-transform: capitalize; }
+.record-status select:disabled { opacity: .6; }
+.record-status small { display: block; max-width: 180px; color: #b33d3d; font-size: 10px; }
 .priority { border-radius: 999px; padding: 4px 8px; background: #eef4f3; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: capitalize; }
 .priority.high { background: #fff0db; color: #a35d18; }
 .priority.urgent { background: #ffebeb; color: #b33d3d; }

@@ -76,6 +76,47 @@ export function Status({ value }: { value: string }) {
     </span>
   );
 }
+export function RecordStatus({
+  id,
+  resource,
+  value,
+  options,
+  refresh,
+}: {
+  id: string;
+  resource: string;
+  value: string;
+  options: string[];
+  refresh: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  return (
+    <label className="record-status">
+      <span className="sr-only">Update status</span>
+      <select
+        aria-label="Update status"
+        value={value}
+        disabled={busy}
+        onChange={async (event) => {
+          setBusy(true);
+          setError("");
+          try {
+            await api(`${resource}/${id}`, "PATCH", { status: event.target.value });
+            await refresh();
+          } catch (e) {
+            setError((e as Error).message);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {options.map((option) => <option key={option} value={option}>{option.replace("_", " ")}</option>)}
+      </select>
+      {error && <small role="alert">{error}</small>}
+    </label>
+  );
+}
 export function Modal({
   title,
   children,
@@ -354,11 +395,11 @@ export function Portal({
           ) : section === "agents" ? (
             <Agents data={data} refresh={refresh} notify={notify} />
           ) : section === "appointments" ? (
-            <Appointments data={data} />
+            <Appointments data={data} refresh={refresh} />
           ) : section === "orders" ? (
-            <Orders data={data} />
+            <Orders data={data} refresh={refresh} />
           ) : section === "tickets" ? (
-            <Tickets data={data} />
+            <Tickets data={data} refresh={refresh} />
           ) : (
             <Resources
               section={section}

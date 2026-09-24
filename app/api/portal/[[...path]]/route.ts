@@ -149,6 +149,25 @@ async function handler(
       );
       return Response.json({ ok: true });
     }
+    if (id && method === "PATCH" && ["orders", "tickets", "appointments"].includes(route || "")) {
+      uuid.parse(id);
+      const statuses = {
+        orders: z.enum(["placed", "processing", "completed", "cancelled"]),
+        tickets: z.enum(["open", "in_progress", "resolved", "closed"]),
+        appointments: z.enum(["booked", "completed", "cancelled"]),
+      } as const;
+      const status = statuses[route as keyof typeof statuses].parse(
+        z.object({ status: z.string() }).parse(await request.json()).status,
+      );
+      const rows = route === "orders"
+        ? await sql`update portal_orders set status=${status},updated_at=now() where id=${id} and customer_id=${customer} returning customer_name as name`
+        : route === "tickets"
+          ? await sql`update portal_tickets set status=${status},updated_at=now() where id=${id} and customer_id=${customer} returning subject as name`
+          : await sql`update portal_appointments set status=${status} where id=${id} and customer_id=${customer} returning service as name`;
+      if (!rows.length) throw new ApiError("Record not found.", 404);
+      await audit(customer, `${route.slice(0, -1)} status changed`, `${rows[0].name}: ${status}`);
+      return Response.json({ ok: true });
+    }
     if (route === "agents") {
       if (id) uuid.parse(id);
       if (id && path[2] === "action" && method === "POST") {

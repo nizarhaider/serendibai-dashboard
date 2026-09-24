@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Phone } from "lucide-react";
 import type { Appointment, PortalData } from "@/lib/types";
+import { RecordStatus } from "./portal";
 
 const zone = "Asia/Colombo";
 const dateParts = (date: Date) =>
@@ -35,7 +36,7 @@ const fullDate = (value: string) =>
     year: "numeric",
   }).format(new Date(value));
 
-export function Appointments({ data }: { data: PortalData }) {
+export function Appointments({ data, refresh }: { data: PortalData; refresh: () => Promise<void> }) {
   const today = dateParts(new Date());
   const [month, setMonth] = useState(
     new Date(Date.UTC(Number(today.year), Number(today.month) - 1, 1)),
@@ -57,8 +58,8 @@ export function Appointments({ data }: { data: PortalData }) {
       return date;
     });
   }, [month]);
-  const upcoming = data.appointments
-    .filter((appointment) => appointment.status === "booked" && new Date(appointment.appointment_at) >= new Date())
+  const upcoming = [...data.appointments]
+    .sort((a, b) => Math.abs(new Date(a.appointment_at).getTime() - data.generatedAt) - Math.abs(new Date(b.appointment_at).getTime() - data.generatedAt))
     .slice(0, 8);
   const move = (amount: number) =>
     setMonth(new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + amount, 1)));
@@ -106,8 +107,8 @@ export function Appointments({ data }: { data: PortalData }) {
         </div>
       </section>
       <aside className="panel upcoming-panel">
-        <div className="panel-heading">
-          <div><h2>Upcoming</h2><p>Bookings made during calls.</p></div>
+          <div className="panel-heading">
+          <div><h2>Bookings</h2><p>Upcoming and recent call bookings.</p></div>
           <span className="icon-tile lavender"><CalendarDays size={19} /></span>
         </div>
         {upcoming.length ? (
@@ -121,7 +122,9 @@ export function Appointments({ data }: { data: PortalData }) {
                   <span><Clock3 size={13} /> {fullDate(appointment.appointment_at)} at {timeFor(appointment.appointment_at)}</span>
                   {appointment.customer_phone && <span><Phone size={13} /> {appointment.customer_phone}</span>}
                   <small>{appointment.agent_name || "Voice agent"} · {appointment.duration_minutes} min</small>
+                  {appointment.notes && <small>{appointment.notes}</small>}
                 </div>
+                <RecordStatus id={appointment.id} resource="appointments" value={appointment.status} options={["booked", "completed", "cancelled"]} refresh={refresh} />
               </article>
             ))}
           </div>
