@@ -6,7 +6,9 @@ Customer workspace at https://portal.serendibai.lk. Next.js on Netlify, Neon Pos
 
 Install with `pnpm install`. Configure `DATABASE_URL`, `GEMINI_API_KEY`, `INTERNAL_API_KEY` (encryption secret) and `PORTAL_URL` in `.env.local`. Existing WhatsApp integration variables are optional defaults for the migrated agent. Never expose these as `NEXT_PUBLIC_*` variables.
 
-Run `node --env-file=.env.local scripts/migrate.mjs`, then `pnpm dev`. The idempotent migration imports the existing business agent and historical calls, documents and catalogue. It seeds the requested temporary admin account once; it does not overwrite an existing password.
+Run `node --env-file=.env.local scripts/migrate.mjs`, then `pnpm dev`. The idempotent migration maintains the portal tables and seeds the requested temporary admin account once; it does not overwrite an existing password.
+
+The former `calls`, `agent_profiles`, `client_catalog`, and `knowledge_documents` tables were removed after their records were copied to portal tables. Their encrypted snapshot is at `s3://serendibai-call-recordings-744861799976/database-backups/legacy-voice-tables-2026-09-25.json.gz`.
 
 ## Data and capabilities
 

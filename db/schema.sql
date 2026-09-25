@@ -28,3 +28,7 @@ create table if not exists portal_events (id uuid primary key default gen_random
 create index if not exists portal_events_customer_date on portal_events(customer_id,created_at desc);
 
 create table if not exists portal_demo_requests (id text primary key, phone text not null, state text not null, message_id text unique, call_id text unique, expires_at timestamptz not null, created_at timestamptz not null default now());
+drop table if exists calls;
+drop table if exists agent_profiles;
+drop table if exists client_catalog;
+drop table if exists knowledge_documents;
