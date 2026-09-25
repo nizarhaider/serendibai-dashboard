@@ -37,7 +37,7 @@ const agentSchema = z.object({
   company_url: z.union([z.literal(""), z.url()]).default(""),
   system_prompt: z.string().max(30000).default(""),
   greeting: z.string().max(1000).default("Hello! How can I help you today?"),
-  voice: z.enum(["Kore", "Aoede", "Puck", "Charon", "Fenrir"]).default("Kore"),
+  voice: z.enum(["Aoede", "Charon"]).default("Aoede"),
   languages: z
     .array(z.enum(["English", "Sinhala", "Tamil"]))
     .min(1)

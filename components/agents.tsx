@@ -56,7 +56,7 @@ const defaultAgent = () => ({
   company_url: "",
   system_prompt: "",
   greeting: "Hello! How can I help you today?",
-  voice: "Kore",
+  voice: "Aoede",
   languages: ["English", "Sinhala", "Tamil"],
   tools: ["search_knowledge", "search_products", "book_appointment", "create_order", "create_ticket"],
   max_calls: 3,
@@ -498,11 +498,14 @@ export function Agents({
                           setEdit({ ...edit, voice: e.target.value })
                         }
                       >
-                        {["Kore", "Aoede", "Puck", "Charon", "Fenrir"].map(
-                          (v) => (
-                            <option key={v}>{v}</option>
-                          ),
-                        )}
+                        {[
+                          { value: "Aoede", label: "Female" },
+                          { value: "Charon", label: "Male" },
+                        ].map((voice) => (
+                          <option key={voice.value} value={voice.value}>
+                            {voice.label}
+                          </option>
+                        ))}
                       </select>
                       <small>Gemini native audio voice.</small>
                     </label>
