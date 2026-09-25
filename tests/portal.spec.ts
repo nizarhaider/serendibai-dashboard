@@ -182,15 +182,8 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
       .getByRole("button", { name: "Save changes", exact: true })
       .click();
     await expect(page.getByRole("status")).toContainText("configuration saved");
-    await page.getByRole("button", { name: "Compute", exact: true }).click();
-    await page.getByRole("button", { name: "Find available compute" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Live compute offers" }),
-    ).toBeVisible({ timeout: 30000 });
-    const liveOffers = await (
-      await page.request.get("/api/portal/offers?budget=0.2")
-    ).json();
-    expect(liveOffers.offers).toBeInstanceOf(Array);
+    await page.getByRole("button", { name: "Runtime", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Voice server" })).toBeVisible();
     if (sql) {
       const token = randomBytes(32).toString("hex"),
         hash = createHash("sha256").update(token).digest("hex");

@@ -432,10 +432,9 @@ export function Portal({
               research and draft them. Review generated facts before saving.
             </p>
             <p>
-              <strong>3. Choose your compute.</strong> Browse live Vast.ai
-              offers within your hourly budget. Provision, start, stop or
-              destroy the instance. Stopped instances still incur storage
-              charges; destroying releases the rental.
+              <strong>3. Start the voice server.</strong> Run the voice agent
+              locally with <code>./deploy.sh --env local</code>. Its status
+              appears under Runtime in Agent Management.
             </p>
             <p>
               <strong>4. Connect your phone.</strong> Add your WhatsApp Business
@@ -760,9 +759,9 @@ function Dashboard({
           </div>
           <div className="capacity-row">
             <span>
-              <i className="dot grey" /> Compute instances
+              <i className="dot grey" /> Online voice agents
             </span>
-            <strong>{data.agents.filter((a) => a.instance_id).length}</strong>
+            <strong>{data.agents.filter((a) => a.status === "ready" && a.heartbeat_at && data.generatedAt - new Date(a.heartbeat_at).getTime() < 90000).length}</strong>
           </div>
           <button
             className="button subtle full"

@@ -1,10 +1,10 @@
 # SerendibAI Portal
 
-Customer workspace at https://portal.serendibai.lk. Next.js on Netlify, Neon Postgres for persisted customer data and sessions, Vast.ai for persistent Gemini Live voice runtimes.
+Customer workspace at https://portal.serendibai.lk. Next.js on Netlify, Neon Postgres for persisted customer data and sessions, and a separate Gemini Live voice runtime.
 
 ## Local development
 
-Install with `pnpm install`. Configure `DATABASE_URL`, `GEMINI_API_KEY`, `VASTAI_API_KEY`, `INTERNAL_API_KEY` (encryption secret) and `PORTAL_URL` in `.env.local`. Existing WhatsApp integration variables are optional defaults for the migrated agent. Never expose these as `NEXT_PUBLIC_*` variables.
+Install with `pnpm install`. Configure `DATABASE_URL`, `GEMINI_API_KEY`, `INTERNAL_API_KEY` (encryption secret) and `PORTAL_URL` in `.env.local`. Existing WhatsApp integration variables are optional defaults for the migrated agent. Never expose these as `NEXT_PUBLIC_*` variables.
 
 Run `node --env-file=.env.local scripts/migrate.mjs`, then `pnpm dev`. The idempotent migration imports the existing business agent and historical calls, documents and catalogue. It seeds the requested temporary admin account once; it does not overwrite an existing password.
 
@@ -15,8 +15,7 @@ Run `node --env-file=.env.local scripts/migrate.mjs`, then `pnpm dev`. The idemp
 - Excel `.xlsx` imports are reviewed before insertion. The downloadable template defines columns; formulas are rejected. Up to 500 rows per import. Inline editing persists validated product and service rows.
 - Historical calls retain provenance. Missing token and duration measurements are null, never fabricated. New runtime calls upsert idempotently. Dashboard filters and quota reference values are explicit. Quotas are administrative planning allowances, not a billing subscription.
 - The prompt assistant uses Gemini with Google Search and URL context. Sources are shown and drafts require review and application before saving.
-- Agent credentials are AES-256-GCM encrypted at rest using `INTERNAL_API_KEY`. Compute receives a scoped runtime token rather than a database credential. Rotate the encryption secret only with a credential migration.
-- Vast offer availability and pricing are live. Provision, start, stop, restart and destroy are authenticated and audited. A per-agent operation lock prevents duplicate submissions; a customer throttle bounds provisioning. Stopped instances still incur storage charges.
+- Agent credentials are AES-256-GCM encrypted at rest using `INTERNAL_API_KEY`. The voice runtime uses a scoped runtime token rather than a database credential. Rotate the encryption secret only with a credential migration.
 - Configuration loads for new calls; tool permissions are also checked on every execution. Restart disconnects calls. CPU/memory and active-call counts come from runtime heartbeats, not simulated GPU inference.
 - Meta webhooks require a saved app secret. The stable portal webhook proxies signed events to an HTTPS runtime tunnel. The migrated phone retains its original named Cloudflare tunnel. New agents require their own Meta phone configuration.
 

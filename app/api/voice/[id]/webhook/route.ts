@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
-import { runtimeSecrets } from "@/lib/vast";
+import { runtimeSecrets } from "@/lib/runtime";
 import { handleDemoWebhook } from "@/lib/demo";
 import { z } from "zod";
 

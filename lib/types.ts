@@ -8,9 +8,7 @@ export type Agent = {
   languages: string[];
   tools: string[];
   max_calls: number;
-  hourly_budget: number;
   phone_number_id: string;
-  instance_id: number | null;
   status: string;
   version: number;
   deployed_version: number;

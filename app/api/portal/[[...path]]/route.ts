@@ -12,7 +12,6 @@ import {
   rateLimit,
 } from "@/lib/auth";
 import { getData } from "@/lib/data";
-import { agentAction, compute, offers } from "@/lib/vast";
 import { draftPrompt } from "@/lib/assistant";
 
 export const runtime = "nodejs";
@@ -55,7 +54,6 @@ const agentSchema = z.object({
     )
     .default(["search_knowledge", "search_products", "book_appointment", "create_order", "create_ticket"]),
   max_calls: z.coerce.number().int().min(1).max(20).default(3),
-  hourly_budget: z.coerce.number().min(0.02).max(2).default(0.2),
   phone_number_id: z.string().regex(/^\d*$/).max(30).default(""),
   credentials: z.record(z.string(), z.string().max(4000)).optional(),
 });
@@ -112,18 +110,6 @@ async function handler(
         { headers: { "Cache-Control": "private, no-store" } },
       );
     }
-    if (route === "compute" && method === "GET")
-      return Response.json({ instances: await compute(customer) });
-    if (route === "offers" && method === "GET")
-      return Response.json({
-        offers: await offers(
-          z.coerce
-            .number()
-            .min(0.02)
-            .max(2)
-            .parse(new URL(request.url).searchParams.get("budget") || 0.2),
-        ),
-      });
     if (route === "assistant" && method === "POST") {
       await rateLimit(`ai:${user.id}`, 15, 3600);
       const { prompt } = z
@@ -170,17 +156,6 @@ async function handler(
     }
     if (route === "agents") {
       if (id) uuid.parse(id);
-      if (id && path[2] === "action" && method === "POST") {
-        const b = z
-          .object({
-            action: z.enum(["deploy", "start", "stop", "restart", "destroy"]),
-            offerId: z.number().int().positive().optional(),
-          })
-          .parse(await request.json());
-        return Response.json(
-          await agentAction(customer, id, b.action, b.offerId),
-        );
-      }
       if (method === "POST" || method === "PUT") {
         const b = agentSchema.parse(await request.json());
         const count =
@@ -208,8 +183,8 @@ async function handler(
           });
         }
         const rows = id
-          ? await sql`update portal_agents set name=${b.name},company_url=${b.company_url},system_prompt=${b.system_prompt},greeting=${b.greeting},voice=${b.voice},languages=${b.languages},tools=${b.tools},max_calls=${b.max_calls},hourly_budget=${b.hourly_budget},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${customer} returning id`
-          : await sql`insert into portal_agents(customer_id,name,company_url,system_prompt,greeting,voice,languages,tools,max_calls,hourly_budget,phone_number_id,credentials) values(${customer},${b.name},${b.company_url},${b.system_prompt},${b.greeting},${b.voice},${b.languages},${b.tools},${b.max_calls},${b.hourly_budget},${b.phone_number_id},${credentials}) returning id`;
+          ? await sql`update portal_agents set name=${b.name},company_url=${b.company_url},system_prompt=${b.system_prompt},greeting=${b.greeting},voice=${b.voice},languages=${b.languages},tools=${b.tools},max_calls=${b.max_calls},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${customer} returning id`
+          : await sql`insert into portal_agents(customer_id,name,company_url,system_prompt,greeting,voice,languages,tools,max_calls,phone_number_id,credentials) values(${customer},${b.name},${b.company_url},${b.system_prompt},${b.greeting},${b.voice},${b.languages},${b.tools},${b.max_calls},${b.phone_number_id},${credentials}) returning id`;
         if (!rows.length) throw new ApiError("Agent not found.", 404);
         await audit(
           customer,
@@ -221,12 +196,8 @@ async function handler(
       }
       if (id && method === "DELETE") {
         const [a] =
-          await sql`select name,instance_id from portal_agents where id=${id} and customer_id=${customer}`;
+          await sql`select name from portal_agents where id=${id} and customer_id=${customer}`;
         if (!a) throw new ApiError("Agent not found.", 404);
-        if (a.instance_id)
-          throw new ApiError(
-            "Destroy this agent’s compute before deleting its configuration.",
-          );
         await sql.transaction([
           sql`update portal_calls set agent_id=null where agent_id=${id} and customer_id=${customer}`,
           sql`update portal_events set agent_id=null where agent_id=${id} and customer_id=${customer}`,

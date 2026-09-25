@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { digest, ApiError } from "@/lib/auth";
-import { runtimeSecrets } from "@/lib/vast";
+import { runtimeSecrets } from "@/lib/runtime";
 
 export const runtime = "nodejs";
 async function handler(

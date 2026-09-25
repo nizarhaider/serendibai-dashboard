@@ -10,7 +10,7 @@ export async function getData(
   const sql = db();
   const [agents, documents, products, calls, appointments, orders, tickets, daily, totals, quotas, events] =
     await Promise.all([
-      sql`select id,name,company_url,system_prompt,greeting,voice,languages,tools,max_calls,hourly_budget,phone_number_id,instance_id,status,version,deployed_version,heartbeat_at,telemetry,(credentials is not null or phone_number_id=${process.env.PHONE_NUMBER_ID || ""}) as has_credentials,created_at from portal_agents where customer_id=${customer} order by (status='archived'),created_at desc`,
+      sql`select id,name,company_url,system_prompt,greeting,voice,languages,tools,max_calls,phone_number_id,status,version,deployed_version,heartbeat_at,telemetry,(credentials is not null or phone_number_id=${process.env.PHONE_NUMBER_ID || ""}) as has_credentials,created_at from portal_agents where customer_id=${customer} order by (status='archived'),created_at desc`,
       sql`select id,name,bytes,type,created_at,length(content) as characters from portal_documents where customer_id=${customer} order by created_at desc`,
       sql`select id,name,sku,description,category,price,currency,stock,status from portal_products where customer_id=${customer} order by updated_at desc limit 2000`,
       sql`select c.id,c.agent_id,a.name as agent_name,c.customer_phone,c.status,c.transcript,c.duration_seconds,c.tokens,c.usage,c.created_at,c.source from portal_calls c left join portal_agents a on a.id=c.agent_id where c.customer_id=${customer} and (${agent || null}::uuid is null or c.agent_id=${agent || null}::uuid) and c.created_at>=current_date-(${days}-1)*interval '1 day' order by c.created_at desc limit 100`,

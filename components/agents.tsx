@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ArrowUpRight,
   AudioLines,
@@ -9,48 +9,22 @@ import {
   Check,
   ChevronRight,
   Code2,
-  Cpu,
   Globe,
   Loader2,
   MessageSquare,
   PackageCheck,
-  Pause,
-  Play,
   Plus,
-  RefreshCw,
   Save,
-  Server,
   Settings2,
   Ticket,
   Shield,
   Sparkles,
   Trash2,
   WandSparkles,
-  Zap,
 } from "lucide-react";
 import type { Agent, PortalData } from "@/lib/types";
 import { api, Modal, number, Status } from "./portal";
 
-type Offer = {
-  id: number;
-  gpu: string;
-  vram: number;
-  cpu: number;
-  ram: number;
-  hourly: number;
-  reliability: number;
-  location: string;
-};
-type Instance = {
-  id: number;
-  status: string;
-  gpu: string;
-  price: number;
-  cpu_util: number;
-  gpu_util: number;
-  ram: number;
-  disk: number;
-};
 const defaultAgent = () => ({
   name: "",
   company_url: "",
@@ -60,7 +34,6 @@ const defaultAgent = () => ({
   languages: ["English", "Sinhala", "Tamil"],
   tools: ["search_knowledge", "search_products", "book_appointment", "create_order", "create_ticket"],
   max_calls: 3,
-  hourly_budget: 0.2,
   phone_number_id: "",
 });
 type Editable = ReturnType<typeof defaultAgent> & { id?: string };
@@ -85,47 +58,15 @@ export function Agents({
       text: string;
       sources: { url: string; title: string }[];
     } | null>(null),
-    [offerList, setOfferList] = useState<Offer[] | null>(null),
-    [instances, setInstances] = useState<Instance[]>([]),
-    [confirm, setConfirm] = useState<{ action: string; offer?: Offer } | null>(
-      null,
-    ),
+    [confirm, setConfirm] = useState<{ action: string } | null>(null),
     [secrets, setSecrets] = useState<Record<string, string>>({});
-  const current = data.agents.find((a) => a.id === selected),
-    instance = instances.find((i) => i.id === Number(current?.instance_id));
-  const computePending = ["provisioning", "starting", "restarting"].includes(current?.status || "");
-  useEffect(() => {
-    let active = true;
-    if (tab !== "compute" || !current?.instance_id) {
-      return () => { active = false; };
-    }
-    async function sync() {
-      try {
-        const r = await api("compute");
-        if (active) setInstances(r.instances);
-      } catch (e) {
-        if (active) setError((e as Error).message);
-      }
-    }
-    void sync();
-    const timer = computePending
-      ? setInterval(() => {
-          void sync();
-          void refresh();
-        }, 30000)
-      : undefined;
-    return () => {
-      active = false;
-      if (timer) clearInterval(timer);
-    };
-  }, [computePending, current?.instance_id, refresh, tab]);
+  const current = data.agents.find((a) => a.id === selected);
   function choose(a: Agent) {
     setSelected(a.id);
     setEdit(a);
     setDraft(null);
     setError("");
     setSecrets({});
-    setOfferList(null);
   }
   async function save() {
     setBusy("save");
@@ -139,42 +80,6 @@ export function Agents({
       );
     } catch (e) {
       setError((e as Error).message);
-    } finally {
-      setBusy("");
-    }
-  }
-  async function loadOffers() {
-    setBusy("offers");
-    setError("");
-    try {
-      const r = await api(
-        `offers?budget=${current?.hourly_budget || edit.hourly_budget}`,
-      );
-      setOfferList(r.offers);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy("");
-    }
-  }
-  async function action() {
-    if (!confirm) return;
-    setBusy("action");
-    setError("");
-    try {
-      await api(`agents/${selected}/action`, "POST", {
-        action: confirm.action,
-        offerId: confirm.offer?.id,
-      });
-      setConfirm(null);
-      setOfferList(null);
-      await refresh();
-      const r = await api("compute");
-      setInstances(r.instances);
-      notify("Compute request accepted. Status updates every 15 seconds.");
-    } catch (e) {
-      setError((e as Error).message);
-      setConfirm(null);
     } finally {
       setBusy("");
     }
@@ -245,8 +150,7 @@ export function Agents({
             <Shield size={18} />
             <strong>You’re in control.</strong>
             <p>
-              Starting compute begins billing. Stop to pause processing, or
-              destroy to release the rental.
+              Run the voice server locally and see its live status here.
             </p>
           </div>
         </aside>
@@ -284,7 +188,7 @@ export function Agents({
                   icon: MessageSquare,
                 },
                 { key: "tools", label: "Tools & behaviour", icon: Settings2 },
-                { key: "compute", label: "Compute", icon: Cpu },
+                { key: "runtime", label: "Runtime", icon: AudioLines },
                 { key: "connections", label: "Connections", icon: Code2 },
               ].map((t) => (
                 <button
@@ -549,233 +453,16 @@ export function Agents({
                     ))}
                   </div>
                 </>
-              ) : tab === "compute" ? (
-                <>
-                  <div className="compute-hero">
-                    <span className="compute-chip">
-                      <Cpu size={35} />
-                    </span>
-                    <div>
-                      <h3>
-                        {instance?.gpu || "Ready for your next conversation."}
-                      </h3>
-                      <p>
-                        {instance
-                          ? `Vast.ai instance #${instance.id}`
-                          : "Provision a dedicated runtime from the Vast.ai marketplace."}
-                      </p>
-                    </div>
-                    <Status value={instance?.status || "not provisioned"} />
-                  </div>
-                  <div className="compute-stats">
-                    <div>
-                      <span>Active calls / limit</span>
-                      <strong>
-                        {heartbeatFresh
-                          ? number(Number(current.telemetry.active_calls || 0))
-                          : "—"}{" "}
-                        <small>/ {current.max_calls}</small>
-                      </strong>
-                    </div>
-                    <div>
-                      <span>CPU utilisation</span>
-                      <strong>
-                        {heartbeatFresh
-                          ? number(Number(current.telemetry.cpu_percent || 0))
-                          : "—"}
-                        <small>%</small>
-                      </strong>
-                    </div>
-                    <div>
-                      <span>Memory usage</span>
-                      <strong>
-                        {heartbeatFresh
-                          ? number(Number(current.telemetry.memory_mb || 0))
-                          : "—"}
-                        <small> MB</small>
-                      </strong>
-                    </div>
-                    <div>
-                      <span>Compute cost</span>
-                      <strong>
-                        {instance
-                          ? `$${Number(instance.price || 0).toFixed(3)}`
-                          : "—"}
-                        <small>/ hr</small>
-                      </strong>
-                    </div>
-                  </div>
-                  <div className="compute-actions">
-                    {current.instance_id ? (
-                      <>
-                        <button
-                          className="button primary"
-                          disabled={
-                            Boolean(busy) || instance?.status === "running"
-                          }
-                          onClick={() => setConfirm({ action: "start" })}
-                        >
-                          <Play size={15} /> Start
-                        </button>
-                        <button
-                          className="button"
-                          disabled={Boolean(busy) || !heartbeatFresh}
-                          onClick={() => setConfirm({ action: "restart" })}
-                        >
-                          <RefreshCw size={15} /> Restart agent
-                        </button>
-                        <button
-                          className="button"
-                          disabled={
-                            Boolean(busy) || instance?.status === "stopped"
-                          }
-                          onClick={() => setConfirm({ action: "stop" })}
-                        >
-                          <Pause size={15} /> Stop compute
-                        </button>
-                        <button
-                          className="button danger-outline"
-                          disabled={Boolean(busy)}
-                          onClick={() => setConfirm({ action: "destroy" })}
-                        >
-                          <Trash2 size={15} /> Destroy instance
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        className="button primary"
-                        onClick={loadOffers}
-                        disabled={Boolean(busy)}
-                      >
-                        {busy === "offers" ? (
-                          <Loader2 className="spin" size={16} />
-                        ) : (
-                          <Server size={16} />
-                        )}{" "}
-                        Find available compute
-                      </button>
-                    )}
-                  </div>
-                  <div className="field-row">
-                    <label>
-                      Maximum hourly price (USD)
-                      <input
-                        type="number"
-                        min="0.02"
-                        max="2"
-                        step="0.01"
-                        value={edit.hourly_budget}
-                        onChange={(e) =>
-                          setEdit({
-                            ...edit,
-                            hourly_budget: Number(e.target.value),
-                          })
-                        }
-                      />
-                      <small>
-                        Save changes before searching with a new budget. GPU
-                        runtime + storage; Gemini API is billed separately.
-                      </small>
-                    </label>
-                    <div className="compute-note">
-                      <Zap size={17} />
-                      <p>
-                        Gemini inference runs in Google’s cloud. Vast handles
-                        the persistent voice connection; GPU utilisation may be
-                        near zero.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="runtime-details">
-                    <h3>Runtime status</h3>
-                    <div>
-                      <span>Last heartbeat</span>
-                      <code>
-                        {current.heartbeat_at
-                          ? new Date(current.heartbeat_at).toLocaleString(
-                              "en-GB",
-                              { timeZone: "Asia/Colombo" },
-                            )
-                          : "Awaiting first deployment"}
-                      </code>
-                    </div>
-                    <div>
-                      <span>Configuration</span>
-                      <code>
-                        saved v{current.version} / deployed{" "}
-                        {current.deployed_version > 0
-                          ? `v${current.deployed_version}`
-                          : "not active"}
-                      </code>
-                    </div>
-                    <div>
-                      <span>Runtime</span>
-                      <code>Python · Gemini Live · WhatsApp WebRTC</code>
-                    </div>
-                    <div>
-                      <span>Health</span>
-                      <code>
-                        {current.telemetry.error
-                          ? String(current.telemetry.error)
-                          : heartbeatFresh
-                            ? "Runtime responding"
-                            : "No recent runtime heartbeat"}
-                      </code>
-                    </div>
-                  </div>
-                  {offerList && (
-                    <div className="offers">
-                      <div className="section-toolbar">
-                        <h3>Live compute offers</h3>
-                        <button
-                          className="button"
-                          onClick={loadOffers}
-                          disabled={Boolean(busy)}
-                        >
-                          <RefreshCw size={14} /> Refresh
-                        </button>
-                      </div>
-                      {offerList.length ? (
-                        offerList.map((o) => (
-                          <div className="offer" key={o.id}>
-                            <span className="icon-tile">
-                              <Cpu size={19} />
-                            </span>
-                            <div>
-                              <strong>{o.gpu}</strong>
-                              <small>
-                                {number(o.vram)} GB VRAM · {number(o.cpu)} vCPU
-                                · {o.location || "Global"} ·{" "}
-                                {(o.reliability * 100).toFixed(1)}% reliability
-                              </small>
-                            </div>
-                            <strong>
-                              ${o.hourly.toFixed(3)}
-                              <small>/hr</small>
-                            </strong>
-                            <button
-                              className="button primary"
-                              onClick={() =>
-                                setConfirm({ action: "deploy", offer: o })
-                              }
-                            >
-                              Provision <ArrowUpRight size={14} />
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="empty">
-                          <Server size={25} />
-                          <h3>No offers within this budget right now.</h3>
-                          <p>
-                            Try again later, or raise and save the hourly
-                            budget.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
+              ) : tab === "runtime" ? (
+                <div className="runtime-details">
+                  <h3>Voice server</h3>
+                  <div><span>Status</span><Status value={heartbeatFresh ? current.status : "offline"} /></div>
+                  <div><span>Active calls</span><code>{heartbeatFresh ? number(Number(current.telemetry.active_calls || 0)) : "—"} / {current.max_calls}</code></div>
+                  <div><span>Last heartbeat</span><code>{current.heartbeat_at ? new Date(current.heartbeat_at).toLocaleString("en-GB", { timeZone: "Asia/Colombo" }) : "Never"}</code></div>
+                  <div><span>Configuration</span><code>saved v{current.version} / running {current.deployed_version > 0 ? `v${current.deployed_version}` : "—"}</code></div>
+                  <div><span>Health</span><code>{current.telemetry.error ? String(current.telemetry.error) : heartbeatFresh ? "Runtime responding" : "Start the local voice server"}</code></div>
+                  <div><span>Local command</span><code>./deploy.sh --env local</code></div>
+                </div>
               ) : (
                 <>
                   <h3>WhatsApp Business connection</h3>
@@ -851,7 +538,7 @@ export function Agents({
                   </p>
                   <button
                     className="button danger-outline"
-                    disabled={Boolean(busy) || Boolean(current.instance_id)}
+                    disabled={Boolean(busy)}
                     onClick={() => setConfirm({ action: "delete" })}
                   >
                     <Trash2 size={15} /> Delete agent configuration
@@ -957,7 +644,7 @@ export function Agents({
               {busy === "new" ? "Creating…" : "Create agent"}
               <ChevronRight size={16} />
             </button>
-            <small>No compute is rented until you provision it.</small>
+            <small>Start the voice server with ./deploy.sh --env local.</small>
           </form>
         </Modal>
       )}
@@ -1016,39 +703,19 @@ export function Agents({
       )}
       {confirm && (
         <Modal
-          title={
-            confirm.action === "deploy"
-              ? "Provision this compute?"
-              : confirm.action === "delete"
-                ? "Delete this agent?"
-                : `${confirm.action.charAt(0).toUpperCase() + confirm.action.slice(1)} ${confirm.action === "restart" ? "agent" : "compute"}?`
-          }
+          title="Delete this agent?"
           onClose={() => setConfirm(null)}
         >
           <div className="modal-content">
-            <p>
-              {confirm.action === "deploy"
-                ? `${confirm.offer?.gpu} at $${confirm.offer?.hourly.toFixed(3)}/hour (approximately $${((confirm.offer?.hourly || 0) * 24).toFixed(2)}/day, excluding Gemini and network usage). Billing starts immediately. Setup can take several minutes.`
-                : confirm.action === "destroy"
-                  ? "This releases the Vast rental and deletes its local disk. Your agent configuration, call history, catalogue and knowledge remain in Neon. Active calls will disconnect."
-                  : confirm.action === "stop"
-                    ? "Active calls will disconnect. Compute processing will stop, but Vast storage charges continue until the instance is destroyed."
-                    : confirm.action === "restart"
-                      ? "The voice runtime will restart within 30 seconds and load the latest configuration. Active calls will disconnect."
-                      : confirm.action === "delete"
-                        ? "The agent configuration will be deleted. Call history and shared workspace knowledge will be preserved."
-                        : "This starts the existing instance and resumes compute billing."}
-            </p>
+            <p>The agent configuration will be deleted. Call history and shared workspace knowledge will be preserved.</p>
             <div className="modal-actions">
               <button className="button" onClick={() => setConfirm(null)}>
                 Cancel
               </button>
               <button
-                className={`button ${["destroy", "delete"].includes(confirm.action) ? "danger" : "primary"}`}
+                className="button danger"
                 disabled={Boolean(busy)}
-                onClick={
-                  confirm.action === "delete"
-                    ? async () => {
+                onClick={async () => {
                         setBusy("action");
                         try {
                           await api(`agents/${selected}`, "DELETE");
@@ -1067,14 +734,9 @@ export function Agents({
                           setBusy("");
                         }
                       }
-                    : action
                 }
               >
-                {busy
-                  ? "Working…"
-                  : confirm.action === "deploy"
-                    ? "Confirm & provision"
-                    : `Confirm ${confirm.action}`}
+                {busy ? "Working…" : "Confirm delete"}
               </button>
             </div>
           </div>

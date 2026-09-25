@@ -1,7 +1,7 @@
 import { createHmac, randomBytes } from "node:crypto";
 import { db } from "./db";
 import { ApiError, digest, rateLimit } from "./auth";
-import { runtimeSecrets } from "./vast";
+import { runtimeSecrets } from "./runtime";
 
 export const demoNumber = "94774482914";
 export function normalizeDemoPhone(value: string) {
