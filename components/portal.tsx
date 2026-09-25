@@ -474,6 +474,21 @@ function Dashboard({
     [limits, setLimits] = useState(false),
     [saving, setSaving] = useState(false),
     [limitError, setLimitError] = useState("");
+  const usageRequests = (call?.usage?.requests ?? []) as Record<string, unknown>[];
+  const usageTotal = (key: string) =>
+    usageRequests.reduce((sum, request) => sum + Number(request[key] ?? 0), 0);
+  const usageModalities = (key: string) => {
+    const totals = new Map<string, number>();
+    for (const request of usageRequests) {
+      const details = request[key];
+      if (!Array.isArray(details)) continue;
+      for (const item of details as Record<string, unknown>[]) {
+        const modality = String(item.modality ?? "unknown");
+        totals.set(modality, (totals.get(modality) ?? 0) + Number(item.token_count ?? 0));
+      }
+    }
+    return [...totals.entries()];
+  };
   const online = data.agents.filter(
     (a) =>
       a.heartbeat_at &&
@@ -863,6 +878,45 @@ function Dashboard({
                 ? "not recorded"
                 : `${number(call.duration_seconds)} seconds`}
             </p>
+            <section className="form-section">
+              <h3>Gemini usage</h3>
+              {usageRequests.length ? (
+                <>
+                  <p className="muted">
+                    {number(usageRequests.length)} provider usage records · Input{" "}
+                    {number(usageTotal("prompt_token_count"))} · Output{" "}
+                    {number(usageTotal("response_token_count"))} · Tool input{" "}
+                    {number(usageTotal("tool_use_prompt_token_count"))} · Total{" "}
+                    {number(usageTotal("total_token_count"))} tokens
+                  </p>
+                  <p className="muted">
+                    Thinking {number(usageTotal("thoughts_token_count"))} · Cached{" "}
+                    {number(usageTotal("cached_content_token_count"))} tokens
+                  </p>
+                  <p className="muted">
+                    Input modalities: {usageModalities("prompt_tokens_details")
+                      .map(([name, value]) => `${name} ${number(value)}`)
+                      .join(" · ") || "not reported"}
+                  </p>
+                  <p className="muted">
+                    Tool result input: {usageModalities("tool_use_prompt_tokens_details")
+                      .map(([name, value]) => `${name} ${number(value)}`)
+                      .join(" · ") || "not reported"}
+                  </p>
+                  <p className="muted">
+                    Output modalities: {usageModalities("response_tokens_details")
+                      .map(([name, value]) => `${name} ${number(value)}`)
+                      .join(" · ") || "not reported"}
+                  </p>
+                  <p className="muted">
+                    Provider usage is recorded for cost estimates. Actual charges
+                    depend on the Gemini billing tier and account credits.
+                  </p>
+                </>
+              ) : (
+                <p className="muted">Provider usage breakdown was not recorded for this call.</p>
+              )}
+            </section>
           </div>
         </Modal>
       )}

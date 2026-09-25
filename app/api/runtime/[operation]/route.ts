@@ -146,11 +146,12 @@ async function handler(
           transcript: z.string().max(200000),
           duration_seconds: z.number().nonnegative().max(86400).nullable(),
           tokens: z.number().int().nonnegative().max(10000000).nullable(),
+          usage: z.record(z.string(), z.unknown()).nullable().optional(),
           started_at: z.number().positive(),
         })
         .parse(body);
       const callId = `${agent.id}:${b.id}`;
-      await sql`insert into portal_calls(id,customer_id,agent_id,customer_phone,status,transcript,duration_seconds,tokens,created_at) values(${callId},${agent.customer_id},${agent.id},${b.customer_phone},${b.status},${b.transcript},${b.duration_seconds},${b.tokens},to_timestamp(${b.started_at})) on conflict(id) do update set status=excluded.status,transcript=excluded.transcript,duration_seconds=excluded.duration_seconds,tokens=excluded.tokens,updated_at=now() where portal_calls.customer_id=${agent.customer_id} and portal_calls.agent_id=${agent.id}`;
+      await sql`insert into portal_calls(id,customer_id,agent_id,customer_phone,status,transcript,duration_seconds,tokens,usage,created_at) values(${callId},${agent.customer_id},${agent.id},${b.customer_phone},${b.status},${b.transcript},${b.duration_seconds},${b.tokens},${b.usage == null ? null : JSON.stringify(b.usage)}::jsonb,to_timestamp(${b.started_at})) on conflict(id) do update set status=excluded.status,transcript=excluded.transcript,duration_seconds=excluded.duration_seconds,tokens=excluded.tokens,usage=excluded.usage,updated_at=now() where portal_calls.customer_id=${agent.customer_id} and portal_calls.agent_id=${agent.id}`;
       return Response.json({ ok: true });
     }
     throw new ApiError("Not found.", 404);

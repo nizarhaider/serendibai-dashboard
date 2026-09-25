@@ -47,6 +47,7 @@ export type Call = {
   transcript: string | null;
   duration_seconds: number | null;
   tokens: number | null;
+  usage: { provider: string; requests: Record<string, unknown>[] } | null;
   created_at: string;
   source: string;
 };
