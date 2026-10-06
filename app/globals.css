@@ -1612,6 +1612,9 @@ tr.clickable:hover {
   gap: 20px;
   margin-bottom: 23px;
 }
+.company-name-row {
+  grid-template-columns: 1fr;
+}
 .field-row label input,
 .field-row select {
   width: 100%;

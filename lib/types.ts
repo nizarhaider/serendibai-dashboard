@@ -1,6 +1,7 @@
 export type Agent = {
   id: string;
   name: string;
+  company_name: string;
   company_url: string;
   system_prompt: string;
   greeting: string;

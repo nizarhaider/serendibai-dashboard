@@ -27,9 +27,10 @@ import { api, Modal, number, Status } from "./portal";
 
 const defaultAgent = () => ({
   name: "",
+  company_name: "",
   company_url: "",
   system_prompt: "",
-  greeting: "Hello! How can I help you today?",
+  greeting: "{company_name} වෙත සාදරයෙන් පිළිගනිමු. සිංහලෙන් කතා කිරීමට “සිංහල” කියන්න. தமிழில் பேச, “தமிழ்” என்று சொல்லுங்கள். To speak in English, say “English.”",
   voice: "Aoede",
   languages: ["English", "Sinhala", "Tamil"],
   tools: ["search_knowledge", "search_products", "book_appointment", "create_order", "create_ticket"],
@@ -53,6 +54,7 @@ export function Agents({
     [error, setError] = useState(""),
     [newOpen, setNewOpen] = useState(false),
     [newName, setNewName] = useState(""),
+    [newCompanyName, setNewCompanyName] = useState(""),
     [research, setResearch] = useState(""),
     [draft, setDraft] = useState<{
       text: string;
@@ -228,6 +230,20 @@ export function Agents({
                       </div>
                     </label>
                   </div>
+                  <div className="field-row company-name-row">
+                    <label>
+                      Company name
+                      <input
+                        value={edit.company_name}
+                        onChange={(e) =>
+                          setEdit({ ...edit, company_name: e.target.value })
+                        }
+                        required
+                        maxLength={160}
+                      />
+                      <small>Used wherever the greeting contains {"{company_name}"}.</small>
+                    </label>
+                  </div>
                   <div className="prompt-label">
                     <label htmlFor="system-prompt">System prompt</label>
                     <span>{number(edit.system_prompt.length)} characters</span>
@@ -311,7 +327,7 @@ export function Agents({
                           setEdit({ ...edit, greeting: e.target.value })
                         }
                       />
-                      <small>The first words your customer hears.</small>
+                      <small>The first words your customer hears. Include {"{company_name}"} where the company name should appear.</small>
                     </label>
                     <div className="prompt-hint">
                       <AudioLines size={24} />
@@ -606,7 +622,11 @@ export function Agents({
               setBusy("new");
               setError("");
               try {
-                const values = { ...defaultAgent(), name: newName };
+                const values = {
+                  ...defaultAgent(),
+                  name: newName,
+                  company_name: newCompanyName,
+                };
                 const result = await api("agents", "POST", values);
                 await refresh();
                 setSelected(result.id);
@@ -614,6 +634,7 @@ export function Agents({
                 setTab("instructions");
                 setNewOpen(false);
                 setNewName("");
+                setNewCompanyName("");
                 notify(
                   "Agent created. Add your instructions or use the website assistant.",
                 );
@@ -625,8 +646,7 @@ export function Agents({
             }}
           >
             <p className="muted">
-              Give your agent a name. You can generate its instructions from a
-              website in the next step.
+              Set the agent and company names. You can add instructions next.
             </p>
             <label>
               Agent name
@@ -637,6 +657,16 @@ export function Agents({
                 placeholder="e.g. AirAsia travel assistant"
                 required
                 maxLength={100}
+              />
+            </label>
+            <label>
+              Company name
+              <input
+                value={newCompanyName}
+                onChange={(e) => setNewCompanyName(e.target.value)}
+                placeholder="e.g. SLT-MOBITEL"
+                required
+                maxLength={160}
               />
             </label>
             {error && <p className="error">{error}</p>}

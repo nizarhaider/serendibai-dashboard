@@ -145,6 +145,10 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
     await page.getByRole("button", { name: "New voice agent" }).click();
     await page.getByRole("dialog").getByLabel("Agent name").fill(marker);
     await page
+      .getByRole("dialog")
+      .getByLabel("Company name")
+      .fill("QA Company");
+    await page
       .getByRole("button", { name: "Create agent", exact: true })
       .click();
     await expect(page.locator(".agent-editor-heading h2")).toHaveText(marker);
