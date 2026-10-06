@@ -1714,29 +1714,6 @@ tr.clickable:hover {
   display: block;
   margin-top: 10px;
 }
-.greeting-row {
-  margin: 23px 0 0;
-}
-.greeting-row textarea {
-  font-size: 12px;
-  min-height: 105px;
-}
-.prompt-hint {
-  border: 1px solid #e6f4f1;
-  background: #fafdfc;
-  border-radius: 9px;
-  padding: 18px;
-  color: var(--muted);
-}
-.prompt-hint h3 {
-  font-size: 13px;
-  margin: 10px 0 6px;
-  color: var(--muted);
-}
-.prompt-hint p {
-  font-size: 11px;
-  color: var(--muted);
-}
 .tool-options {
   display: flex;
   flex-direction: column;
@@ -2660,9 +2637,6 @@ tr.clickable:hover {
   }
   .assistant-label strong {
     font-size: 11px;
-  }
-  .prompt-hint {
-    display: none;
   }
   .tool-option {
     padding: 13px;

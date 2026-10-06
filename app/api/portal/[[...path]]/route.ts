@@ -36,15 +36,6 @@ const agentSchema = z.object({
   company_name: z.string().trim().min(1).max(160),
   company_url: z.union([z.literal(""), z.url()]).default(""),
   system_prompt: z.string().max(30000).default(""),
-  greeting: z
-    .string()
-    .trim()
-    .min(1)
-    .max(1000)
-    .refine(
-      (value) => value.includes("{company_name}"),
-      "Opening greeting must include {company_name}.",
-    ),
   voice: z.enum(["Aoede", "Charon"]).default("Aoede"),
   languages: z
     .array(z.enum(["English", "Sinhala", "Tamil"]))
@@ -192,8 +183,8 @@ async function handler(
           });
         }
         const rows = id
-          ? await sql`update portal_agents set name=${b.name},company_name=${b.company_name},company_url=${b.company_url},system_prompt=${b.system_prompt},greeting=${b.greeting},voice=${b.voice},languages=${b.languages},tools=${b.tools},max_calls=${b.max_calls},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${customer} returning id`
-          : await sql`insert into portal_agents(customer_id,name,company_name,company_url,system_prompt,greeting,voice,languages,tools,max_calls,phone_number_id,credentials) values(${customer},${b.name},${b.company_name},${b.company_url},${b.system_prompt},${b.greeting},${b.voice},${b.languages},${b.tools},${b.max_calls},${b.phone_number_id},${credentials}) returning id`;
+          ? await sql`update portal_agents set name=${b.name},company_name=${b.company_name},company_url=${b.company_url},system_prompt=${b.system_prompt},voice=${b.voice},languages=${b.languages},tools=${b.tools},max_calls=${b.max_calls},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${customer} returning id`
+          : await sql`insert into portal_agents(customer_id,name,company_name,company_url,system_prompt,voice,languages,tools,max_calls,phone_number_id,credentials) values(${customer},${b.name},${b.company_name},${b.company_url},${b.system_prompt},${b.voice},${b.languages},${b.tools},${b.max_calls},${b.phone_number_id},${credentials}) returning id`;
         if (!rows.length) throw new ApiError("Agent not found.", 404);
         await audit(
           customer,

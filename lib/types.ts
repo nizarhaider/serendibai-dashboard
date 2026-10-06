@@ -4,7 +4,6 @@ export type Agent = {
   company_name: string;
   company_url: string;
   system_prompt: string;
-  greeting: string;
   voice: string;
   languages: string[];
   tools: string[];

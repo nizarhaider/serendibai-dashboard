@@ -30,7 +30,6 @@ const defaultAgent = () => ({
   company_name: "",
   company_url: "",
   system_prompt: "",
-  greeting: "{company_name} වෙත සාදරයෙන් පිළිගනිමු. සිංහලෙන් කතා කිරීමට “සිංහල” කියන්න. தமிழில் பேச, “தமிழ்” என்று சொல்லுங்கள். To speak in English, say “English.”",
   voice: "Aoede",
   languages: ["English", "Sinhala", "Tamil"],
   tools: ["search_knowledge", "search_products", "book_appointment", "create_order", "create_ticket"],
@@ -241,7 +240,7 @@ export function Agents({
                         required
                         maxLength={160}
                       />
-                      <small>Used wherever the greeting contains {"{company_name}"}.</small>
+                      <small>Used in the opening greeting.</small>
                     </label>
                   </div>
                   <div className="prompt-label">
@@ -315,27 +314,6 @@ export function Agents({
                         Uses live website research. Review the draft before
                         applying it.
                       </small>
-                    </div>
-                  </div>
-                  <div className="field-row greeting-row">
-                    <label>
-                      Opening greeting
-                      <textarea
-                        rows={3}
-                        value={edit.greeting}
-                        onChange={(e) =>
-                          setEdit({ ...edit, greeting: e.target.value })
-                        }
-                      />
-                      <small>The first words your customer hears. Include {"{company_name}"} where the company name should appear.</small>
-                    </label>
-                    <div className="prompt-hint">
-                      <AudioLines size={24} />
-                      <h3>Let your brand do the talking.</h3>
-                      <p>
-                        Short instructions, clear boundaries and a warm greeting
-                        make for better conversations.
-                      </p>
                     </div>
                   </div>
                 </>
