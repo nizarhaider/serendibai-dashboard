@@ -47,6 +47,7 @@ export function Customers({ initial }: { initial: Customer[] }) {
       <div className="panel-heading"><div><h2>{customer.business_name}</h2><p>{customer.agents} agents · {customer.calls} calls</p></div></div>
       <div className="customer-access">
         <h3>Users</h3>
+        {!customer.users.length && <p className="muted">No portal users assigned.</p>}
         {customer.users.map(user => <p key={user.email}>{user.name || customer.contact_name} · {user.email}{user.is_admin ? " · Administrator" : ""}</p>)}
         <h3>Enabled bot features</h3>
         <div className="customer-features">{toolNames.map(tool => <label key={tool}>
