@@ -15,7 +15,7 @@ import {
 } from "@/lib/auth";
 import { getData } from "@/lib/data";
 import { draftPrompt } from "@/lib/assistant";
-import { resourceTools, toolNames } from "@/lib/permissions";
+import { resourceTools, standardTools, toolNames } from "@/lib/permissions";
 import { getCustomers } from "@/lib/customers";
 
 export const runtime = "nodejs";
@@ -48,15 +48,15 @@ const agentSchema = z.object({
   tools: z
     .array(
       z.enum([
-        "search_knowledge",
-        "search_products",
         "book_appointment",
         "create_order",
         "create_ticket",
+        "search_knowledge",
+        "search_products",
         "send_whatsapp_message",
       ]),
     )
-    .default(["search_knowledge", "search_products", "book_appointment", "create_order", "create_ticket"]),
+    .default([...standardTools, ...toolNames]),
   max_calls: z.coerce.number().int().min(1).max(20).default(3),
   phone_number_id: z.string().regex(/^\d*$/).max(30).default(""),
   credentials: z.record(z.string(), z.string().max(4000)).optional(),
@@ -118,7 +118,7 @@ async function handler(
         if (!target) throw new ApiError("Customer not found.", 404);
         await sql.transaction([
           sql`update customers set portal_read_only=${b.read_only},portal_tools=${b.allowed_tools} where id=${id}`,
-          sql`update portal_agents set tools=${b.allowed_tools},version=version+1,updated_at=now() where customer_id=${id} and status<>'archived'`,
+          sql`update portal_agents set tools=${[...standardTools, ...b.allowed_tools]},version=version+1,updated_at=now() where customer_id=${id} and status<>'archived'`,
         ]);
         await audit(id, "Customer access updated", `Features: ${b.allowed_tools.join(", ") || "none"}; editing: ${!b.read_only}`);
         return Response.json({ ok: true });
@@ -204,8 +204,9 @@ async function handler(
       if (id) uuid.parse(id);
       if (method === "POST" || method === "PUT") {
         const b = agentSchema.parse(await request.json());
-        if (b.tools.some(tool => !user.allowed_tools.includes(tool)))
+        if (b.tools.some(tool => toolNames.includes(tool as typeof toolNames[number]) && !user.allowed_tools.includes(tool as typeof toolNames[number])))
           throw new ApiError("One or more tools are disabled for your workspace.", 403);
+        const tools = [...standardTools, ...b.tools.filter((tool): tool is typeof toolNames[number] => toolNames.includes(tool as typeof toolNames[number]) && user.allowed_tools.includes(tool as typeof toolNames[number]))];
         const count =
           await sql`select id from portal_agents where customer_id=${customer}`;
         if (!id && count.length >= 20)
@@ -231,8 +232,8 @@ async function handler(
           });
         }
         const rows = id
-          ? await sql`update portal_agents set name=${b.name},company_name=${b.company_name},company_url=${b.company_url},system_prompt=${b.system_prompt},voice=${b.voice},languages=${b.languages},tools=${b.tools},max_calls=${b.max_calls},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${customer} returning id`
-          : await sql`insert into portal_agents(customer_id,name,company_name,company_url,system_prompt,voice,languages,tools,max_calls,phone_number_id,credentials) values(${customer},${b.name},${b.company_name},${b.company_url},${b.system_prompt},${b.voice},${b.languages},${b.tools},${b.max_calls},${b.phone_number_id},${credentials}) returning id`;
+          ? await sql`update portal_agents set name=${b.name},company_name=${b.company_name},company_url=${b.company_url},system_prompt=${b.system_prompt},voice=${b.voice},languages=${b.languages},tools=${tools},max_calls=${b.max_calls},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${customer} returning id`
+          : await sql`insert into portal_agents(customer_id,name,company_name,company_url,system_prompt,voice,languages,tools,max_calls,phone_number_id,credentials) values(${customer},${b.name},${b.company_name},${b.company_url},${b.system_prompt},${b.voice},${b.languages},${tools},${b.max_calls},${b.phone_number_id},${credentials}) returning id`;
         if (!rows.length) throw new ApiError("Agent not found.", 404);
         await audit(
           customer,

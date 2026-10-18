@@ -29,7 +29,7 @@ export function Customers({ initial }: { initial: Customer[] }) {
         event.preventDefault(); const form = event.currentTarget;
         setBusy("create"); setError(""); setMessage("");
         try {
-          await api("customers", "POST", { ...Object.fromEntries(new FormData(form)), read_only: true, allowed_tools: ["search_knowledge", "send_whatsapp_message"] });
+          await api("customers", "POST", { ...Object.fromEntries(new FormData(form)), read_only: true, allowed_tools: [] });
           setCustomers(await api("customers")); form.reset(); setMessage("Customer account created.");
         } catch (e) { setError((e as Error).message); }
         finally { setBusy(""); }
@@ -55,7 +55,7 @@ export function Customers({ initial }: { initial: Customer[] }) {
           {toolLabels[tool]}
         </label>)}</div>
         <label className="customer-editing"><input type="checkbox" checked={!customer.read_only} disabled={!!busy} onChange={event => update(customer.id, { read_only: !event.target.checked })} />Allow this customer to edit agent settings and enabled resources</label>
-        <p className="muted">With editing off, clients can only view their own call history and transcripts. Disabled features are blocked by the server.</p>
+        <p className="muted">Every agent can answer from its knowledge base and catalogue and send useful WhatsApp follow-ups. With editing off, clients can view only their own calls and transcripts.</p>
         <button className="button primary" disabled={!!busy} onClick={() => save(customer)}>{busy === customer.id ? "Saving…" : "Save access"}</button>
       </div>
     </section>)}

@@ -180,7 +180,7 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
     state = await (await page.request.get("/api/portal/data")).json();
     expect(
       state.agents.find((a: { id: string }) => a.id === testAgent).tools,
-    ).not.toContain("search_knowledge");
+    ).not.toContain("book_appointment");
     await switcher.check();
     await page
       .getByRole("button", { name: "Save changes", exact: true })
@@ -215,7 +215,7 @@ test("production workspace: authentication, editing, ingestion, runtime isolatio
             data: { tool: "search_products", query: marker },
           })
         ).status(),
-      ).toBe(403);
+      ).toBe(200);
       expect(
         (
           await request.get("/api/runtime/config", {

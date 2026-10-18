@@ -3,8 +3,6 @@ import { useState } from "react";
 import {
   ArrowUpRight,
   AudioLines,
-  BookOpen,
-  Box,
   CalendarDays,
   Check,
   ChevronRight,
@@ -23,6 +21,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 import type { Agent, PortalData } from "@/lib/types";
+import { standardTools, toolNames } from "@/lib/permissions";
 import { api, Modal, number, Status } from "./portal";
 
 const defaultAgent = () => ({
@@ -32,11 +31,11 @@ const defaultAgent = () => ({
   system_prompt: "",
   voice: "Aoede",
   languages: ["English", "Sinhala", "Tamil"],
-  tools: ["search_knowledge", "search_products", "book_appointment", "create_order", "create_ticket"],
+  tools: [...standardTools, ...toolNames],
   max_calls: 3,
   phone_number_id: "",
 });
-type Editable = ReturnType<typeof defaultAgent> & { id?: string };
+type Editable = Omit<ReturnType<typeof defaultAgent>, "tools"> & { tools: string[]; id?: string };
 export function Agents({
   data,
   refresh,
@@ -319,25 +318,12 @@ export function Agents({
                 </>
               ) : tab === "tools" ? (
                 <>
-                  <h3>Knowledge & capabilities</h3>
+                  <h3>Agent actions</h3>
                   <p className="muted">
-                    Choose what this agent can access. Disabled tools are also
-                    blocked on the server.
+                    Knowledge and catalogue answers are always available. WhatsApp follow-ups are sent when useful. Choose which customer actions this agent can take.
                   </p>
                   <div className="tool-options">
                     {[
-                      {
-                        name: "search_knowledge",
-                        title: "Search knowledge base",
-                        text: `Find answers across ${data.documents.length} uploaded documents.`,
-                        icon: BookOpen,
-                      },
-                      {
-                        name: "search_products",
-                        title: "Search product catalogue",
-                        text: `Look up ${data.products.length} products and services, prices and availability.`,
-                        icon: Box,
-                      },
                       {
                         name: "book_appointment",
                         title: "Book appointments",
@@ -355,12 +341,6 @@ export function Agents({
                         title: "Create support tickets",
                         text: "Log caller issues for your team to follow up.",
                         icon: Ticket,
-                      },
-                      {
-                        name: "send_whatsapp_message",
-                        title: "Send a WhatsApp message",
-                        text: "Send follow-up text to the caller only when they request it.",
-                        icon: MessageSquare,
                       },
                     ].filter(t => data.allowed_tools.includes(t.name)).map((t) => (
                       <label className="tool-option" key={t.name}>
@@ -602,7 +582,7 @@ export function Agents({
               try {
                 const values = {
                   ...defaultAgent(),
-                  tools: defaultAgent().tools.filter(tool => data.allowed_tools.includes(tool)),
+                  tools: defaultAgent().tools.filter(tool => !toolNames.includes(tool as typeof toolNames[number]) || data.allowed_tools.includes(tool)),
                   name: newName,
                   company_name: newCompanyName,
                 };
