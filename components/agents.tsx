@@ -362,7 +362,7 @@ export function Agents({
                         text: "Send follow-up text to the caller only when they request it.",
                         icon: MessageSquare,
                       },
-                    ].map((t) => (
+                    ].filter(t => data.allowed_tools.includes(t.name)).map((t) => (
                       <label className="tool-option" key={t.name}>
                         <span className="icon-tile">
                           <t.icon size={21} />
@@ -602,6 +602,7 @@ export function Agents({
               try {
                 const values = {
                   ...defaultAgent(),
+                  tools: defaultAgent().tools.filter(tool => data.allowed_tools.includes(tool)),
                   name: newName,
                   company_name: newCompanyName,
                 };

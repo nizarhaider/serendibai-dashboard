@@ -24,12 +24,16 @@ import {
   Plus,
   RefreshCw,
   Settings2,
+  Users,
   Sparkles,
   X,
   Ticket,
   Zap,
 } from "lucide-react";
-import type { PortalData, Call } from "@/lib/types";
+import type { PortalData, Call, Customer } from "@/lib/types";
+import { canAccessSection } from "@/lib/permissions";
+import { Customers } from "./customers";
+import { CallHistory } from "./call-history";
 import { Resources } from "./resources";
 import { Agents } from "./agents";
 import { Appointments } from "./appointments";
@@ -170,9 +174,11 @@ export function Modal({
 export function Portal({
   initial,
   section,
+  initialCustomers = [],
 }: {
   initial: PortalData;
   section: string;
+  initialCustomers?: Customer[];
 }) {
   const [data, setData] = useState(initial),
     [message, setMessage] = useState(""),
@@ -190,7 +196,8 @@ export function Portal({
     { href: "knowledge", label: "Knowledge Base", icon: BookOpen },
     { href: "catalogue", label: "Product Catalogue", icon: Box },
     { href: "agents", label: "Agent Management", icon: AudioLines },
-  ];
+    { href: "admin", label: "Customers & access", icon: Users },
+  ].filter(item => canAccessSection(data, item.href));
   const refresh = useCallback(
     async (nextDays = days, nextAgent = agent) => {
       setBusy(true);
@@ -225,10 +232,10 @@ export function Portal({
           <sup>PORTAL</sup>
         </Link>
         <div className="workspace-switch">
-          <div className="workspace-avatar">S</div>
+          <div className="workspace-avatar">{data.business_name.charAt(0)}</div>
           <div>
-            <strong>SerendibAI workspace</strong>
-            <span>Business account</span>
+            <strong>{data.business_name}</strong>
+            <span>{data.read_only ? "Call history access" : "Business account"}</span>
           </div>
           <ChevronDown size={14} />
         </div>
@@ -248,7 +255,7 @@ export function Portal({
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="sidebar-card">
+          {!data.read_only && <div className="sidebar-card">
             <span className="tiny-orb">
               <Sparkles size={19} />
             </span>
@@ -260,14 +267,14 @@ export function Portal({
             <Link href="/agents">
               Set up your agent <ArrowUpRight size={16} />
             </Link>
-          </div>
-          <button className="sidebar-help" onClick={() => setHelp(true)}>
+          </div>}
+          {!data.read_only && <button className="sidebar-help" onClick={() => setHelp(true)}>
             <CircleHelp size={17} /> Workspace guide <ArrowUpRight size={14} />
-          </button>
+          </button>}
           <div className="user-block">
             <div className="user-avatar">A</div>
             <div>
-              <strong>Workspace admin</strong>
+              <strong>{data.display_name || (data.is_admin ? "Administrator" : "Workspace member")}</strong>
               <span>{data.email}</span>
             </div>
             <button
@@ -318,7 +325,7 @@ export function Portal({
           <div className="page-heading">
             <div>
               <div className="eyebrow">
-                {section === "dashboard"
+                {section === "admin" ? "CUSTOMERS AND PERMISSIONS" : section === "dashboard"
                   ? "YOUR BUSINESS, IN CONVERSATION"
                   : section === "appointments"
                     ? "EVERY BOOKING, IN ONE PLACE"
@@ -333,12 +340,12 @@ export function Portal({
                       : "EVERY DETAIL, AT THEIR FINGERTIPS"}
               </div>
               <h1>
-                {section === "dashboard"
+                {section === "dashboard" && data.read_only ? "Call history" : section === "dashboard"
                   ? "Your conversations, at a glance."
                   : title}
               </h1>
               <p>
-                {section === "dashboard"
+                {section === "admin" ? "Manage customer accounts and choose which features their agents can use." : section === "dashboard" && data.read_only ? "See who called and read what was discussed." : section === "dashboard"
                   ? "See how your voice agents are showing up for your business."
                   : section === "appointments"
                     ? "See appointments booked by your voice agents in Sri Lanka time."
@@ -353,7 +360,7 @@ export function Portal({
                       : "Create, configure and run voice agents. All from one place."}
               </p>
             </div>
-            {section === "dashboard" && (
+            {section === "dashboard" && !data.read_only && (
               <Link href="/agents" className="button primary">
                 <Plus size={17} /> Create an agent
               </Link>
@@ -379,7 +386,7 @@ export function Portal({
               </button>
             </div>
           )}
-          {section === "dashboard" ? (
+          {section === "admin" ? <Customers initial={initialCustomers} /> : section === "dashboard" && data.read_only ? <CallHistory data={data} /> : section === "dashboard" ? (
             <Dashboard
               data={data}
               days={days}
@@ -763,12 +770,12 @@ function Dashboard({
             </span>
             <strong>{data.agents.filter((a) => a.status === "ready" && a.heartbeat_at && data.generatedAt - new Date(a.heartbeat_at).getTime() < 90000).length}</strong>
           </div>
-          <button
+          {data.is_admin && <button
             className="button subtle full"
             onClick={() => setLimits(true)}
           >
             <Settings2 size={15} /> Configure workspace limits
-          </button>
+          </button>}
         </section>
       </div>
       <section className="panel calls-panel">

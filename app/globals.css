@@ -2831,6 +2831,19 @@ td small, .resource-stat span:not(.icon-tile), .catalogue-banner p, .upload-zone
 .record-status select { min-height: 32px; max-width: 140px; padding: 5px 24px 5px 9px; border: 1px solid var(--border); border-radius: 7px; background: #fff; color: var(--ink); font-size: 11px; text-transform: capitalize; }
 .record-status select:disabled { opacity: .6; }
 .record-status small { display: block; max-width: 180px; color: #b33d3d; font-size: 10px; }
+.customer-admin { display: grid; gap: 24px; }
+.customer-create { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; padding: 24px; }
+.customer-create label { display: grid; gap: 8px; font-size: 13px; font-weight: 600; }
+.customer-create input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: white; }
+.customer-access { padding: 0 24px 24px; font-size: 13px; }
+.customer-access h3 { margin: 20px 0 12px; font-size: 14px; }
+.customer-features { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin: 16px 0 24px; }
+.customer-features label, .customer-editing { display: flex; gap: 10px; align-items: center; }
+.client-calls article { padding: 24px; border-top: 1px solid var(--border); }
+.client-call-heading { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+.client-call-heading time { margin-left: auto; color: var(--muted); font-size: 12px; }
+.client-calls summary { cursor: pointer; padding: 12px 0; font-size: 13px; font-weight: 600; }
+@media (max-width: 640px) { .customer-create, .customer-features { grid-template-columns: 1fr; } .client-call-heading time { margin-left: 0; width: 100%; } }
 .priority { border-radius: 999px; padding: 4px 8px; background: #eef4f3; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: capitalize; }
 .priority.high { background: #fff0db; color: #a35d18; }
 .priority.urgent { background: #ffebeb; color: #b33d3d; }

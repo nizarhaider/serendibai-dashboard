@@ -8,6 +8,7 @@ import {
 } from "node:crypto";
 import { cookies } from "next/headers";
 import { db } from "./db";
+import type { Access } from "./permissions";
 
 export const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
@@ -23,13 +24,17 @@ export async function session() {
   const token = (await cookies()).get("portal_session")?.value;
   if (!token) return null;
   const [user] =
-    await db()`select u.id,u.email,u.customer_id from portal_sessions s join portal_users u on u.id=s.user_id where s.token_hash=${digest(token)} and s.expires_at>now()`;
-  return user as { id: string; email: string; customer_id: string } | undefined;
+    await db()`select u.id,u.email,u.customer_id,u.is_admin,c.portal_read_only as read_only,c.portal_tools as allowed_tools from portal_sessions s join portal_users u on u.id=s.user_id join customers c on c.id=u.customer_id where s.token_hash=${digest(token)} and s.expires_at>now()`;
+  return user as ({ id: string; email: string; customer_id: string } & Access) | undefined;
 }
 export async function requireUser() {
   const user = await session();
   if (!user) throw new ApiError("Please sign in to continue.", 401);
   return user;
+}
+export function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  return `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
 }
 export function checkOrigin(request: Request) {
   const origin = request.headers.get("origin");

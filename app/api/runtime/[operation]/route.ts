@@ -13,8 +13,9 @@ async function handler(
     if (!token) throw new ApiError("Unauthorized", 401);
     const sql = db(),
       [agent] =
-        await sql`select * from portal_agents where runtime_token_hash=${digest(token)}`;
+        await sql`select a.*,c.portal_tools from portal_agents a join customers c on c.id=a.customer_id where a.runtime_token_hash=${digest(token)} and a.status<>'archived'`;
     if (!agent) throw new ApiError("Unauthorized", 401);
+    agent.tools = agent.tools.filter((tool: string) => agent.portal_tools.includes(tool));
     const { operation } = await params;
     if (operation === "config" && request.method === "GET")
       return Response.json(

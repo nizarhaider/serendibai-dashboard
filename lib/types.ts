@@ -1,3 +1,13 @@
+export type Customer = {
+  id: string;
+  business_name: string;
+  contact_name: string;
+  read_only: boolean;
+  allowed_tools: string[];
+  users: { email: string; name: string; is_admin: boolean }[];
+  agents: number;
+  calls: number;
+};
 export type Agent = {
   id: string;
   name: string;
@@ -90,6 +100,11 @@ export type Ticket = {
   created_at: string;
 };
 export type PortalData = {
+  business_name: string;
+  display_name: string;
+  is_admin: boolean;
+  read_only: boolean;
+  allowed_tools: string[];
   generatedAt: number;
   email: string;
   agents: Agent[];

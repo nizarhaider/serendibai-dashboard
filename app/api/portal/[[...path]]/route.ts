@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db, audit } from "@/lib/db";
 import {
@@ -10,9 +11,12 @@ import {
   encrypt,
   decrypt,
   rateLimit,
+  hashPassword,
 } from "@/lib/auth";
 import { getData } from "@/lib/data";
 import { draftPrompt } from "@/lib/assistant";
+import { resourceTools, toolNames } from "@/lib/permissions";
+import { getCustomers } from "@/lib/customers";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -85,6 +89,48 @@ async function handler(
       customer = user.customer_id,
       sql = db();
     if (method !== "GET") await rateLimit(`write:${user.id}`, 120, 60);
+    if (route === "customers") {
+      if (!user.is_admin) throw new ApiError("Administrator access required.", 403);
+      if (method === "GET") return Response.json(await getCustomers(), { headers: { "Cache-Control": "private, no-store" } });
+      const permissions = z.object({ read_only: z.boolean(), allowed_tools: z.array(z.enum(toolNames)) });
+      if (method === "POST") {
+        const b = permissions.extend({
+          business_name: z.string().trim().min(1).max(160),
+          contact_name: z.string().trim().min(1).max(160),
+          email: z.email().max(250).transform(v => v.toLowerCase()),
+          password: z.string().min(1).max(200),
+        }).parse(await request.json());
+        const [existing] = await sql`select id from portal_users where email=${b.email}`;
+        if (existing) throw new ApiError("That email already has an account.", 409);
+        const customerId = randomUUID();
+        await sql.transaction([
+          sql`insert into customers(id,business_name,contact_name,email,portal_read_only,portal_tools) values(${customerId},${b.business_name},${b.contact_name},${b.email},${b.read_only},${b.allowed_tools})`,
+          sql`insert into portal_users(email,password_hash,customer_id,display_name) values(${b.email},${hashPassword(b.password)},${customerId},${b.contact_name})`,
+          sql`insert into portal_quotas(customer_id) values(${customerId})`,
+        ]);
+        await audit(customerId, "Customer created", b.business_name);
+        return Response.json({ id: customerId }, { status: 201 });
+      }
+      if (id && method === "PUT") {
+        uuid.parse(id);
+        const b = permissions.parse(await request.json());
+        const [target] = await sql`select id from customers where id=${id}`;
+        if (!target) throw new ApiError("Customer not found.", 404);
+        await sql.transaction([
+          sql`update customers set portal_read_only=${b.read_only},portal_tools=${b.allowed_tools} where id=${id}`,
+          sql`update portal_agents set tools=${b.allowed_tools},version=version+1,updated_at=now() where customer_id=${id} and status<>'archived'`,
+        ]);
+        await audit(id, "Customer access updated", `Features: ${b.allowed_tools.join(", ") || "none"}; editing: ${!b.read_only}`);
+        return Response.json({ ok: true });
+      }
+      throw new ApiError("Not found.", 404);
+    }
+    if (user.read_only && !["data", "logout"].includes(route || ""))
+      throw new ApiError("This account can only view calls and transcripts.", 403);
+    if (resourceTools[route || ""] && !user.allowed_tools.includes(resourceTools[route || ""]))
+      throw new ApiError("This feature is disabled for your workspace.", 403);
+    if (route === "quotas" && !user.is_admin)
+      throw new ApiError("Administrator access required.", 403);
     if (route === "logout" && method === "POST") {
       const store = await cookies();
       await sql`delete from portal_sessions where token_hash=${digest(store.get("portal_session")?.value || "")}`;
@@ -158,6 +204,8 @@ async function handler(
       if (id) uuid.parse(id);
       if (method === "POST" || method === "PUT") {
         const b = agentSchema.parse(await request.json());
+        if (b.tools.some(tool => !user.allowed_tools.includes(tool)))
+          throw new ApiError("One or more tools are disabled for your workspace.", 403);
         const count =
           await sql`select id from portal_agents where customer_id=${customer}`;
         if (!id && count.length >= 20)

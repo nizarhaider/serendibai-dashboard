@@ -8,6 +8,8 @@ export async function getData(
   agent?: string,
 ): Promise<PortalData> {
   const sql = db();
+  const [account] = await sql`select c.business_name,u.display_name,u.is_admin,c.portal_read_only as read_only,c.portal_tools as allowed_tools from customers c join portal_users u on u.customer_id=c.id where c.id=${customer} and u.email=${email}`;
+  if (!account) throw new Error("Workspace not found.");
   const [agents, documents, products, calls, appointments, orders, tickets, daily, totals, quotas, events] =
     await Promise.all([
       sql`select id,name,company_name,company_url,system_prompt,voice,languages,tools,max_calls,phone_number_id,status,version,deployed_version,heartbeat_at,telemetry,(credentials is not null or phone_number_id=${process.env.PHONE_NUMBER_ID || ""}) as has_credentials,created_at from portal_agents where customer_id=${customer} order by (status='archived'),created_at desc`,
@@ -25,14 +27,15 @@ export async function getData(
   return JSON.parse(
     JSON.stringify({
       generatedAt: Date.now(),
+      ...account,
       email,
-      agents,
-      documents,
-      products,
+      agents: account.read_only ? agents.map(a => ({ ...a, system_prompt: "", phone_number_id: "", has_credentials: false })) : agents,
+      documents: account.read_only || !account.allowed_tools.includes("search_knowledge") ? [] : documents,
+      products: account.read_only || !account.allowed_tools.includes("search_products") ? [] : products,
       calls,
-      appointments,
-      orders,
-      tickets,
+      appointments: account.read_only || !account.allowed_tools.includes("book_appointment") ? [] : appointments,
+      orders: account.read_only || !account.allowed_tools.includes("create_order") ? [] : orders,
+      tickets: account.read_only || !account.allowed_tools.includes("create_ticket") ? [] : tickets,
       daily,
       totals: totals[0],
       quotas: quotas[0],
