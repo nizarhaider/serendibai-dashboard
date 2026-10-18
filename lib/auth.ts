@@ -38,7 +38,7 @@ export function hashPassword(password: string) {
 }
 export function checkOrigin(request: Request) {
   const origin = request.headers.get("origin");
-  if (!origin || origin !== new URL(request.url).origin)
+  if (!origin || ![new URL(request.url).origin, "https://portal.serendibai.lk"].includes(origin))
     throw new ApiError("Request origin rejected.", 403);
 }
 export async function rateLimit(key: string, limit: number, seconds = 900) {
