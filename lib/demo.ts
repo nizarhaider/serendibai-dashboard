@@ -1,7 +1,7 @@
 import { createHmac, randomBytes } from "node:crypto";
 import { db } from "./db";
 import { ApiError, digest, rateLimit } from "./auth";
-import { runtimeSecrets } from "./runtime";
+import { runtimeSecrets, validRuntimeUrl } from "./runtime";
 
 export const demoNumber = "94774482914";
 export function normalizeDemoPhone(value: string) {
@@ -14,9 +14,15 @@ export function normalizeDemoPhone(value: string) {
 
 async function agentForDemo() {
   const [agent] = await db()`select * from portal_agents where id=${process.env.DEMO_AGENT_ID || null}`;
-  if (!agent || agent.status !== "ready" || !agent.heartbeat_at || Date.now() - new Date(agent.heartbeat_at).getTime() > 90000 || !/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(agent.telemetry?.runtime_url || ""))
+  if (!agent || agent.status !== "ready" || !agent.heartbeat_at || Date.now() - new Date(agent.heartbeat_at).getTime() > 90000 || !validRuntimeUrl(agent.telemetry?.runtime_url || ""))
     throw new ApiError("Our demo agent is offline. Please try again shortly.", 503);
   return agent;
+}
+
+export function demoSignature(body: string) {
+  const secret = process.env.DEMO_SIGNING_SECRET;
+  if (!secret) throw new ApiError("Demo calling is not configured.", 503);
+  return createHmac("sha256", secret).update(body).digest("hex");
 }
 
 async function graph(path: string, body?: object) {
@@ -67,7 +73,7 @@ async function startDemo(id: string) {
     const permission = await graph(`call_permissions?user_wa_id=${row.phone}`);
     if (!permission.actions?.some((a: { action_name: string; can_perform_action: boolean }) => a.action_name === "start_call" && a.can_perform_action)) throw new Error("Permission unavailable");
     const body = JSON.stringify({ id, phone: row.phone, timestamp: Math.floor(Date.now() / 1000) });
-    const signature = createHmac("sha256", runtimeSecrets(agent).VERIFY_TOKEN).update(body).digest("hex");
+    const signature = demoSignature(body);
     const response = await fetch(`${agent.telemetry.runtime_url}/demo/call`, { method: "POST", headers: { "Content-Type": "application/json", "x-demo-signature": signature }, body, signal: AbortSignal.timeout(25000), redirect: "error" });
     if (!response.ok) throw new Error("Call unavailable");
     const result = await response.json();

@@ -1,5 +1,9 @@
 import { decrypt } from "./auth";
 
+export function validRuntimeUrl(value: string) {
+  return value === "https://whatsapp.serendibai.lk" || /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(value);
+}
+
 export function runtimeSecrets(agent: Record<string, unknown>) {
   const custom = decrypt(agent.credentials as string | null);
   const legacy = agent.phone_number_id === process.env.PHONE_NUMBER_ID;

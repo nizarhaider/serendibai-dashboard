@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
-import { runtimeSecrets } from "@/lib/runtime";
+import { runtimeSecrets, validRuntimeUrl } from "@/lib/runtime";
 import { handleDemoWebhook } from "@/lib/demo";
 import { z } from "zod";
 
@@ -45,7 +45,7 @@ async function handler(
   const target = agent.telemetry?.runtime_url;
   if (
     !target ||
-    !/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(target) ||
+    !validRuntimeUrl(target) ||
     !agent.heartbeat_at ||
     Date.now() - new Date(agent.heartbeat_at).getTime() > 90000
   )
