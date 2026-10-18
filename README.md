@@ -21,6 +21,21 @@ The former `calls`, `agent_profiles`, `client_catalog`, and `knowledge_documents
 - Configuration loads for new calls; tool permissions are also checked on every execution. Restart disconnects calls. CPU/memory and active-call counts come from runtime heartbeats, not simulated GPU inference.
 - Meta webhooks require a saved app secret. The stable portal webhook proxies signed events to an HTTPS runtime tunnel. The migrated phone retains its original named Cloudflare tunnel. New agents require their own Meta phone configuration.
 
+## Customer administration
+
+Administrators use `/admin` to list customers and users, create accounts, and
+enable each customer's bot features. `portal_users.is_admin` grants this access;
+it cannot be changed through the customer API. Existing administrator passwords
+are preserved.
+
+Customers with editing disabled see only their own call history and transcripts.
+The API blocks their writes and resource access. Customer feature limits also
+restrict agent configuration and runtime tool execution. Disabling appointments,
+orders, or tickets removes them from the customer's workspace and blocks the tools.
+
+For the website demo, set `DEMO_AGENT_ID` to the active demo agent and configure
+the same `DEMO_SIGNING_SECRET` on Netlify and the voice runtime.
+
 ## Validation
 
 `pnpm build`, `pnpm lint`, and `pnpm exec playwright test`. Browser tests cover authentication, real uploads, Excel/manual editing, persisted configuration, responsive pages and error handling. With `DATABASE_URL` in the test environment, they also cover scoped runtime retrieval, disabled tools, duplicate call ingestion and customer isolation. QA records are removed after tests.
