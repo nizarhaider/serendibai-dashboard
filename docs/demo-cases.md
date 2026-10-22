@@ -88,3 +88,5 @@ consented WhatsApp summaries. Refunds, transfers, payments, rescheduling, identi
 verification and hiring decisions are not claimed as completed actions.
 
 Voice direction is scoped to these five recording cases: Aoede female timbre with explicit native Sri Lankan English cadence and Sinhala-influenced pronunciation, including Bambalapitiya. A female preset does not by itself verify the accent; audition the generated preview and a fresh WhatsApp recording. Talent 360 retains its existing instructions and greeting.
+
+The case speech configuration now uses the provider-supported `en-IN` regional setting alongside Sri Lankan accent instructions. A full-config Gemini 3.8 Live audition on 23 October 2026 produced English audio classified as Sri Lankan English by an automated audio review, then successfully switched to Sinhala and Tamil. The automated review is not a substitute for a native listener or a fresh WhatsApp call. The host agent, including Talent 360, does not receive this case-only locale setting.
