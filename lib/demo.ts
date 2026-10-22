@@ -3,6 +3,8 @@ import { db } from "./db";
 import { ApiError, digest, rateLimit } from "./auth";
 import { runtimeSecrets, validRuntimeUrl } from "./runtime";
 
+const demoEnabled = false;
+
 export const demoNumber = "94774482914";
 export function normalizeDemoPhone(value: string) {
   let phone = value.trim().replace(/[\s()-]/g, "").replace(/^\+/, "").replace(/^00/, "");
@@ -13,6 +15,7 @@ export function normalizeDemoPhone(value: string) {
 }
 
 async function agentForDemo() {
+  if (!demoEnabled) throw new ApiError("Demo calls are temporarily disabled.", 503);
   const [agent] = await db()`select * from portal_agents where id=${process.env.DEMO_AGENT_ID || null}`;
   if (!agent || agent.status !== "ready" || !agent.heartbeat_at || Date.now() - new Date(agent.heartbeat_at).getTime() > 90000 || !validRuntimeUrl(agent.telemetry?.runtime_url || ""))
     throw new ApiError("Our demo agent is offline. Please try again shortly.", 503);
@@ -84,6 +87,7 @@ async function startDemo(id: string) {
 }
 
 export async function handleDemoWebhook(body: { entry?: { changes?: { value?: Record<string, unknown> }[] }[] }) {
+  if (!demoEnabled) return;
   for (const entry of body.entry || []) for (const change of entry.changes || []) {
     const value = change.value || {};
     for (const message of (value.messages || []) as { from?: string; text?: { body?: string }; context?: { id?: string }; interactive?: { type?: string; call_permission_reply?: { response?: string; response_source?: string } } }[]) {
