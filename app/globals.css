@@ -2856,3 +2856,31 @@ td small, .resource-stat span:not(.icon-tile), .catalogue-banner p, .upload-zone
   .calendar-toolbar h2 { font-size: 18px; }
   .calendar-toolbar .button { min-height: 34px; padding: 7px 10px; font-size: 10px; }
 }
+
+.case-studio { max-width: 1120px; margin: 0 auto; padding: 36px 24px 72px; }
+.case-brand { display: inline-block; color: #134b3b; font: 700 24px var(--font-heading); margin-bottom: 72px; text-decoration: none; }
+.case-eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: 11px; color: #567165; margin: 0 0 16px; }
+.case-studio h1 { max-width: 740px; font: 500 clamp(36px, 5vw, 64px)/1.08 var(--font-heading); letter-spacing: -.04em; margin: 0; color: #163f33; }
+.case-intro { max-width: 600px; font-size: 17px; line-height: 1.7; color: #63736c; margin: 24px 0 36px; }
+.case-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+.case-tabs button { border: 1px solid #dce4df; border-radius: 30px; padding: 12px 22px; background: white; cursor: pointer; }
+.case-tabs button[aria-pressed=true] { background: #174c3c; color: white; border-color: #174c3c; }
+.case-card { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; border: 1px solid #dce4df; border-radius: 24px; background: #f5f8f5; padding: 40px; }
+.case-card h2 { font: 500 30px/1.2 var(--font-heading); color: #173d32; margin: 0 0 24px; }
+.case-card p { line-height: 1.7; color: #647369; font-size: 14px; }
+.case-card .case-hint { color: #244f3e; background: #e8efe7; border-radius: 12px; padding: 18px; }
+.case-form { align-self: center; background: white; padding: 28px; border-radius: 16px; }
+.case-form form { display: flex; flex-direction: column; gap: 14px; }
+.case-form input[type=tel] { width: 100%; padding: 14px; border: 1px solid #ced9d1; border-radius: 8px; font: inherit; }
+.case-consent { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; line-height: 1.7; }
+.case-consent input { margin-top: 4px; }
+.case-primary { display: block; text-align: center; text-decoration: none; border: 0; border-radius: 8px; padding: 14px 18px; background: #174c3c; color: white; cursor: pointer; font: inherit; }
+.case-primary:disabled { opacity: .5; cursor: default; }
+.case-trap { display: none; }
+.case-reset { background: none; border: 0; padding: 16px 0 0; text-decoration: underline; cursor: pointer; }
+.case-note { font-size: 12px; color: #647369; line-height: 1.8; margin-top: 24px; }
+.case-note a { text-decoration: underline; }
+@media (max-width: 700px) { .case-brand { margin-bottom: 48px; } .case-card { grid-template-columns: 1fr; padding: 24px; gap: 20px; } .case-tabs button { padding: 10px 16px; } .case-form { padding: 20px; } }
+.case-transcript { border-bottom: 1px solid #dce4df; padding: 20px 0; }
+.case-transcript summary { cursor: pointer; line-height: 1.6; }
+.case-transcript pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.8; padding: 20px 0; }
