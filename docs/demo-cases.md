@@ -40,11 +40,27 @@ The recording page supplies a short caller cue. Use fictional details.
 
 | Case | Fictional Sri Lankan company | Scenario |
 | --- | --- | --- |
-| Support | Weraluma Clothing | Colombo-to-Kandy clothing delivery |
-| Sales | Kelaniyara Solar | Rooftop solar enquiry in Peradeniya |
-| Operations | Suwaneliya Family Clinic | Appointment at a Nugegoda clinic |
-| Marketing | Ruhunara Holidays | Feedback and domestic holiday planning |
-| Talent | Nilawera Hospitality | Guest relations interview in Galle |
+| Support | Wear Luma Clothing | Trace demo wedding suit WL-1042, escalate and send its working demo tracker |
+| Sales | Keleniya Solar | Colombo home with a bill over LKR 20,000; illustrative savings, payback and lender options |
+| Operations | Silva Family Clinic | Ask the preferred area, then book at Colombo, Dehiwala or Nugegoda |
+| Marketing | Ruhunu Holidays | Agent-led callback about a holiday enquiry and tailored demo package pitch |
+| Talent | Talent Sri Lanka | Third-party agency vacancies, sample CV request and recruiter follow-up |
+
+The support tracker at `/cases/order/WL-1042` displays only a fixed fictional
+order, not customer data. Its stage matches the seeded knowledge document.
+Remove it with the other temporary demo pages after the recordings are supplied.
+The recruitment demo asks for a sample CV in the WhatsApp chat and logs a
+follow-up; it does not parse CV files or forward them to actual employers.
+
+Solar figures are illustrative fixtures: LKR 800,000 initial cost and LKR 15,000
+modeled monthly savings give about 53 months of simple payback, before financing,
+maintenance and other charges. They are not real customer performance claims.
+The agent can discuss independently offered financing from
+[NDB](https://www.ndbbank.com/personal-banking/loans/solar-vantage-loans),
+[DFCC](https://www.dfcc.lk/savings-accounts/solar-loans) and
+[HNB](https://hnb.lk/personal/loans/personal-loans), checked on 23 October 2026.
+No bank partnership, current interest rate or loan approval is claimed.
+
 
 Full call MP3s are archived through the existing private S3 path. Administrators
 can read the demo transcripts at `/cases/transcripts`. The showcase player is the next
