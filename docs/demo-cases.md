@@ -40,7 +40,7 @@ The recording page supplies a short caller cue. Use fictional details.
 
 | Case | Fictional Sri Lankan company | Scenario |
 | --- | --- | --- |
-| Support | Wear Luma Clothing | Trace demo wedding suit WL-1042, escalate and send its working demo tracker |
+| Support | Luma Clothing | Trace demo wedding suit WL-1042, escalate and send its working demo tracker |
 | Sales | Keleniya Solar | Colombo home with a bill over LKR 20,000; illustrative savings, payback and lender options |
 | Operations | Silva Family Clinic | Ask the preferred area, then book at Colombo, Dehiwala or Nugegoda |
 | Marketing | Ruhunu Holidays | Agent-led callback about a holiday enquiry and tailored demo package pitch |

@@ -5,7 +5,7 @@ export default async function Page({ params }: { params: Promise<{ reference: st
   const { reference } = await params;
   if (reference !== "WL-1042") notFound();
   return <main className="case-studio">
-    <Link href="/cases" className="case-brand">Wear Luma Clothing</Link>
+    <Link href="/cases" className="case-brand">Luma Clothing</Link>
     <p className="case-eyebrow">Fictional order · Demo tracker</p>
     <h1>Your wedding suit.</h1>
     <p className="case-intro">Order WL-1042 · Navy wedding suit</p>
