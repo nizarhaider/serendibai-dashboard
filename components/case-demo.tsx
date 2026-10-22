@@ -50,10 +50,10 @@ export function CaseDemo({ cases }: { cases: AgentCase[] }) {
     <Link href="https://serendibai.lk" className="case-brand">SerendibAI</Link>
     <p className="case-eyebrow">Demo studio</p>
     <h1>Five ways to start a conversation.</h1>
-    <p className="case-intro">Choose an agent, confirm your WhatsApp number, then call us. Each demo starts in English and follows your language.</p>
+    <p className="case-intro">Five fictional Sri Lankan businesses. Choose an agent, confirm your WhatsApp number, then call us. Each demo starts in English and follows your language.</p>
     <div className="case-tabs" aria-label="Choose a demo case">{cases.map((item) => <button key={item.slug} disabled={busy} aria-pressed={selected === item.slug} onClick={() => { setSelected(item.slug); setSelection(null); setError(""); }}>{item.title}</button>)}</div>
     <section className="case-card">
-      <div><p className="case-eyebrow">{current?.title} agent</p><h2>{current?.description}</h2><p className="case-hint">{current?.caller_hint}</p><p>Use fictional details. These agents create demo records only. Calls are recorded and transcribed; public showcase clips will be selected separately.</p></div>
+      <div><p className="case-eyebrow">{current?.title} agent · Fictional business</p><h2>{current?.company_name}</h2><p>{current?.description}</p><p className="case-hint">{current?.caller_hint}</p><p>Use fictional details. These agents create demo records only. Calls are recorded and transcribed; public showcase clips will be selected separately.</p></div>
       <div className="case-form">
         {!selection ? <form onSubmit={submit}>
           <label htmlFor="case-phone">Your WhatsApp number</label>

@@ -1,12 +1,16 @@
 # Demo cases
 
-The recording setup is at `/cases`. Five independent portal agents belong to
-SerendibAI Demo Studio. Talent 360's agent, prompt, tools and customer are unchanged.
+The temporary recording setup is at `/cases`. These five one-off agents are for
+the website showcase, not a customer portal feature. Remove the demo pages and
+portal integration after the owner supplies the recordings. The final website
+will play approved clips and offer an opt-in callback for the selected case.
+Talent 360's agent, prompt, tools and customer are unchanged.
 The existing WhatsApp runtime transports both ordinary and selected demo calls.
 
 Apply `db/cases.sql` as one PostgreSQL migration before deploying the runtime or
 portal. It creates the tables and seeds the five agents idempotently. It does not
-update existing agents. The SQL uses the existing runtime agent and public
+update other agents; reruns update only the five seeded demo companies and prompts.
+The SQL uses the existing runtime agent and public
 WhatsApp number; change the case mappings when moving to a different number.
 
 Select a case and enter your WhatsApp number. Send the generated `CASE` message
@@ -27,6 +31,14 @@ The global runtime call limit still applies.
 The English opening identifies the selected AI demo and recording. The existing
 Talent 360 greeting remains unchanged. Each case follows the caller's language.
 The recording page supplies a short caller cue. Use fictional details.
+
+| Case | Fictional Sri Lankan company | Scenario |
+| --- | --- | --- |
+| Support | Weraluma Clothing | Colombo-to-Kandy clothing delivery |
+| Sales | Kelaniyara Solar | Rooftop solar enquiry in Peradeniya |
+| Operations | Suwaneliya Family Clinic | Appointment at a Nugegoda clinic |
+| Marketing | Ruhunara Holidays | Feedback and domestic holiday planning |
+| Talent | Nilawera Hospitality | Guest relations interview in Galle |
 
 Full call MP3s are archived through the existing private S3 path. Administrators
 can read the demo transcripts at `/cases/transcripts`. The showcase player is the next

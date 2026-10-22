@@ -4,12 +4,12 @@ import { db } from "./db";
 import { normalizeDemoPhone } from "./demo";
 
 export const caseSlugs = ["support", "sales", "operations", "marketing", "talent"] as const;
-export type AgentCase = { slug: string; title: string; description: string; caller_hint: string; available: boolean };
+export type AgentCase = { slug: string; title: string; company_name: string; description: string; caller_hint: string; available: boolean };
 
 export async function getCases() {
-  const rows = await db()`select c.slug,c.title,c.description,c.caller_hint,
+  const rows = await db()`select c.slug,c.title,a.company_name,c.description,c.caller_hint,
     (r.status='ready' and r.heartbeat_at>now()-interval '90 seconds' and r.telemetry->>'case_routing'='true') as available
-    from portal_agent_cases c join portal_agents r on r.id=c.runtime_agent_id
+    from portal_agent_cases c join portal_agents r on r.id=c.runtime_agent_id join portal_agents a on a.id=c.agent_id
     order by array_position(array['support','sales','operations','marketing','talent'],c.slug)`;
   return rows as AgentCase[];
 }
