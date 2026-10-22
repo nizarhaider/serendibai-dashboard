@@ -13,20 +13,26 @@ update other agents; reruns update only the five seeded demo companies and promp
 The SQL uses the existing runtime agent and public
 WhatsApp number; change the case mappings when moving to a different number.
 
-Select a case and enter your WhatsApp number. Send the generated `CASE` message
-from that number, then place a WhatsApp voice call in the same chat. Confirmation
-activates the selection for ten minutes. It is consumed by one incoming call;
-the next call uses the ordinary agent unless another case is selected. A new
-selection replaces the previous selection for that number. Demo calls last at
-most five minutes. The page only enables registration when the host runtime has
-a fresh ready heartbeat advertising `case_routing`.
+Select a case and enter your WhatsApp number with callback consent. The backend
+checks WhatsApp call permission and places an outbound call immediately when
+permission is already granted. Otherwise it sends the approved
+`serendibai_demo_call` permission template and places the selected call after the
+recipient accepts. The recipient does not send a confirmation message or initiate
+a call. Declines, delivery failures, unanswered calls and expiry appear on the page.
+A website checkbox does not replace WhatsApp call permission.
 
-The caller's number, confirmation token and latest selection are stored in
-`portal_case_requests`. The verified Meta webhook binds the token to its actual
-sender. Agent configuration, tools, call transcripts, usage and recordings retain
-the selected case's tenant and agent identity. Calls without a confirmed selection
-retain the host agent. Demo tool actions write demo records, not real transactions.
-The global runtime call limit still applies.
+The signed `/cases/call` request uses the existing demo signing secret and is
+claimed once by the host runtime. The runtime rechecks Meta permission before
+calling and binds the selected case agent to the call. Configuration, tools,
+transcripts, usage and private recordings retain that agent and tenant identity.
+Requests expire after ten minutes, demo calls last at most five minutes, and the
+global runtime call limit applies. Concurrent callback requests for the same
+number are rejected. The legacy inbound selector applies only to older inbound
+requests and cannot select the persona for an outbound callback.
+
+The page enables registration only when the host runtime has a fresh ready
+heartbeat advertising `case_callbacks`. Callback handling stays in the runtime;
+these temporary endpoints will be removed from the portal after recording.
 
 The English opening identifies the selected AI demo and recording. The existing
 Talent 360 greeting remains unchanged. Each case follows the caller's language.

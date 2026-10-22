@@ -12,12 +12,19 @@ create table if not exists portal_case_requests (
   phone text not null,
   case_slug text not null references portal_agent_cases(slug),
   runtime_agent_id uuid not null references portal_agents(id),
-  state text not null default 'pending' check(state in ('pending','active','consumed')),
+  state text not null default 'pending',
+  direction text not null default 'inbound',
+  message_id text,
+  error text not null default '',
   call_id text unique,
   expires_at timestamptz not null default now()+interval '10 minutes',
   created_at timestamptz not null default now(),
   unique(runtime_agent_id,phone)
 );
+alter table portal_case_requests drop constraint if exists portal_case_requests_state_check;
+alter table portal_case_requests add column if not exists direction text not null default 'inbound';
+alter table portal_case_requests add column if not exists message_id text;
+alter table portal_case_requests add column if not exists error text not null default '';
 insert into customers(id,business_name,contact_name,portal_tools)
 values('11f34122-0125-43f2-8d18-d7d4ae186eaa','SerendibAI Demo Studio','SerendibAI',array['book_appointment','create_order','create_ticket'])
 on conflict(id) do nothing;
