@@ -34,20 +34,19 @@ The page enables registration only when the host runtime has a fresh ready
 heartbeat advertising `case_callbacks`. Callback handling stays in the runtime;
 these temporary endpoints will be removed from the portal after recording.
 
-The English opening identifies the selected AI demo and recording. The existing
+The case opening uses a natural business greeting. Consent to AI calling and recording is collected before dialing, so the spoken scene does not announce a demo or recording. Direct questions about AI or the staged company are answered truthfully. The existing
 Talent 360 greeting remains unchanged. Each case follows the caller's language.
 The recording page supplies a short caller cue. Use fictional details.
 
 | Case | Fictional Sri Lankan company | Scenario |
 | --- | --- | --- |
-| Support | Luma Clothing | Trace demo wedding suit WL-1042, escalate and send its working demo tracker |
+| Support | Luma Clothing | Accept the supplied suit reference, offer priority courier pickup or Bambalapitiya collection, and share tracking |
 | Sales | Keleniya Solar | Colombo home with a bill over LKR 20,000; illustrative savings, payback and lender options |
 | Operations | Silva Family Clinic | Ask the preferred area, then book at Colombo, Dehiwala or Nugegoda |
 | Marketing | Ruhunu Holidays | Agent-led callback about a holiday enquiry and tailored demo package pitch |
 | Talent | Talent Sri Lanka | Third-party agency vacancies, sample CV request and recruiter follow-up |
 
-The support tracker at `/cases/order/WL-1042` displays only a fixed fictional
-order, not customer data. Its stage matches the seeded knowledge document.
+The support tracker at `/cases/order/{reference}` displays the caller-provided reference with the staged suit status: ready at Bambalapitiya, awaiting courier pickup within two days. References must contain 3-30 letters, digits or hyphens. It contains no actual customer data. The caller can request a delivery-partner escalation through the delivery coordinator or collection from the branch.
 Remove it with the other temporary demo pages after the recordings are supplied.
 The recruitment demo asks for a sample CV in the WhatsApp chat and logs a
 follow-up; it does not parse CV files or forward them to actual employers.
@@ -87,3 +86,5 @@ The SerendibAI cases use these conversational patterns while restricting claims 
 implemented tools: demo bookings, demo tickets, knowledge/catalogue search and
 consented WhatsApp summaries. Refunds, transfers, payments, rescheduling, identity
 verification and hiring decisions are not claimed as completed actions.
+
+Voice direction is scoped to these five recording cases: Aoede female timbre with explicit native Sri Lankan English cadence and Sinhala-influenced pronunciation, including Bambalapitiya. A female preset does not by itself verify the accent; audition the generated preview and a fresh WhatsApp recording. Talent 360 retains its existing instructions and greeting.
