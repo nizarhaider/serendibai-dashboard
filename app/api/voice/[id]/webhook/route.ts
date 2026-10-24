@@ -1,7 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
 import { runtimeSecrets, validRuntimeUrl } from "@/lib/runtime";
-import { handleDemoWebhook } from "@/lib/demo";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -41,7 +40,6 @@ async function handler(
       !payload.entry?.every((entry: { id?: string }) => entry.id === "2397798740726496"))
   )
     return new Response("Invalid webhook", { status: 400 });
-  if (id === process.env.DEMO_AGENT_ID) await handleDemoWebhook(payload);
   const target = agent.telemetry?.runtime_url;
   if (
     !target ||

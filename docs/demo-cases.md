@@ -27,8 +27,8 @@ calling and binds the selected case agent to the call. Configuration, tools,
 transcripts, usage and private recordings retain that agent and tenant identity.
 Requests expire after ten minutes, demo calls last at most five minutes, and the
 global runtime call limit applies. Concurrent callback requests for the same
-number are rejected. The legacy inbound selector applies only to older inbound
-requests and cannot select the persona for an outbound callback.
+number are rejected. The legacy text-based inbound selector has been removed; normal inbound calls
+use the host agent.
 
 The page enables registration only when the host runtime has a fresh ready
 heartbeat advertising `case_callbacks`. Callback handling stays in the runtime;
@@ -87,6 +87,6 @@ implemented tools: demo bookings, demo tickets, knowledge/catalogue search and
 consented WhatsApp summaries. Refunds, transfers, payments, rescheduling, identity
 verification and hiring decisions are not claimed as completed actions.
 
-Voice direction is scoped to these five recording cases: Aoede female timbre with explicit native Sri Lankan English cadence and Sinhala-influenced pronunciation, including Bambalapitiya. A female preset does not by itself verify the accent; audition the generated preview and a fresh WhatsApp recording. Talent 360 retains its existing instructions and greeting.
+Voice direction is scoped to these five recording cases: Leda female timbre with explicit native Sri Lankan English cadence and Sinhala-influenced pronunciation, including Bambalapitiya. A female preset does not by itself verify the accent; audition the generated preview and a fresh WhatsApp recording. Talent 360 retains its existing instructions and greeting.
 
 The five showcase agents use Leda, selected by the user after matching Gemini Live auditions, with Sri Lankan accent instructions and no explicit language or locale code. The opening asks the caller to select English, Sinhala or Tamil. Talent 360 retains its existing voice and configuration.

@@ -1,8 +1,21 @@
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { ApiError, digest, rateLimit } from "./auth";
 import { db } from "./db";
-import { demoSignature, normalizeDemoPhone } from "./demo";
 import { validRuntimeUrl } from "./runtime";
+
+export function normalizePhone(value: string) {
+  let phone = value.trim().replace(/[\s()-]/g, "").replace(/^\+/, "").replace(/^00/, "");
+  if (/^0[1-9]\d{8}$/.test(phone)) phone = `94${phone.slice(1)}`;
+  if (!/^[1-9]\d{7,14}$/.test(phone) || (phone.startsWith("94") && !/^94[1-9]\d{8}$/.test(phone)))
+    throw new ApiError("Enter a valid WhatsApp number with its country code.");
+  return phone;
+}
+
+export function caseSignature(body: string) {
+  const secret = process.env.DEMO_SIGNING_SECRET;
+  if (!secret) throw new ApiError("Demo calling is not configured.", 503);
+  return createHmac("sha256", secret).update(body).digest("hex");
+}
 
 export const caseSlugs = ["support", "sales", "operations", "marketing", "talent"] as const;
 export type AgentCase = { slug: string; title: string; company_name: string; description: string; caller_hint: string; available: boolean };
@@ -16,7 +29,7 @@ export async function getCases() {
 }
 
 export async function registerCase(value: string, slug: string, ip: string) {
-  const phone = normalizeDemoPhone(value);
+  const phone = normalizePhone(value);
   await rateLimit(`case:ip:${digest(ip)}`, 15, 3600);
   await rateLimit(`case:phone:${digest(phone)}`, 10, 3600);
   await rateLimit("case:global", 100, 86400);
@@ -36,7 +49,7 @@ export async function registerCase(value: string, slug: string, ip: string) {
   const body = JSON.stringify({ id, phone, timestamp: Math.floor(Date.now() / 1000) });
   try {
     const response = await fetch(`${target.runtime_url}/cases/call`, {
-      method: "POST", headers: { "Content-Type": "application/json", "x-demo-signature": demoSignature(body) },
+      method: "POST", headers: { "Content-Type": "application/json", "x-demo-signature": caseSignature(body) },
       body, signal: AbortSignal.timeout(25000), redirect: "error",
     });
     if (!response.ok) throw new Error("Callback unavailable");
