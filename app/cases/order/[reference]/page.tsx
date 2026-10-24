@@ -5,7 +5,7 @@ export default async function Page({ params }: { params: Promise<{ reference: st
   const { reference } = await params;
   if (!/^[a-zA-Z0-9-]{3,30}$/.test(reference)) notFound();
   return <main className="case-studio">
-    <Link href="/cases" className="case-brand">Luma Clothing</Link>
+    <Link href="/cases" className="case-brand">Roma Suits</Link>
     <p className="case-eyebrow">Fictional order · Demo tracker</p>
     <h1>Your wedding suit.</h1>
     <p className="case-intro">Order {reference} · Navy wedding suit</p>

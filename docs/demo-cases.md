@@ -1,15 +1,14 @@
 # Demo cases
 
-The temporary recording setup is at `/cases`. These five one-off agents are for
-the website showcase, not a customer portal feature. Remove the demo pages and
-portal integration after the owner supplies the recordings. The final website
-will play approved clips and offer an opt-in callback for the selected case.
-Talent 360's agent, prompt, tools and customer are unchanged.
+The temporary recording setup is at `/cases`. Sales is the only outbound
+callback case. Talent, Support and Operations have separate inbound instruction
+prompts; the shared inbound line does not route calls between them. Remove the
+demo pages and portal integration after the owner supplies the recordings.
 The existing WhatsApp runtime transports both ordinary and selected demo calls.
 
 Apply `db/cases.sql` as one PostgreSQL migration before deploying the runtime or
-portal. It creates the tables and seeds the five agents idempotently. It does not
-update other agents; reruns update only the five seeded demo companies and prompts.
+portal. It creates the tables and seeds the demo agents idempotently. It does not
+update other agents; reruns update only the seeded demo companies and prompts.
 The SQL uses the existing runtime agent and public
 WhatsApp number; change the case mappings when moving to a different number.
 
@@ -34,31 +33,25 @@ The page enables registration only when the host runtime has a fresh ready
 heartbeat advertising `case_callbacks`. Callback handling stays in the runtime;
 these temporary endpoints will be removed from the portal after recording.
 
-The case opening uses a natural business greeting. Consent to AI calling and recording is collected before dialing, so the spoken scene does not announce a demo or recording. Direct questions about AI or the staged company are answered truthfully. The existing
-Talent 360 greeting remains unchanged. Each case follows the caller's language.
-The recording page supplies a short caller cue. Use fictional details.
+The Sales callback starts in English with Prasan's laptop inquiry opening. It
+does not ask the recipient to choose a language. Inbound calls offer English,
+Sinhala or Tamil. Use fictional details and answer questions about the staged
+company truthfully.
 
 | Case | Fictional Sri Lankan company | Scenario |
 | --- | --- | --- |
-| Support | Luma Clothing | Accept the supplied suit reference, offer priority courier pickup or Bambalapitiya collection, and share tracking |
-| Sales | Keleniya Solar | Colombo home with a bill over LKR 20,000; illustrative savings, payback and lender options |
-| Operations | Silva Family Clinic | Ask the preferred area, then book at Colombo, Dehiwala or Nugegoda |
-| Marketing | Ruhunu Holidays | Agent-led callback about a holiday enquiry and tailored demo package pitch |
-| Talent | Talent Sri Lanka | Third-party agency vacancies, sample CV request and recruiter follow-up |
+| Support | Roma Suits | Accept the supplied suit reference, offer priority courier pickup or Bambalapitiya collection, and share tracking |
+| Sales | Electronics.lk | Call about the customer's laptop inquiry and use only verified product information |
+| Operations | Dentist.lk | Ask the preferred area, then book a dental consultation |
+| Talent | Talent360 | Recruitment vacancies and recruiter follow-up |
 
 The support tracker at `/cases/order/{reference}` displays the caller-provided reference with the staged suit status: ready at Bambalapitiya, awaiting courier pickup within two days. References must contain 3-30 letters, digits or hyphens. It contains no actual customer data. The caller can request a delivery-partner escalation through the delivery coordinator or collection from the branch.
 Remove it with the other temporary demo pages after the recordings are supplied.
 The recruitment demo asks for a sample CV in the WhatsApp chat and logs a
 follow-up; it does not parse CV files or forward them to actual employers.
 
-Solar figures are illustrative fixtures: LKR 800,000 initial cost and LKR 15,000
-modeled monthly savings give about 53 months of simple payback, before financing,
-maintenance and other charges. They are not real customer performance claims.
-The agent can discuss independently offered financing from
-[NDB](https://www.ndbbank.com/personal-banking/loans/solar-vantage-loans),
-[DFCC](https://www.dfcc.lk/savings-accounts/solar-loans) and
-[HNB](https://hnb.lk/personal/loans/personal-loans), checked on 23 October 2026.
-No bank partnership, current interest rate or loan approval is claimed.
+Electronics.lk uses a laptop inquiry scenario. The agent does not invent model,
+price, stock or specification details.
 
 
 Full call MP3s are archived through the existing private S3 path. Administrators
@@ -87,6 +80,6 @@ implemented tools: demo bookings, demo tickets, knowledge/catalogue search and
 consented WhatsApp summaries. Refunds, transfers, payments, rescheduling, identity
 verification and hiring decisions are not claimed as completed actions.
 
-Voice direction is scoped to these five recording cases: Leda female timbre with explicit native Sri Lankan English cadence and Sinhala-influenced pronunciation, including Bambalapitiya. A female preset does not by itself verify the accent; audition the generated preview and a fresh WhatsApp recording. Talent 360 retains its existing instructions and greeting.
+Voice direction is scoped to the demo agents: Leda female timbre with native Sri Lankan English cadence and Sinhala-influenced pronunciation. A female preset does not by itself verify the accent; audition a fresh WhatsApp recording.
 
-The five showcase agents use Leda, selected by the user after matching Gemini Live auditions, with Sri Lankan accent instructions and no explicit language or locale code. The opening asks the caller to select English, Sinhala or Tamil. Talent 360 retains its existing voice and configuration.
+The demo agents use Leda with Sri Lankan accent instructions and no explicit language or locale code. Inbound calls offer English, Sinhala or Tamil. Outbound Sales starts in English without asking the customer to choose a language.
