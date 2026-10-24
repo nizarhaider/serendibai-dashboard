@@ -17,14 +17,15 @@ export function caseSignature(body: string) {
   return createHmac("sha256", secret).update(body).digest("hex");
 }
 
-export const caseSlugs = ["sales"] as const;
+export const caseSlugs = ["sales", "talent", "operations", "marketing"] as const;
 export type AgentCase = { slug: string; title: string; company_name: string; description: string; caller_hint: string; available: boolean };
 
 export async function getCases() {
   const rows = await db()`select c.slug,c.title,a.company_name,c.description,c.caller_hint,
     (r.status='ready' and r.heartbeat_at>now()-interval '90 seconds' and r.telemetry->>'case_callbacks'='true') as available
     from portal_agent_cases c join portal_agents r on r.id=c.runtime_agent_id join portal_agents a on a.id=c.agent_id
-    where c.slug='sales'`;
+    where c.slug in ('sales','talent','operations','marketing')
+    order by array_position(array['sales','talent','operations','marketing'],c.slug)`;
   return rows as AgentCase[];
 }
 
@@ -35,7 +36,7 @@ export async function registerCase(value: string, slug: string, ip: string) {
   await rateLimit("case:global", 100, 86400);
   const [target] = await db()`select c.runtime_agent_id,r.telemetry->>'runtime_url' as runtime_url from portal_agent_cases c
     join portal_agents r on r.id=c.runtime_agent_id join portal_agents a on a.id=c.agent_id
-    where c.slug=${slug} and a.status<>'archived' and r.status='ready'
+    where c.slug=${slug} and c.slug in ('sales','talent','operations','marketing') and a.status<>'archived' and r.status='ready'
       and r.heartbeat_at>now()-interval '90 seconds' and r.telemetry->>'case_callbacks'='true'`;
   if (!target || !validRuntimeUrl(target.runtime_url || "")) throw new ApiError("The demo agents are offline. Please try again shortly.", 503);
   const id = randomBytes(16).toString("hex");

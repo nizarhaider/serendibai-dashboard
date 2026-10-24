@@ -1,85 +1,26 @@
 # Demo cases
 
-The temporary recording setup is at `/cases`. Sales is the only outbound
-callback case. Talent, Support and Operations have separate inbound instruction
-prompts; the shared inbound line does not route calls between them. Remove the
-demo pages and portal integration after the owner supplies the recordings.
-The existing WhatsApp runtime transports both ordinary and selected demo calls.
+The four main solutions are `inbound_cx_support`, `outbound_cx_support`,
+`lead_qualification` and `outbound`. Their general prompts live in
+`voice-agent/app/solution_prompts.py`. Example instructions and fixed demo
+identities live in `voice-agent/app/case_prompt.py`.
 
-Apply `db/cases.sql` as one PostgreSQL migration before deploying the runtime or
-portal. It creates the tables and seeds the demo agents idempotently. It does not
-update other agents; reruns update only the seeded demo companies and prompts.
-The SQL uses the existing runtime agent and public
-WhatsApp number; change the case mappings when moving to a different number.
+The shared inbound number defaults to Samantha from Talent360 for applicant
+qualification. Roma Suits support and Econ Properties qualification are additional
+instruction examples; there is no inbound number-based routing.
 
-Select a case and enter your WhatsApp number with callback consent. The backend
-checks WhatsApp call permission and places an outbound call immediately when
-permission is already granted. Otherwise it sends the approved
-`serendibai_demo_call` permission template and places the selected call after the
-recipient accepts. The recipient does not send a confirmation message or initiate
-a call. Declines, delivery failures, unanswered calls and expiry appear on the page.
-A website checkbox does not replace WhatsApp call permission.
-
-The signed `/cases/call` request uses the existing demo signing secret and is
-claimed once by the host runtime. The runtime rechecks Meta permission before
-calling and binds the selected case agent to the call. Configuration, tools,
-transcripts, usage and private recordings retain that agent and tenant identity.
-Requests expire after ten minutes, demo calls last at most five minutes, and the
-global runtime call limit applies. Concurrent callback requests for the same
-number are rejected. The legacy text-based inbound selector has been removed; normal inbound calls
-use the host agent.
-
-The page enables registration only when the host runtime has a fresh ready
-heartbeat advertising `case_callbacks`. Callback handling stays in the runtime;
-these temporary endpoints will be removed from the portal after recording.
-
-The Sales callback starts in English with Prasan's laptop inquiry opening. It
-does not ask the recipient to choose a language. Inbound calls offer English,
-Sinhala or Tamil. Use fictional details and answer questions about the staged
-company truthfully.
-
-| Case | Fictional Sri Lankan company | Scenario |
+| Callback route | Solution | Example |
 | --- | --- | --- |
-| Support | Roma Suits | Accept the supplied suit reference, offer priority courier pickup or Bambalapitiya collection, and share tracking |
-| Sales | Electronics.lk | Call about the customer's laptop inquiry and use only verified product information |
-| Operations | Dentist.lk | Ask the preferred area, then book a dental consultation |
-| Talent | Talent360 | Recruitment vacancies and recruiter follow-up |
+| sales | outbound_cx_support | Electronics.lk laptop repair ready for collection |
+| talent | lead_qualification | Talent360 applicant screening |
+| operations | outbound | Dentist.lk appointment confirmation |
+| marketing | outbound | Education webinar enrollment follow-up |
 
-The support tracker at `/cases/order/{reference}` displays the caller-provided reference with the staged suit status: ready at Bambalapitiya, awaiting courier pickup within two days. References must contain 3-30 letters, digits or hyphens. It contains no actual customer data. The caller can request a delivery-partner escalation through the delivery coordinator or collection from the branch.
-Remove it with the other temporary demo pages after the recordings are supplied.
-The recruitment demo asks for a sample CV in the WhatsApp chat and logs a
-follow-up; it does not parse CV files or forward them to actual employers.
+The existing route identifiers are kept to preserve agent and call history. They
+identify examples, not the four solution names. Callbacks start in English
+without a language selector; incoming calls offer English, Sinhala or Tamil.
 
-Electronics.lk uses a laptop inquiry scenario. The agent does not invent model,
-price, stock or specification details.
-
-
-Full call MP3s are archived through the existing private S3 path. Administrators
-can read the demo transcripts at `/cases/transcripts`. The showcase player is the next
-stage: record and select a clip for each case, then add synchronized transcript
-playback. No unreviewed call is automatically published.
-
-## Reference review
-
-Reviewed all 20 full conversations supplied in the page data for
-[ElevenLabs Agents](https://elevenlabs.io/agents), on 22 October 2026. Ten examples
-contain audio with word-timed transcripts; ten use text conversations. These notes
-summarize the patterns; the new agent instructions use original wording and
-fictional fixtures.
-
-| Category | Reference examples and patterns |
-| --- | --- |
-| Support | Order Support checks an order, explains a delivery delay and addresses a refund request. Triage gathers outage impact and context before escalation. Front Desk prioritizes an active property leak and asks about electrical risk. FAQ explains export limitations and an alternative to cancelling. |
-| Sales | Outreach identifies why an application stalled and offers a checklist. Qualification gathers use case, call volume and launch date before a meeting. Booking confirms a visit slot and arrival details. Upsell identifies usage pressure and hands pricing to an account manager. |
-| Operations | Scheduling offers alternatives and confirms a changed appointment. Claims gathers incident details and evidence before a reference. Verification compares submitted identity details. Collections acknowledges an overdue balance and agrees a follow-up date. |
-| Marketing | Campaign introduces a relevant offer and a checkout next step. Win-back listens to a reason for leaving and offers a low-pressure demo. Feedback discovers a sizing issue and offers an exchange. Research asks for a recommendation score, then follows the underlying problem. |
-| Talent | Screening asks about shifts, relevant experience and location. Training runs a difficult-customer role-play and gives focused feedback. Interview explores a specific experience with follow-up questions. Onboarding checks access and clarifies first-week expectations. |
-
-The SerendibAI cases use these conversational patterns while restricting claims to
-implemented tools: demo bookings, demo tickets, knowledge/catalogue search and
-consented WhatsApp summaries. Refunds, transfers, payments, rescheduling, identity
-verification and hiring decisions are not claimed as completed actions.
-
-Voice direction is scoped to the demo agents: Leda female timbre with native Sri Lankan English cadence and Sinhala-influenced pronunciation. A female preset does not by itself verify the accent; audition a fresh WhatsApp recording.
-
-The demo agents use Leda with Sri Lankan accent instructions and no explicit language or locale code. Inbound calls offer English, Sinhala or Tamil. Outbound Sales starts in English without asking the customer to choose a language.
+Apply `db/cases.sql` to seed or update only these demo agents, case descriptions
+and documents. The callback page is `/cases`. It preserves signed requests,
+Meta call permission, tenant-scoped tools, private recordings and transcripts.
+The support tracker remains at `/cases/order/{reference}`.

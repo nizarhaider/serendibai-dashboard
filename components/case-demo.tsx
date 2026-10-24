@@ -18,7 +18,7 @@ const statuses: Record<string, [string, string]> = {
 };
 
 export function CaseDemo({ cases }: { cases: AgentCase[] }) {
-  const [selected, setSelected] = useState(cases[0]?.slug || "support");
+  const [selected, setSelected] = useState(cases[0]?.slug || "sales");
   const [selection, setSelection] = useState<Selection | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -60,8 +60,8 @@ export function CaseDemo({ cases }: { cases: AgentCase[] }) {
   return <main className="case-studio">
     <Link href="https://serendibai.lk" className="case-brand">SerendibAI</Link>
     <p className="case-eyebrow">Demo studio</p>
-    <h1>Five ways to start a conversation.</h1>
-    <p className="case-intro">Five fictional Sri Lankan businesses. Choose an agent and enter your number for a WhatsApp callback. Each demo starts in English and follows your language.</p>
+    <h1>Try an outbound conversation.</h1>
+    <p className="case-intro">Choose an example and enter your number for a WhatsApp callback. Calls start in English and follow your language.</p>
     <div className="case-tabs" aria-label="Choose a demo case">{cases.map((item) => <button key={item.slug} disabled={busy} aria-pressed={selected === item.slug} onClick={() => { setSelected(item.slug); setSelection(null); setError(""); }}>{item.title}</button>)}</div>
     <section className="case-card">
       <div><p className="case-eyebrow">{current?.title} agent · Fictional business</p><h2>{current?.company_name}</h2><p>{current?.description}</p><p className="case-hint">{current?.caller_hint}</p><p>Use fictional details. These agents create demo records only. Calls are recorded and transcribed; public showcase clips will be selected separately.</p></div>
