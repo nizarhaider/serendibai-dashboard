@@ -38,9 +38,7 @@ the same `DEMO_SIGNING_SECRET` on Netlify and the voice runtime.
 
 ## Validation
 
-`pnpm build`, `pnpm lint`, and `pnpm exec playwright test`. Browser tests cover authentication, real uploads, Excel/manual editing, persisted configuration, responsive pages and error handling. With `DATABASE_URL` in the test environment, they also cover scoped runtime retrieval, disabled tools, duplicate call ingestion and customer isolation. QA records are removed after tests.
-
-The voice runtime repository also runs `uv run python -m pytest`, including the recording tests.
+`pnpm build` and `pnpm lint` validate the portal. The voice runtime uses `uv run ruff check .` for Python validation.
 
 ## Deployment
 
