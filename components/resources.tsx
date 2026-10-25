@@ -38,6 +38,7 @@ export function Resources({
   refresh: () => Promise<void>;
   notify: (s: string) => void;
 }) {
+  const [catalogueStatus, setCatalogueStatus] = useState("active");
   const [query, setQuery] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -184,9 +185,10 @@ export function Resources({
   const products = (editing || data.products).filter(
     (p) =>
       editing ||
-      `${p.name} ${p.sku} ${p.category}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
+      ((catalogueStatus === "all" || p.status === catalogueStatus) &&
+        `${p.name} ${p.sku} ${p.category}`
+          .toLowerCase()
+          .includes(query.toLowerCase())),
   );
   return (
     <>
@@ -284,6 +286,18 @@ export function Resources({
             </p>
           </div>
           <div className="toolbar-actions">
+            {!knowledge && !editing && (
+              <select
+                aria-label="Catalogue status"
+                value={catalogueStatus}
+                onChange={(event) => setCatalogueStatus(event.target.value)}
+              >
+                <option value="active">Active items</option>
+                <option value="draft">Drafts</option>
+                <option value="archived">Archived</option>
+                <option value="all">All items</option>
+              </select>
+            )}
             <div className="search-input">
               <Search size={16} />
               <input
@@ -291,6 +305,7 @@ export function Resources({
                 placeholder={
                   knowledge ? "Find a document…" : "Search catalogue…"
                 }
+                disabled={Boolean(editing)}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -361,8 +376,7 @@ export function Resources({
                     >
                       <strong>{d.name}</strong>
                       <span>
-                        {number(d.bytes / 1024)} KB · {number(d.characters)}{" "}
-                        characters · Added{" "}
+                        {number(d.bytes / 1024)} KB · Added{" "}
                         {new Date(d.created_at).toLocaleDateString("en-GB", {
                           timeZone: "Asia/Colombo",
                           day: "numeric",
@@ -561,7 +575,9 @@ export function Resources({
                 <h3>
                   {query
                     ? "No products match your search."
-                    : "No products or services yet"}
+                    : data.products.length
+                      ? "No items in this view"
+                      : "No products or services yet"}
                 </h3>
                 <p>
                   Add products, services, prices and availability. Your agent
@@ -571,7 +587,7 @@ export function Resources({
                   className="button"
                   onClick={() => setEditing([blank()])}
                 >
-                  <Plus size={15} /> Add your first item
+                  <Plus size={15} /> Add item
                 </button>
               </div>
             )}
