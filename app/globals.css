@@ -2899,3 +2899,11 @@ td small, .resource-stat span:not(.icon-tile), .catalogue-banner p, .upload-zone
 .outbound-table th, .outbound-table td { padding: 12px; border-bottom: 1px solid #e4ebe9; vertical-align: top; }
 .outbound-table td { max-width: 340px; overflow-wrap: anywhere; }
 .outbound-table td small { display: block; color: #ae483c; }
+.outbound-live { margin: 14px 0 0; font-weight: 600; }
+.outbound-status { display: inline-block; color: #556966; }
+.outbound-status.calling, .outbound-status.permission, .outbound-status.preparing, .outbound-status.pending { color: #9a650e; }
+.outbound-status.completed { color: #167457; }
+.outbound-status.failed, .outbound-status.declined, .outbound-status.expired { color: #ae483c; }
+.outbound-table details { margin-top: 8px; }
+.outbound-table summary { cursor: pointer; }
+.outbound-table pre { white-space: pre-wrap; font: inherit; max-height: 220px; overflow: auto; }
