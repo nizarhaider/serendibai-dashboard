@@ -42,7 +42,7 @@ export async function registerCase(value: string, slug: string, ip: string) {
   const id = randomBytes(16).toString("hex");
   const [created] = await db()`insert into portal_case_requests(id,phone,case_slug,runtime_agent_id,direction)
     values(${id},${phone},${slug},${target.runtime_agent_id},'outbound')
-    on conflict(runtime_agent_id,phone) do update set id=excluded.id,case_slug=excluded.case_slug,
+    on conflict(runtime_agent_id,phone) do update set id=excluded.id,case_slug=excluded.case_slug,outbound_row_id=null,
       direction='outbound',state='pending',call_id=null,message_id=null,error='',expires_at=now()+interval '10 minutes',created_at=now()
     where portal_case_requests.state not in ('preparing','permission','calling') or portal_case_requests.expires_at<now()
     returning id`;

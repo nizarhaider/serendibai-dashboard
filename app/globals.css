@@ -2882,3 +2882,19 @@ td small, .resource-stat span:not(.icon-tile), .catalogue-banner p, .upload-zone
 .case-transcript { border-bottom: 1px solid #dce4df; padding: 20px 0; }
 .case-transcript summary { cursor: pointer; line-height: 1.6; }
 .case-transcript pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.8; padding: 20px 0; }
+.outbound-page { display: grid; gap: 20px; }
+.outbound-card { background: white; border: 1px solid #e4ebe9; border-radius: 18px; padding: 24px; }
+.outbound-card h2 { margin: 0 0 8px; font-size: 20px; }
+.outbound-card p { color: #63716e; }
+.outbound-card form { display: grid; gap: 16px; max-width: 680px; margin-top: 20px; }
+.outbound-card label { display: grid; gap: 7px; font-weight: 600; }
+.outbound-card input, .outbound-card select, .outbound-card textarea { width: 100%; }
+.outbound-card textarea { resize: vertical; }
+.outbound-lists { display: flex; flex-wrap: wrap; gap: 10px; }
+.outbound-lists button, .outbound-table button { border: 1px solid #cbdad5; border-radius: 8px; background: white; padding: 8px 12px; cursor: pointer; }
+.outbound-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.outbound-table { overflow-x: auto; margin: 20px 0; }
+.outbound-table table { width: 100%; border-collapse: collapse; text-align: left; }
+.outbound-table th, .outbound-table td { padding: 12px; border-bottom: 1px solid #e4ebe9; vertical-align: top; }
+.outbound-table td { max-width: 340px; overflow-wrap: anywhere; }
+.outbound-table td small { display: block; color: #ae483c; }

@@ -32,6 +32,11 @@ create index if not exists portal_tickets_customer_date on portal_tickets(custom
 create table if not exists portal_quotas (customer_id uuid primary key references customers(id), tokens integer not null default 1000000 check(tokens>0), minutes integer not null default 1000 check(minutes>0), calls integer not null default 500 check(calls>0), label text not null default 'Workspace limits');
 create table if not exists portal_events (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), agent_id uuid references portal_agents(id), action text not null, detail text not null, created_at timestamptz not null default now());
 create index if not exists portal_events_customer_date on portal_events(customer_id,created_at desc);
+create table if not exists portal_outbound_batches (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), agent_id uuid not null references portal_agents(id), name text not null, instructions text not null, columns jsonb not null, headers jsonb not null, created_at timestamptz not null default now());
+create table if not exists portal_outbound_rows (id uuid primary key default gen_random_uuid(), batch_id uuid not null references portal_outbound_batches(id) on delete cascade, phone text not null, data jsonb not null, result jsonb, created_at timestamptz not null default now());
+create index if not exists portal_outbound_rows_batch on portal_outbound_rows(batch_id,created_at);
+alter table portal_case_requests alter column case_slug drop not null;
+alter table portal_case_requests add column if not exists outbound_row_id uuid references portal_outbound_rows(id);
 
 create table if not exists portal_demo_requests (id text primary key, phone text not null, state text not null, message_id text unique, call_id text unique, expires_at timestamptz not null, created_at timestamptz not null default now());
 drop table if exists calls;

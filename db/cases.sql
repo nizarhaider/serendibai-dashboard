@@ -21,6 +21,8 @@ create table if not exists portal_case_requests (
   created_at timestamptz not null default now(),
   unique(runtime_agent_id,phone)
 );
+alter table portal_case_requests alter column case_slug drop not null;
+alter table portal_case_requests add column if not exists outbound_row_id uuid references portal_outbound_rows(id);
 alter table portal_case_requests drop constraint if exists portal_case_requests_state_check;
 alter table portal_case_requests add column if not exists direction text not null default 'inbound';
 alter table portal_case_requests add column if not exists message_id text;

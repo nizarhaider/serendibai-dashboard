@@ -20,6 +20,7 @@ import {
   LogOut,
   Menu,
   PhoneIncoming,
+  PhoneOutgoing,
   PackageCheck,
   Plus,
   RefreshCw,
@@ -39,6 +40,7 @@ import { Agents } from "./agents";
 import { Appointments } from "./appointments";
 import { Orders } from "./orders";
 import { Tickets } from "./tickets";
+import { Outbound } from "./outbound";
 
 const Chart = dynamic(() => import("./chart"), {
   ssr: false,
@@ -196,6 +198,7 @@ export function Portal({
     { href: "knowledge", label: "Knowledge Base", icon: BookOpen },
     { href: "catalogue", label: "Product Catalogue", icon: Box },
     { href: "agents", label: "Agent Management", icon: AudioLines },
+    { href: "outbound", label: "Outbound Calls", icon: PhoneOutgoing },
     { href: "admin", label: "Customers & access", icon: Users },
   ].filter(item => canAccessSection(data, item.href));
   const refresh = useCallback(
@@ -337,6 +340,8 @@ export function Portal({
                     ? "MEET YOUR DIGITAL TEAM"
                     : section === "knowledge"
                       ? "GIVE YOUR AGENTS THE ANSWERS"
+                      : section === "outbound"
+                        ? "VALIDATE CONTACTS BY PHONE"
                       : "EVERY DETAIL, AT THEIR FINGERTIPS"}
               </div>
               <h1>
@@ -355,6 +360,8 @@ export function Portal({
                         ? "Keep every customer issue visible and ready for your team."
                   : section === "knowledge"
                     ? "A shared source of truth. Add your documents and keep every answer current."
+                  : section === "outbound"
+                    ? "Upload contacts, set the validation instructions, and download the results."
                     : section === "catalogue"
                       ? "Your products and services, ready for the next conversation."
                       : "Create, configure and run voice agents. All from one place."}
@@ -401,6 +408,8 @@ export function Portal({
             />
           ) : section === "agents" ? (
             <Agents data={data} refresh={refresh} notify={notify} />
+          ) : section === "outbound" ? (
+            <Outbound data={data} />
           ) : section === "appointments" ? (
             <Appointments data={data} refresh={refresh} />
           ) : section === "orders" ? (
