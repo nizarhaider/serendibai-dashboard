@@ -24,7 +24,7 @@ export function Outbound({ data }: { data: PortalData }) {
   const [phoneColumn, setPhoneColumn] = useState("");
   const [instructions, setInstructions] = useState("");
   const [agentId, setAgentId] = useState(data.agents.find(a => a.status !== "archived")?.id || "");
-  const [batches, setBatches] = useState<{ id: string; name: string; rows: number }[]>([]);
+  const [batches, setBatches] = useState<{ id: string; name: string; rows: number; created_at: string }[]>([]);
   const [batch, setBatch] = useState<Batch | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState("");
@@ -36,13 +36,22 @@ export function Outbound({ data }: { data: PortalData }) {
     const response = await fetch(`/api/outbound${id ? `?id=${id}` : ""}`);
     const result = await response.json();
     if (!response.ok) throw Error(result.error);
-    if (id) { setBatch(result.batch); setRows(result.rows); }
+    if (id) {
+      setBatch(result.batch); setRows(result.rows);
+      window.history.replaceState(null, "", `/outbound?list=${id}`);
+    }
     else setBatches(result);
   }
   useEffect(() => {
     fetch("/api/outbound")
-      .then(response => response.json())
-      .then(setBatches)
+      .then(async response => {
+        const result = await response.json();
+        if (!response.ok) throw Error(result.error);
+        setBatches(result);
+        const requested = new URLSearchParams(window.location.search).get("list");
+        const selected = result.find((item: { id: string }) => item.id === requested)?.id || result[0]?.id;
+        if (selected) await load(selected);
+      })
       .catch(e => setError(e.message));
   }, []);
   useEffect(() => {
@@ -137,12 +146,11 @@ export function Outbound({ data }: { data: PortalData }) {
         <button className="button primary" disabled={!file || !agentId || instructions.trim().length < 20 || !!busy}>{busy === "create" ? "Preparing…" : "Prepare call list"}</button>
       </form>
     </section>
-    {batches.length > 0 && <section className="outbound-card"><h2>Call lists</h2><div className="outbound-lists">{batches.map(item => <button key={item.id} onClick={() => void load(item.id).catch(e => setError(e.message))}>{item.name} · {item.rows} contacts</button>)}</div></section>}
+    {batches.length > 0 && <section className="outbound-card"><h2>Call lists</h2><div className="outbound-lists">{batches.map(item => <button key={item.id} className={batch?.id === item.id ? "selected" : ""} onClick={() => void load(item.id).catch(e => setError(e.message))}><strong>{item.name}</strong><small>{item.rows} contacts · {new Date(item.created_at).toLocaleString()}</small></button>)}</div></section>}
     {batch && <section className="outbound-card">
       <div className="outbound-title"><div><h2>{batch.name}</h2><p>{batch.instructions}</p><small>Result columns: {batch.columns.join(", ")}</small></div><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}>Download CSV</a></div>
       <div className="outbound-actions"><button className="button primary" disabled={!!busy || !rows.some(row => !row.state)} onClick={() => void runBatch("call")}>{busy === "all" ? `Starting calls · ${progress} placed` : "Call remaining"}</button><button className="button" disabled={!!busy || !rows.some(row => row.state === "completed" && !row.result)} onClick={() => void runBatch("result")}>Update completed results</button></div>
-      <p className="outbound-live" aria-live="polite">{rows.filter(row => row.state === "completed").length} completed · {rows.filter(row => row.state && activeStates.includes(row.state)).length} in progress · {rows.filter(row => ["failed", "declined", "expired"].includes(row.state || "")).length} unsuccessful{watching ? " · Updating live" : ""}</p>
-      <div className="outbound-table"><table><thead><tr><th>Phone</th><th>Context</th><th>Call progress</th><th>Result</th><th></th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.phone}</td><td>{Object.entries(row.data).filter(([key]) => !/phone|mobile|whatsapp/i.test(key)).map(([key, value]) => `${key}: ${value}`).join(" · ")}</td><td><strong className={`outbound-status ${row.state || "idle"}`}>{callProgress(row)}</strong>{row.error && <small>{row.error}</small>}{row.call_id && <details><summary>Call transcript</summary><pre>{row.transcript || "Waiting for conversation…"}</pre></details>}</td><td>{row.result ? batch.columns.map(column => `${column}: ${row.result?.[column] || "—"}`).join(" · ") : "—"}</td><td>{row.state === "completed" ? <button disabled={!!busy} onClick={() => void act(row.id, "result")}>{busy === row.id ? "Working…" : "Update result"}</button> : !row.state || ["failed", "declined", "expired"].includes(row.state) ? <button disabled={!!busy} onClick={() => void act(row.id, "call")}>{busy === row.id ? "Calling…" : "Call"}</button> : null}</td></tr>)}</tbody></table></div>
+      <div className="outbound-table"><table><thead><tr><th>Phone number</th><th>Call</th><th>Status</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.phone}</td><td>{!row.state || ["failed", "declined", "expired"].includes(row.state) ? <button disabled={!!busy} onClick={() => void act(row.id, "call")}>{busy === row.id ? "Calling…" : "Call"}</button> : "—"}</td><td><strong className={`outbound-status ${row.state || "idle"}`}>{callProgress(row)}</strong>{row.result && <small>Result ready</small>}{row.error && <small>{row.error}</small>}{row.call_id && <details><summary>Call transcript</summary><pre>{row.transcript || "Waiting for conversation…"}</pre></details>}</td></tr>)}</tbody></table></div>
       <button className="button" onClick={() => void load(batch.id).catch(e => setError(e.message))}>Refresh status</button>
     </section>}
   </div>;

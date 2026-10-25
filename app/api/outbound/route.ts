@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
 import { z } from "zod";
@@ -22,7 +22,7 @@ async function handler(request: Request) {
     const id = url.searchParams.get("id");
     if (request.method === "GET") {
       if (!id) {
-        const batches = await sql`select b.id,b.name,b.created_at,count(r.id)::int as rows from portal_outbound_batches b left join portal_outbound_rows r on r.batch_id=b.id where b.customer_id=${user.customer_id} group by b.id order by b.created_at desc limit 30`;
+        const batches = await sql`select id,name,created_at,rows from (select distinct on (coalesce(b.source_hash,b.id::text)) b.id,b.name,b.created_at,(select count(*)::int from portal_outbound_rows r where r.batch_id=b.id) as rows from portal_outbound_batches b where b.customer_id=${user.customer_id} order by coalesce(b.source_hash,b.id::text),b.created_at desc) lists order by created_at desc limit 30`;
         return Response.json(batches, { headers });
       }
       uuid.parse(id);
@@ -56,8 +56,11 @@ async function handler(request: Request) {
       });
       const [agent] = await sql`select id from portal_agents where id=${agentId} and customer_id=${user.customer_id} and status<>'archived'`;
       if (!agent) throw new ApiError("Agent not found.", 404);
+      const sourceHash = createHash("sha256").update(JSON.stringify({ name: file.name.slice(0, 120), agentId, instructions, headers: columns, rows: records.map((row, index) => JSON.stringify([phones[index], ...columns.map(column => row[column] || "")])).sort() })).digest("hex");
+      const [existing] = await sql`select id from portal_outbound_batches where customer_id=${user.customer_id} and source_hash=${sourceHash} order by created_at desc limit 1`;
+      if (existing) return Response.json({ id: existing.id }, { headers });
       const resultColumns = await generateFields(instructions, columns);
-      const [batch] = await sql`insert into portal_outbound_batches(customer_id,agent_id,name,instructions,columns,headers) values(${user.customer_id},${agentId},${file.name.slice(0, 120)},${instructions},${JSON.stringify(resultColumns)}::jsonb,${JSON.stringify(columns)}::jsonb) returning id`;
+      const [batch] = await sql`insert into portal_outbound_batches(customer_id,agent_id,name,instructions,columns,headers,source_hash) values(${user.customer_id},${agentId},${file.name.slice(0, 120)},${instructions},${JSON.stringify(resultColumns)}::jsonb,${JSON.stringify(columns)}::jsonb,${sourceHash}) returning id`;
       await sql.transaction(records.map((row, index) => sql`insert into portal_outbound_rows(batch_id,phone,data) values(${batch.id},${phones[index]},${JSON.stringify(row)}::jsonb)`));
       return Response.json({ id: batch.id }, { status: 201, headers });
     }

@@ -2890,8 +2890,11 @@ td small, .resource-stat span:not(.icon-tile), .catalogue-banner p, .upload-zone
 .outbound-card label { display: grid; gap: 7px; font-weight: 600; }
 .outbound-card input, .outbound-card select, .outbound-card textarea { width: 100%; }
 .outbound-card textarea { resize: vertical; }
-.outbound-lists { display: flex; flex-wrap: wrap; gap: 10px; }
+.outbound-lists { display: grid; gap: 10px; }
 .outbound-lists button, .outbound-table button { border: 1px solid #cbdad5; border-radius: 8px; background: white; padding: 8px 12px; cursor: pointer; }
+.outbound-lists button { display: grid; gap: 4px; text-align: left; }
+.outbound-lists button.selected { border-color: #167457; background: #f3faf7; }
+.outbound-lists small { color: #63716e; }
 .outbound-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .outbound-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 .outbound-table { overflow-x: auto; margin: 20px 0; }
@@ -2899,7 +2902,6 @@ td small, .resource-stat span:not(.icon-tile), .catalogue-banner p, .upload-zone
 .outbound-table th, .outbound-table td { padding: 12px; border-bottom: 1px solid #e4ebe9; vertical-align: top; }
 .outbound-table td { max-width: 340px; overflow-wrap: anywhere; }
 .outbound-table td small { display: block; color: #ae483c; }
-.outbound-live { margin: 14px 0 0; font-weight: 600; }
 .outbound-status { display: inline-block; color: #556966; }
 .outbound-status.calling, .outbound-status.permission, .outbound-status.preparing, .outbound-status.pending { color: #9a650e; }
 .outbound-status.completed { color: #167457; }

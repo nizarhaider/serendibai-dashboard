@@ -33,6 +33,8 @@ create table if not exists portal_quotas (customer_id uuid primary key reference
 create table if not exists portal_events (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), agent_id uuid references portal_agents(id), action text not null, detail text not null, created_at timestamptz not null default now());
 create index if not exists portal_events_customer_date on portal_events(customer_id,created_at desc);
 create table if not exists portal_outbound_batches (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), agent_id uuid not null references portal_agents(id), name text not null, instructions text not null, columns jsonb not null, headers jsonb not null, created_at timestamptz not null default now());
+alter table portal_outbound_batches add column if not exists source_hash text;
+create index if not exists portal_outbound_batches_source on portal_outbound_batches(customer_id,source_hash,created_at desc);
 create table if not exists portal_outbound_rows (id uuid primary key default gen_random_uuid(), batch_id uuid not null references portal_outbound_batches(id) on delete cascade, phone text not null, data jsonb not null, result jsonb, created_at timestamptz not null default now());
 create index if not exists portal_outbound_rows_batch on portal_outbound_rows(batch_id,created_at);
 alter table portal_case_requests alter column case_slug drop not null;
