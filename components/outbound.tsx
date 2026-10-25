@@ -175,7 +175,7 @@ export function Outbound({ data }: { data: PortalData }) {
           <input className="sr-only" type="file" accept=".csv,text/csv" disabled={!!busy} aria-label="Upload contacts CSV" onChange={e => { void selectFile(e.target.files?.[0]); e.target.value = ""; }} />
           <span className="outbound-file-icon">{file ? <FileSpreadsheet size={25} /> : <Upload size={25} />}</span>
           <strong>{file ? file.name : "Upload your contacts"}</strong>
-          <span>{file ? `${contactCount} contacts · Click to replace` : "Choose a CSV file or drop it here"}</span>
+          <span>{file ? `${contactCount} ${contactCount === 1 ? "contact" : "contacts"} · Click to replace` : "Choose a CSV file or drop it here"}</span>
           {!file && <small>Up to 500 contacts · 1 MB</small>}
         </label>
         {file && <>
@@ -186,7 +186,7 @@ export function Outbound({ data }: { data: PortalData }) {
         </>}
       </form>
     </section> : <section className="outbound-card outbound-workspace">
-      <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} contacts <span>·</span> {data.agents.find(agent => agent.id === batch.agent_id)?.name || "Voice agent"}</p></div><button className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></button></header>
+      <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} {rows.length === 1 ? "contact" : "contacts"} <span>·</span> {data.agents.find(agent => agent.id === batch.agent_id)?.name || "Voice agent"}</p></div><button className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></button></header>
       <details className="outbound-instructions"><summary>Call instructions <ChevronDown size={15} /></summary><p>{batch.instructions}</p><div className="outbound-columns">{batch.columns.map(column => <span key={column}>{column.replaceAll("_", " ")}</span>)}</div></details>
       <div className="outbound-actions"><button className="button primary" disabled={!!busy || !remaining} onClick={() => void run("call")}>{busy === "call-all" ? <><Loader2 className="outbound-spin" size={16} /> Starting {progress.done} of {progress.total}</> : <><Phone size={16} />{remaining ? `Call remaining (${remaining})` : "All contacts attempted"}</>}</button><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}><ArrowDownToLine size={16} />Download CSV</a>{watching && <span className="outbound-live-indicator" role="status"><i />Live updates</span>}</div>
       {busy === "call-all" && <p className="outbound-inline-note" role="status">Keep this page open while calls are being started.</p>}
