@@ -40,15 +40,13 @@ export function CaseDemo({ cases }: { cases: AgentCase[] }) {
     return () => clearInterval(timer);
   }, [id, state]);
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+  async function requestCall(phone: string, company = "") {
     setBusy(true);
     setError("");
     try {
       const response = await fetch("/api/cases", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: data.get("phone"), case: selected, consent: data.get("consent") === "on", company: data.get("company") }),
+        body: JSON.stringify({ phone, case: selected, company }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
@@ -57,22 +55,31 @@ export function CaseDemo({ cases }: { cases: AgentCase[] }) {
     finally { setBusy(false); }
   }
 
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    void requestCall(String(data.get("phone") || ""), String(data.get("company") || ""));
+  }
+
   return <main className="case-studio">
     <Link href="https://serendibai.lk" className="case-brand">SerendibAI</Link>
     <p className="case-eyebrow">Demo studio</p>
     <h1>Try an outbound conversation.</h1>
-    <p className="case-intro">Choose an example and enter your number for a WhatsApp callback. Calls start in English and follow your language.</p>
+    <p className="case-intro">Choose an example for a WhatsApp callback. Calls start in English and follow your language.</p>
     <div className="case-tabs" aria-label="Choose a demo case">{cases.map((item) => <button key={item.slug} disabled={busy} aria-pressed={selected === item.slug} onClick={() => { setSelected(item.slug); setSelection(null); setError(""); }}>{item.title}</button>)}</div>
     <section className="case-card">
       <div><p className="case-eyebrow">{current?.title} agent · Fictional business</p><h2>{current?.company_name}</h2><p>{current?.description}</p><p className="case-hint">{current?.caller_hint}</p><p>Use fictional details. These agents create demo records only. Calls are recorded and transcribed; public showcase clips will be selected separately.</p></div>
       <div className="case-form">
-        {!selection ? <form onSubmit={submit}>
-          <label htmlFor="case-phone">Your WhatsApp number</label>
-          <input id="case-phone" name="phone" type="tel" autoComplete="tel" placeholder="+94 77 123 4567" maxLength={30} required />
-          <input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="case-trap" defaultValue="" />
-          <label className="case-consent"><input type="checkbox" name="consent" required />I control this number and agree to receive one recorded AI demo call and a WhatsApp call-permission request if needed.</label>
-          <button className="case-primary" disabled={busy || !current?.available}>{busy ? "Preparing your call…" : current?.available ? "Call me on WhatsApp" : "Demo agents are offline"}</button>
-        </form> : <div role="status" aria-live="polite">
+        {!selection ? <div className="case-call-options">
+          <button type="button" className="case-primary" disabled={busy || !current?.available} onClick={() => void requestCall("+94742530708")}>{busy ? "Preparing your call…" : current?.available ? "Call +94 74 253 0708" : "Demo agents are offline"}</button>
+          <form onSubmit={submit}>
+            <label htmlFor="case-phone">Or call another WhatsApp number</label>
+            <input id="case-phone" name="phone" type="tel" autoComplete="tel" placeholder="+94 77 123 4567" maxLength={30} required />
+            <input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="case-trap" defaultValue="" />
+            <button className="case-primary" disabled={busy || !current?.available}>Call this number</button>
+          </form>
+          <p>Calls are recorded and transcribed. WhatsApp may ask you to approve the call first.</p>
+        </div> : <div role="status" aria-live="polite">
           <h3>{statuses[selection.state]?.[0] || "Preparing your callback"}</h3>
           <p>{selection.error || statuses[selection.state]?.[1]}</p>
           {!["pending", "preparing", "permission", "calling"].includes(selection.state) && <button className="case-reset" onClick={() => setSelection(null)}>Select again</button>}

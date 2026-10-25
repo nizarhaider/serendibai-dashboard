@@ -3,7 +3,7 @@ import { ApiError, checkOrigin } from "@/lib/auth";
 import { caseSlugs, caseStatus, getCases, registerCase } from "@/lib/cases";
 
 export const runtime = "nodejs";
-const input = z.object({ phone: z.string().max(30), case: z.enum(caseSlugs), consent: z.literal(true), company: z.literal("") });
+const input = z.object({ phone: z.string().max(30), case: z.enum(caseSlugs), company: z.literal("") });
 const headers = { "Cache-Control": "no-store" };
 
 async function handler(request: Request) {
