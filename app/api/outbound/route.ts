@@ -28,7 +28,7 @@ async function handler(request: Request) {
       uuid.parse(id);
       const [batch] = await sql`select b.id,b.name,b.instructions,b.columns,b.headers,b.agent_id,b.created_at from portal_outbound_batches b where b.id=${id} and b.customer_id=${user.customer_id}`;
       if (!batch) throw new ApiError("Campaign not found.", 404);
-      const rows = await sql`select r.id,r.phone,r.data,r.result,q.state,q.error,q.call_id,c.transcript from portal_outbound_rows r left join portal_case_requests q on q.outbound_row_id=r.id left join portal_calls c on c.id=b.agent_id::text||':'||q.call_id where r.batch_id=${id} order by r.created_at,r.id`;
+      const rows = await sql`select r.id,r.phone,r.data,r.result,q.state,q.error,q.call_id,c.transcript from portal_outbound_rows r left join portal_case_requests q on q.outbound_row_id=r.id left join portal_calls c on c.id=${batch.agent_id}::text||':'||q.call_id where r.batch_id=${id} order by r.created_at,r.id`;
       if (url.searchParams.get("format") === "csv") {
         const output = stringify(rows.map(row => Object.fromEntries([...batch.headers, ...batch.columns].map((column: string) => {
           const value = String(row.result?.[column] ?? row.data[column] ?? "");
