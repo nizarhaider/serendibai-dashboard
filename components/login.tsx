@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ArrowUpRight, AudioLines, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, AudioLines, Loader2 } from "lucide-react";
 export function Login() {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -33,29 +33,20 @@ export function Login() {
           SerendibAI
         </a>
         <div className="login-statement">
-          <span className="eyebrow light">ENGLISH · SINHALA · TAMIL</span>
           <h1>
-            Your business.
-            <br />Every conversation.
+            Your conversations.
+            <br />
+            One workspace.
           </h1>
           <p>
-            The workspace for voice agents that know your business as well as
-            you do.
+            Review calls, follow up with customers, and keep your agents ready.
           </p>
-          <div className="language-chips" aria-label="English, Sinhala, and Tamil">
-            <span>EN</span><span lang="si">සිං</span><span lang="ta">த</span>
-          </div>
-        </div>
-        <div className="login-bottom">
-          <span>BUILT FOR YOUR BUSINESS</span>
-          <span>Powered by SerendibAI</span>
         </div>
       </section>
       <section className="login-form">
         <div className="login-form-inner">
-          <span className="eyebrow">YOUR AGENTS. YOUR WORKSPACE.</span>
-          <h2>Welcome back.</h2>
-          <p>Sign in to keep the conversation going.</p>
+          <h2>Sign in</h2>
+          <p>Use your business account to open your workspace.</p>
           <form onSubmit={submit}>
             <label>
               Email address
@@ -84,13 +75,10 @@ export function Login() {
             )}
             <button className="button primary" disabled={busy}>
               {busy ? <Loader2 className="spin" size={17} /> : null}
-              {busy ? "Signing in…" : "Sign in to workspace"}
+              {busy ? "Signing in…" : "Sign in"}
               <ArrowUpRight size={18} />
             </button>
           </form>
-          <div className="secure-note">
-            <ShieldCheck size={15} /> Secure, private business workspace
-          </div>
         </div>
         <a className="back-link" href="https://serendibai.lk">
           Back to serendibai.lk <ArrowUpRight size={14} />

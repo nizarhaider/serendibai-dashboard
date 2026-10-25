@@ -1,37 +1,24 @@
 "use client";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useCallback, useState, useRef, useEffect } from "react";
 import {
-  Activity,
-  ArrowDownToLine,
   ArrowRight,
-  ArrowUpRight,
   AudioLines,
   BookOpen,
   Box,
   CalendarDays,
   Check,
-  ChevronDown,
-  CircleHelp,
-  Clock3,
-  Cpu,
   LayoutDashboard,
   LogOut,
   Menu,
-  PhoneIncoming,
   PhoneOutgoing,
   PackageCheck,
-  Plus,
   RefreshCw,
-  Settings2,
   Users,
-  Sparkles,
   X,
   Ticket,
-  Zap,
 } from "lucide-react";
-import type { PortalData, Call, Customer } from "@/lib/types";
+import type { PortalData, Customer } from "@/lib/types";
 import { canAccessSection } from "@/lib/permissions";
 import { Customers } from "./customers";
 import { CallHistory } from "./call-history";
@@ -42,10 +29,6 @@ import { Orders } from "./orders";
 import { Tickets } from "./tickets";
 import { Outbound } from "./outbound";
 
-const Chart = dynamic(() => import("./chart"), {
-  ssr: false,
-  loading: () => <div className="chart-loading" />,
-});
 export async function api(path: string, method = "GET", body?: unknown) {
   const response = await fetch(`/api/portal/${path}`, {
     method,
@@ -71,14 +54,14 @@ export const number = (n: number | null | undefined) =>
 export function Status({ value }: { value: string }) {
   return (
     <span
-      className={`status ${["ready", "running", "active", "completed", "ended"].includes(value) ? "green" : ["provisioning", "starting", "restarting"].includes(value) ? "amber" : "neutral"}`}
+      className={`status ${["ready", "running", "active", "completed", "ended"].includes(value) ? "green" : ["provisioning", "starting", "restarting"].includes(value) ? "amber" : ["failed", "error", "cancelled", "offline"].includes(value) ? "red" : "neutral"}`}
     >
       <i />
       {value === "draft"
         ? "Not deployed"
         : value === "ready"
           ? "Online"
-          : value.charAt(0).toUpperCase() + value.slice(1)}
+          : value.charAt(0).toUpperCase() + value.slice(1).replaceAll("_", " ")}
     </span>
   );
 }
@@ -108,7 +91,9 @@ export function RecordStatus({
           setBusy(true);
           setError("");
           try {
-            await api(`${resource}/${id}`, "PATCH", { status: event.target.value });
+            await api(`${resource}/${id}`, "PATCH", {
+              status: event.target.value,
+            });
             await refresh();
           } catch (e) {
             setError((e as Error).message);
@@ -117,7 +102,11 @@ export function RecordStatus({
           }
         }}
       >
-        {options.map((option) => <option key={option} value={option}>{option.replace("_", " ")}</option>)}
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option.replace("_", " ")}
+          </option>
+        ))}
       </select>
       {error && <small role="alert">{error}</small>}
     </label>
@@ -173,6 +162,77 @@ export function Modal({
     </dialog>
   );
 }
+const pages = [
+  {
+    href: "dashboard",
+    label: "Overview",
+    icon: LayoutDashboard,
+    group: "Daily work",
+    description: "Review conversations and see what needs your attention.",
+  },
+  {
+    href: "outbound",
+    label: "Outbound calls",
+    icon: PhoneOutgoing,
+    group: "Daily work",
+    description:
+      "Upload contacts, tell your agent what to check, and follow each call.",
+  },
+  {
+    href: "appointments",
+    label: "Appointments",
+    icon: CalendarDays,
+    group: "Daily work",
+    description: "See upcoming bookings and keep their status up to date.",
+  },
+  {
+    href: "orders",
+    label: "Orders",
+    icon: PackageCheck,
+    group: "Daily work",
+    description:
+      "Review customer orders and mark them complete when fulfilled.",
+  },
+  {
+    href: "tickets",
+    label: "Follow-ups",
+    icon: Ticket,
+    group: "Daily work",
+    description: "Pick up customer requests that need your team’s help.",
+  },
+  {
+    href: "agents",
+    label: "Voice agents",
+    icon: AudioLines,
+    group: "Setup",
+    description:
+      "Choose what your agent says and what it can do for customers.",
+  },
+  {
+    href: "knowledge",
+    label: "Knowledge",
+    icon: BookOpen,
+    group: "Setup",
+    description:
+      "Give your agents the answers: FAQs, policies and business information.",
+  },
+  {
+    href: "catalogue",
+    label: "Products & services",
+    icon: Box,
+    group: "Setup",
+    description:
+      "Keep prices, descriptions and availability ready for customer calls.",
+  },
+  {
+    href: "admin",
+    label: "Customer access",
+    icon: Users,
+    group: "Administration",
+    description: "Manage customer accounts and the features they can use.",
+  },
+];
+
 export function Portal({
   initial,
   section,
@@ -182,38 +242,35 @@ export function Portal({
   section: string;
   initialCustomers?: Customer[];
 }) {
-  const [data, setData] = useState(initial),
-    [message, setMessage] = useState(""),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false),
-    [mobile, setMobile] = useState(false),
-    [days, setDays] = useState(30),
-    [agent, setAgent] = useState(""),
-    [help, setHelp] = useState(false);
-  const nav = [
-    { href: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "appointments", label: "Appointments", icon: CalendarDays },
-    { href: "orders", label: "Orders", icon: PackageCheck },
-    { href: "tickets", label: "Tickets", icon: Ticket },
-    { href: "knowledge", label: "Knowledge Base", icon: BookOpen },
-    { href: "catalogue", label: "Product Catalogue", icon: Box },
-    { href: "agents", label: "Agent Management", icon: AudioLines },
-    { href: "outbound", label: "Outbound Calls", icon: PhoneOutgoing },
-    { href: "admin", label: "Customers & access", icon: Users },
-  ].filter(item => canAccessSection(data, item.href));
+  const [data, setData] = useState(initial);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [mobile, setMobile] = useState(false);
+  const [days, setDays] = useState(30);
+  const [agent, setAgent] = useState("");
+  const refreshId = useRef(0);
+  const nav = pages.filter((page) => canAccessSection(data, page.href));
+  const page = pages.find((page) => page.href === section)!;
+  const title =
+    section === "dashboard" && data.read_only ? "Call history" : page.label;
+  const initials = (data.display_name || data.business_name)
+    .charAt(0)
+    .toUpperCase();
   const refresh = useCallback(
     async (nextDays = days, nextAgent = agent) => {
+      const id = ++refreshId.current;
       setBusy(true);
+      setError("");
       try {
-        setData(
-          await api(
-            `data?days=${nextDays}${nextAgent ? `&agent=${nextAgent}` : ""}`,
-          ),
+        const result = await api(
+          `data?days=${nextDays}${nextAgent ? `&agent=${nextAgent}` : ""}`,
         );
+        if (id === refreshId.current) setData(result);
       } catch (e) {
-        setError((e as Error).message);
+        if (id === refreshId.current) setError((e as Error).message);
       } finally {
-        setBusy(false);
+        if (id === refreshId.current) setBusy(false);
       }
     },
     [days, agent],
@@ -221,72 +278,107 @@ export function Portal({
   function notify(text: string) {
     setMessage(text);
     setError("");
-    setTimeout(() => setMessage(""), 6000);
   }
-  const title = nav.find((n) => n.href === section)?.label || "Dashboard";
+  const attention = [
+    {
+      href: "tickets",
+      label: "Open follow-ups",
+      count: data.tickets.filter((t) =>
+        ["open", "in_progress"].includes(t.status),
+      ).length,
+    },
+    {
+      href: "orders",
+      label: "Orders to fulfil",
+      count: data.orders.filter((o) =>
+        ["placed", "processing"].includes(o.status),
+      ).length,
+    },
+    {
+      href: "appointments",
+      label: "Upcoming bookings",
+      count: data.appointments.filter(
+        (a) =>
+          a.status === "booked" &&
+          new Date(a.appointment_at).getTime() >= data.generatedAt,
+      ).length,
+    },
+  ].filter((item) => canAccessSection(data, item.href));
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${mobile ? "mobile-open" : ""}`}>
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
+      {mobile && (
+        <button
+          className="nav-scrim"
+          aria-label="Close navigation"
+          onClick={() => setMobile(false)}
+        />
+      )}
+      <aside
+        className={`sidebar ${mobile ? "mobile-open" : ""}`}
+        aria-label="Workspace navigation"
+        onKeyDown={(event) => {
+          if (event.key === "Escape") setMobile(false);
+        }}
+      >
         <Link className="brand" href="/dashboard">
           <span className="brand-icon">
             <AudioLines size={22} />
           </span>
           SerendibAI
-          <sup>PORTAL</sup>
         </Link>
         <div className="workspace-switch">
           <div className="workspace-avatar">{data.business_name.charAt(0)}</div>
           <div>
             <strong>{data.business_name}</strong>
-            <span>{data.read_only ? "Call history access" : "Business account"}</span>
-          </div>
-          <ChevronDown size={14} />
-        </div>
-        <div className="nav-label">WORKSPACE</div>
-        <nav>
-          {nav.map((n) => (
-            <Link
-              key={n.href}
-              href={`/${n.href}`}
-              className={section === n.href ? "active" : ""}
-              onClick={() => setMobile(false)}
-            >
-              <n.icon size={19} />
-              {n.label}
-              {section === n.href && <span className="nav-dot" />}
-            </Link>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          {!data.read_only && <div className="sidebar-card">
-            <span className="tiny-orb">
-              <Sparkles size={19} />
+            <span>
+              {data.read_only ? "View-only workspace" : "Your workspace"}
             </span>
-            <strong>From website to voice.</strong>
-            <p>
-              Give your agent a head start with a prompt built for your
-              business.
-            </p>
-            <Link href="/agents">
-              Set up your agent <ArrowUpRight size={16} />
-            </Link>
-          </div>}
-          {!data.read_only && <button className="sidebar-help" onClick={() => setHelp(true)}>
-            <CircleHelp size={17} /> Workspace guide <ArrowUpRight size={14} />
-          </button>}
+          </div>
+        </div>
+        {["Daily work", "Setup", "Administration"].map((group) => {
+          const items = nav.filter((item) => item.group === group);
+          return (
+            items.length > 0 && (
+              <nav key={group} aria-label={group}>
+                <div className="nav-label">{group}</div>
+                {items.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={`/${item.href}`}
+                    aria-current={section === item.href ? "page" : undefined}
+                    className={section === item.href ? "active" : ""}
+                    onClick={() => setMobile(false)}
+                  >
+                    <item.icon size={18} />
+                    {item.href === "dashboard" && data.read_only
+                      ? "Call history"
+                      : item.label}
+                  </Link>
+                ))}
+              </nav>
+            )
+          );
+        })}
+        <div className="sidebar-bottom">
           <div className="user-block">
-            <div className="user-avatar">A</div>
+            <div className="user-avatar">{initials}</div>
             <div>
-              <strong>{data.display_name || (data.is_admin ? "Administrator" : "Workspace member")}</strong>
+              <strong>{data.display_name || "Workspace member"}</strong>
               <span>{data.email}</span>
             </div>
             <button
               aria-label="Sign out"
-              onClick={() =>
-                api("logout", "POST").then(
-                  () => (window.location.href = "/login"),
-                )
-              }
+              onClick={async () => {
+                try {
+                  await api("logout", "POST");
+                  window.location.href = "/login";
+                } catch (e) {
+                  setError((e as Error).message);
+                }
+              }}
             >
               <LogOut size={17} />
             </button>
@@ -302,76 +394,35 @@ export function Portal({
               aria-expanded={mobile}
               onClick={() => setMobile(!mobile)}
             >
-              <Menu size={20} />
+              {mobile ? <X size={20} /> : <Menu size={20} />}
             </button>
-            <span className="muted">Workspace</span>
+            <span className="muted">{data.business_name}</span>
             <span className="crumb-slash">/</span>
             <strong>{title}</strong>
           </div>
-          <div className="topbar-right">
-            <span className="connection">
-              <i /> Workspace connected
-            </span>
-            <span className="vertical-rule" />
+          {section !== "outbound" && (
             <button
-              className={`icon-button ${busy ? "spin" : ""}`}
-              aria-label="Refresh workspace"
-              onClick={() => refresh()}
+              className="button refresh-button"
               disabled={busy}
+              onClick={() =>
+                section === "admin" ? window.location.reload() : refresh()
+              }
             >
-              <RefreshCw size={16} />
+              <RefreshCw size={15} className={busy ? "spin" : ""} />
+              {busy ? "Refreshing…" : "Refresh"}
             </button>
-            <div className="user-avatar small">A</div>
-          </div>
+          )}
         </header>
-        <main>
+        <main id="main-content">
           <div className="page-heading">
             <div>
-              <div className="eyebrow">
-                {section === "admin" ? "CUSTOMERS AND PERMISSIONS" : section === "dashboard"
-                  ? "YOUR BUSINESS, IN CONVERSATION"
-                  : section === "appointments"
-                    ? "EVERY BOOKING, IN ONE PLACE"
-                    : section === "orders"
-                      ? "CONFIRMED DURING A CALL"
-                      : section === "tickets"
-                        ? "ISSUES THAT NEED FOLLOW-UP"
-                  : section === "agents"
-                    ? "MEET YOUR DIGITAL TEAM"
-                    : section === "knowledge"
-                      ? "GIVE YOUR AGENTS THE ANSWERS"
-                      : section === "outbound"
-                        ? "VALIDATE CONTACTS BY PHONE"
-                      : "EVERY DETAIL, AT THEIR FINGERTIPS"}
-              </div>
-              <h1>
-                {section === "dashboard" && data.read_only ? "Call history" : section === "dashboard"
-                  ? "Your conversations, at a glance."
-                  : title}
-              </h1>
+              <h1>{title}</h1>
               <p>
-                {section === "admin" ? "Manage customer accounts and choose which features their agents can use." : section === "dashboard" && data.read_only ? "See who called and read what was discussed." : section === "dashboard"
-                  ? "See how your voice agents are showing up for your business."
-                  : section === "appointments"
-                    ? "See appointments booked by your voice agents in Sri Lanka time."
-                    : section === "orders"
-                      ? "See confirmed customer orders as soon as your voice agent places them."
-                      : section === "tickets"
-                        ? "Keep every customer issue visible and ready for your team."
-                  : section === "knowledge"
-                    ? "A shared source of truth. Add your documents and keep every answer current."
-                  : section === "outbound"
-                    ? "Upload contacts, set the validation instructions, and download the results."
-                    : section === "catalogue"
-                      ? "Your products and services, ready for the next conversation."
-                      : "Create, configure and run voice agents. All from one place."}
+                {data.read_only && section === "dashboard"
+                  ? "Find a call and read what was discussed."
+                  : page.description}
               </p>
             </div>
-            {section === "dashboard" && !data.read_only && (
-              <Link href="/agents" className="button primary">
-                <Plus size={17} /> Create an agent
-              </Link>
-            )}
           </div>
           {message && (
             <div className="toast success" role="status">
@@ -393,19 +444,93 @@ export function Portal({
               </button>
             </div>
           )}
-          {section === "admin" ? <Customers initial={initialCustomers} /> : section === "dashboard" && data.read_only ? <CallHistory data={data} /> : section === "dashboard" ? (
-            <Dashboard
-              data={data}
-              days={days}
-              agent={agent}
-              setFilter={(d, a) => {
-                setDays(d);
-                setAgent(a);
-                void refresh(d, a);
-              }}
-              notify={notify}
-              refresh={refresh}
-            />
+          {section === "dashboard" ? (
+            <>
+              {!data.read_only && !data.agents.length && (
+                <section className="setup-start panel">
+                  <AudioLines size={26} />
+                  <div>
+                    <h2>Set up your first voice agent</h2>
+                    <p>Add its name and instructions to get started.</p>
+                  </div>
+                  <Link className="button primary" href="/agents">
+                    Set up agent <ArrowRight size={16} />
+                  </Link>
+                </section>
+              )}
+              {!data.read_only && attention.length > 0 && (
+                <div className="attention-grid">
+                  {attention.map((item) => (
+                    <Link
+                      className="attention-card"
+                      key={item.href}
+                      href={`/${item.href}`}
+                    >
+                      <span>{item.label}</span>
+                      <strong>{number(item.count)}</strong>
+                      <ArrowRight size={17} />
+                    </Link>
+                  ))}
+                </div>
+              )}
+              <section className="panel conversations-panel">
+                <div className="panel-heading">
+                  <div>
+                    <h2>Conversations</h2>
+                    <p>
+                      Choose a period, then open a call to read the transcript.
+                    </p>
+                  </div>
+                  <div className="toolbar-actions">
+                    <select
+                      aria-label="Filter by agent"
+                      value={agent}
+                      disabled={busy}
+                      onChange={(e) => {
+                        setAgent(e.target.value);
+                        void refresh(days, e.target.value);
+                      }}
+                    >
+                      <option value="">All agents</option>
+                      {data.agents.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      aria-label="Date range"
+                      value={days}
+                      disabled={busy}
+                      onChange={(e) => {
+                        const d = Number(e.target.value);
+                        setDays(d);
+                        void refresh(d, agent);
+                      }}
+                    >
+                      <option value="7">Last 7 days</option>
+                      <option value="30">Last 30 days</option>
+                      <option value="90">Last 90 days</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="conversation-summary" aria-busy={busy}>
+                  <span>
+                    <strong>{number(data.totals.calls)}</strong> calls
+                  </span>
+                  <span>
+                    <strong>{number(data.totals.answered)}</strong> answered
+                  </span>
+                  <span>
+                    <strong>{number(data.totals.minutes)}</strong> recorded
+                    minutes
+                  </span>
+                </div>
+                <CallHistory key={`${days}-${agent}`} data={data} />
+              </section>
+            </>
+          ) : section === "admin" ? (
+            <Customers initial={initialCustomers} />
           ) : section === "agents" ? (
             <Agents data={data} refresh={refresh} notify={notify} />
           ) : section === "outbound" ? (
@@ -424,560 +549,8 @@ export function Portal({
               notify={notify}
             />
           )}
-          <footer className="page-footer">
-            <span>
-              <AudioLines size={13} /> Thoughtful technology. Better
-              conversations.
-            </span>
-            <span>SerendibAI © {new Date().getFullYear()}</span>
-          </footer>
         </main>
       </div>
-      {help && (
-        <Modal title="Your workspace, connected" onClose={() => setHelp(false)}>
-          <div className="modal-content prose">
-            <p>
-              <strong>1. Give your agent context.</strong> Upload readable
-              documents to Knowledge Base and add products or services to the
-              catalogue. Every agent in this workspace can search these when the
-              corresponding tool is enabled.
-            </p>
-            <p>
-              <strong>2. Make it yours.</strong> In Agent Management, create an
-              agent and write its instructions, or use the website assistant to
-              research and draft them. Review generated facts before saving.
-            </p>
-            <p>
-              <strong>3. Start the voice server.</strong> Run the voice agent
-              locally with <code>./deploy.sh --env local</code>. Its status
-              appears under Runtime in Agent Management.
-            </p>
-            <p>
-              <strong>4. Connect your phone.</strong> Add your WhatsApp Business
-              phone ID and access credentials under Connections. Configure the
-              displayed webhook in Meta. The existing phone connection is
-              available on the migrated agent.
-            </p>
-            <p>
-              <strong>5. Follow real performance.</strong> The dashboard uses
-              persisted calls. Historical calls without tokens or duration
-              remain unmeasured. New runtime calls report these automatically.
-            </p>
-          </div>
-        </Modal>
-      )}
     </div>
-  );
-}
-function Dashboard({
-  data,
-  days,
-  agent,
-  setFilter,
-  notify,
-  refresh,
-}: {
-  data: PortalData;
-  days: number;
-  agent: string;
-  setFilter: (d: number, a: string) => void;
-  notify: (s: string) => void;
-  refresh: () => Promise<void>;
-}) {
-  const [metric, setMetric] = useState<"calls" | "minutes" | "tokens">("calls"),
-    [call, setCall] = useState<Call | null>(null),
-    [limits, setLimits] = useState(false),
-    [saving, setSaving] = useState(false),
-    [limitError, setLimitError] = useState("");
-  const usageRequests = (call?.usage?.requests ?? []) as Record<string, unknown>[];
-  const usageTotal = (key: string) =>
-    usageRequests.reduce((sum, request) => sum + Number(request[key] ?? 0), 0);
-  const usageModalities = (key: string) => {
-    const totals = new Map<string, number>();
-    for (const request of usageRequests) {
-      const details = request[key];
-      if (!Array.isArray(details)) continue;
-      for (const item of details as Record<string, unknown>[]) {
-        const modality = String(item.modality ?? "unknown");
-        totals.set(modality, (totals.get(modality) ?? 0) + Number(item.token_count ?? 0));
-      }
-    }
-    return [...totals.entries()];
-  };
-  const online = data.agents.filter(
-    (a) =>
-      a.heartbeat_at &&
-      data.generatedAt - new Date(a.heartbeat_at).getTime() < 90000 &&
-      a.status === "ready",
-  ).length;
-  const metrics = [
-    {
-      key: "tokens" as const,
-      label: "Tokens used",
-      value: data.totals.tokens,
-      quota: data.quotas.tokens,
-      icon: Zap,
-      note: data.totals.measured_tokens
-        ? `${data.totals.measured_tokens} measured calls`
-        : "Historical tokens not recorded",
-    },
-    {
-      key: "minutes" as const,
-      label: "Conversation minutes",
-      value: data.totals.minutes,
-      quota: data.quotas.minutes,
-      icon: Clock3,
-      note: data.totals.measured_minutes
-        ? `${data.totals.measured_minutes} measured calls`
-        : "Historical duration not recorded",
-    },
-    {
-      key: "calls" as const,
-      label: "Calls answered",
-      value: data.totals.answered,
-      quota: data.quotas.calls,
-      icon: PhoneIncoming,
-      note: `${number(data.totals.calls)} total calls received`,
-    },
-  ];
-  function exportCalls() {
-    const lines = [
-      ["Date", "Agent", "Status", "Duration seconds", "Tokens"],
-      ...data.calls.map((c) => [
-        c.created_at,
-        c.agent_name,
-        c.status,
-        c.duration_seconds,
-        c.tokens,
-      ]),
-    ];
-    const text = lines
-      .map((row) =>
-        row.map((v) => `"${String(v ?? "").replaceAll('"', '""')}"`).join(","),
-      )
-      .join("\n");
-    const url = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "serendibai-calls.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-  return (
-    <>
-      <section className="welcome-banner">
-        <div>
-          <span className="banner-label">
-            <span className="pulse-dot" /> YOUR WORKSPACE AT A GLANCE
-          </span>
-          <h2>Great conversations start here.</h2>
-          <p>
-            {number(data.agents.length)} agent
-            {data.agents.length === 1 ? "" : "s"} in your team.{" "}
-            {online
-              ? `${online} online and ready to help.`
-              : "Ready whenever your business is."}
-          </p>
-          <Link href="/agents">
-            Meet your agents <ArrowRight size={16} />
-          </Link>
-        </div>
-        <div className="banner-art" aria-hidden="true">
-          <div className="sound-wave">
-            {Array.from({ length: 35 }, (_, i) => (
-              <i
-                key={i}
-                style={{
-                  height: `${16 + Math.sin(i * 0.8) ** 2 * 70 + Math.sin(i * 0.23) ** 2 * 45}px`,
-                  opacity: 0.25 + Math.sin(i * 0.15) ** 2 * 0.6,
-                }}
-              />
-            ))}
-          </div>
-          <div className="banner-glow" />
-          <span className="wave-pill">
-            <AudioLines size={14} /> A voice for your business
-          </span>
-        </div>
-      </section>
-      <div className="section-toolbar">
-        <div>
-          <h2>Performance overview</h2>
-          <span className="tag">Real call data</span>
-        </div>
-        <div>
-          <select
-            aria-label="Filter by agent"
-            value={agent}
-            onChange={(e) => setFilter(days, e.target.value)}
-          >
-            <option value="">All agents</option>
-            {data.agents.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Date range"
-            value={days}
-            onChange={(e) => setFilter(Number(e.target.value), agent)}
-          >
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-          </select>
-        </div>
-      </div>
-      <div className="metric-grid">
-        {metrics.map((m) => (
-          <button
-            className={`metric-card ${metric === m.key ? "selected" : ""}`}
-            key={m.key}
-            onClick={() => setMetric(m.key)}
-          >
-            <div className="metric-top">
-              <span>{m.label}</span>
-              <span className={`metric-icon ${m.key}`}>
-                <m.icon size={17} />
-              </span>
-            </div>
-            <div className="metric-value">
-              {number(m.value)}
-              <span>/ {number(m.quota)}</span>
-            </div>
-            <div className="quota-track">
-              <div
-                style={{
-                  width: `${Math.min(100, ((m.value || 0) / m.quota) * 100)}%`,
-                }}
-              />
-            </div>
-            <div className="metric-bottom">
-              <span>{m.note}</span>
-              <strong>
-                {m.value == null
-                  ? "Unmeasured"
-                  : `${((m.value / m.quota) * 100).toFixed(1)}% used`}
-              </strong>
-            </div>
-          </button>
-        ))}
-      </div>
-      <div className="analytics-grid">
-        <section className="panel chart-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Conversation activity</h2>
-              <p>Every interaction tells a story.</p>
-            </div>
-            <div className="segmented">
-              {(["calls", "minutes", "tokens"] as const).map((m) => (
-                <button
-                  key={m}
-                  className={m === metric ? "active" : ""}
-                  onClick={() => setMetric(m)}
-                >
-                  {m[0].toUpperCase() + m.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="chart-summary">
-            <strong>
-              {number(
-                metric === "calls" ? data.totals.calls : data.totals[metric],
-              )}
-            </strong>
-            <span>
-              {metric === "calls"
-                ? "calls received"
-                : metric === "minutes"
-                  ? "measured minutes"
-                  : "measured tokens"}
-              <small>over the last {days} days</small>
-            </span>
-            <span className="chart-legend">
-              <i />
-              {metric[0].toUpperCase() + metric.slice(1)}
-            </span>
-          </div>
-          <div className="main-chart">
-            <Chart data={data.daily} metric={metric} />
-            {metric !== "calls" && data.totals[metric] === null && (
-              <div className="chart-empty">
-                <Activity size={24} />
-                <strong>Measurement starts with your next call.</strong>
-                <span>
-                  Older call records don’t include {metric}.<br />
-                  Your new runtime will report them automatically.
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="chart-footnote">
-            {metric === "calls"
-              ? "Daily received calls · Live records from Neon"
-              : "Only measured calls are included · Missing data is never estimated"}
-          </div>
-        </section>
-        <section className="panel capacity-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>Your workspace</h2>
-              <p>Connected and under your control.</p>
-            </div>
-            <span className="icon-tile">
-              <Cpu size={18} />
-            </span>
-          </div>
-          <div className="capacity-ring">
-            <svg viewBox="0 0 180 180">
-              <circle
-                cx="90"
-                cy="90"
-                r="72"
-                fill="none"
-                stroke="#f0edf5"
-                strokeWidth="13"
-              />
-              <circle
-                cx="90"
-                cy="90"
-                r="72"
-                fill="none"
-                stroke="#9373de"
-                strokeWidth="13"
-                strokeLinecap="round"
-                strokeDasharray={`${Math.max(3, (online / Math.max(1, data.agents.length)) * 452)} 452`}
-                transform="rotate(-90 90 90)"
-              />
-            </svg>
-            <div>
-              <strong>
-                {online}
-                <span> / {data.agents.length}</span>
-              </strong>
-              <small>AGENTS ONLINE</small>
-            </div>
-          </div>
-          <div className="capacity-row">
-            <span>
-              <i className="dot purple" /> Knowledge sources
-            </span>
-            <strong>{data.documents.length}</strong>
-          </div>
-          <div className="capacity-row">
-            <span>
-              <i className="dot peach" /> Catalogue items
-            </span>
-            <strong>{data.products.length}</strong>
-          </div>
-          <div className="capacity-row">
-            <span>
-              <i className="dot grey" /> Online voice agents
-            </span>
-            <strong>{data.agents.filter((a) => a.status === "ready" && a.heartbeat_at && data.generatedAt - new Date(a.heartbeat_at).getTime() < 90000).length}</strong>
-          </div>
-          {data.is_admin && <button
-            className="button subtle full"
-            onClick={() => setLimits(true)}
-          >
-            <Settings2 size={15} /> Configure workspace limits
-          </button>}
-        </section>
-      </div>
-      <section className="panel calls-panel">
-        <div className="panel-heading">
-          <div>
-            <h2>
-              Recent conversations{" "}
-              <span className="count">{data.calls.length}</span>
-            </h2>
-            <p>A closer look at the people your agents have helped.</p>
-          </div>
-          <button className="button" onClick={exportCalls}>
-            <ArrowDownToLine size={15} /> Export CSV
-          </button>
-        </div>
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>CALLER</th>
-                <th>AGENT</th>
-                <th>STATUS</th>
-                <th>DURATION</th>
-                <th>WHEN</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {data.calls.slice(0, 8).map((c) => (
-                <tr key={c.id} onClick={() => setCall(c)} className="clickable">
-                  <td>
-                    <span className="caller">
-                      <span className="caller-icon">
-                        <PhoneIncoming size={15} />
-                      </span>
-                      {c.customer_phone
-                        ? `••• ${c.customer_phone.slice(-4)}`
-                        : "Unknown caller"}
-                    </span>
-                  </td>
-                  <td>{c.agent_name || "Previous agent"}</td>
-                  <td>
-                    <Status value={c.status} />
-                  </td>
-                  <td>
-                    {c.duration_seconds == null ? (
-                      <span className="muted">Not recorded</span>
-                    ) : (
-                      `${number(c.duration_seconds / 60)} min`
-                    )}
-                  </td>
-                  <td className="muted">
-                    {new Date(c.created_at).toLocaleDateString("en-GB", {
-                      timeZone: "Asia/Colombo",
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td>
-                    <button
-                      aria-label="View conversation"
-                      className="icon-button"
-                    >
-                      <ArrowUpRight size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!data.calls.length && (
-            <div className="empty">
-              <PhoneIncoming size={25} />
-              <h3>No calls in this period</h3>
-              <p>Choose a longer date range or connect an agent to begin.</p>
-            </div>
-          )}
-        </div>
-        <div className="table-footer">
-          Showing {Math.min(8, data.calls.length)} of{" "}
-          {number(data.totals.calls)} calls in this period{" "}
-          <span>Historical records are preserved.</span>
-        </div>
-      </section>
-      {call && (
-        <Modal title="Conversation details" onClose={() => setCall(null)} wide>
-          <div className="modal-content">
-            <div className="call-meta">
-              <Status value={call.status} />
-              <span>{call.agent_name}</span>
-              <span>
-                {new Date(call.created_at).toLocaleString("en-GB", {
-                  timeZone: "Asia/Colombo",
-                })}
-              </span>
-            </div>
-            <p className="muted mono">{call.id}</p>
-            <div className="transcript">
-              {call.transcript || "No transcript was recorded for this call."}
-            </div>
-            <p className="muted">
-              Source: {call.source} · Tokens: {number(call.tokens)} · Duration:{" "}
-              {call.duration_seconds == null
-                ? "not recorded"
-                : `${number(call.duration_seconds)} seconds`}
-            </p>
-            <section className="form-section">
-              <h3>Gemini usage</h3>
-              {usageRequests.length ? (
-                <>
-                  <p className="muted">
-                    {number(usageRequests.length)} provider usage records · Input{" "}
-                    {number(usageTotal("prompt_token_count"))} · Output{" "}
-                    {number(usageTotal("response_token_count"))} · Tool input{" "}
-                    {number(usageTotal("tool_use_prompt_token_count"))} · Total{" "}
-                    {number(usageTotal("total_token_count"))} tokens
-                  </p>
-                  <p className="muted">
-                    Thinking {number(usageTotal("thoughts_token_count"))} · Cached{" "}
-                    {number(usageTotal("cached_content_token_count"))} tokens
-                  </p>
-                  <p className="muted">
-                    Input modalities: {usageModalities("prompt_tokens_details")
-                      .map(([name, value]) => `${name} ${number(value)}`)
-                      .join(" · ") || "not reported"}
-                  </p>
-                  <p className="muted">
-                    Tool result input: {usageModalities("tool_use_prompt_tokens_details")
-                      .map(([name, value]) => `${name} ${number(value)}`)
-                      .join(" · ") || "not reported"}
-                  </p>
-                  <p className="muted">
-                    Output modalities: {usageModalities("response_tokens_details")
-                      .map(([name, value]) => `${name} ${number(value)}`)
-                      .join(" · ") || "not reported"}
-                  </p>
-                  <p className="muted">
-                    Provider usage is recorded for cost estimates. Actual charges
-                    depend on the Gemini billing tier and account credits.
-                  </p>
-                </>
-              ) : (
-                <p className="muted">Provider usage breakdown was not recorded for this call.</p>
-              )}
-            </section>
-          </div>
-        </Modal>
-      )}
-      {limits && (
-        <Modal title="Workspace limits" onClose={() => setLimits(false)}>
-          <form
-            className="modal-content form-stack"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setSaving(true);
-              try {
-                const f = new FormData(e.currentTarget);
-                await api("quotas", "PUT", Object.fromEntries(f));
-                await refresh();
-                setLimits(false);
-                notify("Workspace limits updated.");
-              } catch (e) {
-                setLimitError((e as Error).message);
-              } finally {
-                setSaving(false);
-              }
-            }}
-          >
-            <p className="muted">
-              Monthly reference allowances for your workspace. These are
-              admin-configured planning limits, not a purchased subscription.
-            </p>
-            {(["tokens", "minutes", "calls"] as const).map((k) => (
-              <label key={k}>
-                {k[0].toUpperCase() + k.slice(1)}
-                <input
-                  name={k}
-                  type="number"
-                  min="1"
-                  defaultValue={data.quotas[k]}
-                  required
-                />
-              </label>
-            ))}
-            {limitError && <p className="error">{limitError}</p>}
-            <button className="button primary" disabled={saving}>
-              {saving ? "Saving…" : "Save limits"}
-            </button>
-          </form>
-        </Modal>
-      )}
-    </>
   );
 }

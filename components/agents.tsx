@@ -3,8 +3,9 @@ import { useState } from "react";
 import {
   ArrowUpRight,
   AudioLines,
-  CalendarDays,
   Check,
+  Sparkles,
+  CalendarDays,
   ChevronRight,
   Code2,
   Globe,
@@ -15,8 +16,6 @@ import {
   Save,
   Settings2,
   Ticket,
-  Shield,
-  Sparkles,
   Trash2,
   WandSparkles,
 } from "lucide-react";
@@ -35,7 +34,10 @@ const defaultAgent = () => ({
   max_calls: 3,
   phone_number_id: "",
 });
-type Editable = Omit<ReturnType<typeof defaultAgent>, "tools"> & { tools: string[]; id?: string };
+type Editable = Omit<ReturnType<typeof defaultAgent>, "tools"> & {
+  tools: string[];
+  id?: string;
+};
 export function Agents({
   data,
   refresh,
@@ -61,7 +63,21 @@ export function Agents({
     [confirm, setConfirm] = useState<{ action: string } | null>(null),
     [secrets, setSecrets] = useState<Record<string, string>>({});
   const current = data.agents.find((a) => a.id === selected);
+  const dirty =
+    Boolean(
+      current &&
+      (
+        Object.keys(defaultAgent()) as (keyof ReturnType<typeof defaultAgent>)[]
+      ).some(
+        (key) => JSON.stringify(edit[key]) !== JSON.stringify(current[key]),
+      ),
+    ) || Object.values(secrets).some(Boolean);
   function choose(a: Agent) {
+    if (
+      a.id === selected ||
+      (dirty && !window.confirm("Discard unsaved changes and switch agents?"))
+    )
+      return;
     setSelected(a.id);
     setEdit(a);
     setDraft(null);
@@ -75,9 +91,7 @@ export function Agents({
       await api(`agents/${selected}`, "PUT", { ...edit, credentials: secrets });
       setSecrets({});
       await refresh();
-      notify(
-        "Agent configuration saved. New calls use the latest version; restart is optional.",
-      );
+      notify("Saved. Your agent will use these instructions on new calls.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -103,7 +117,6 @@ export function Agents({
             {data.agents.length} voice agent
             {data.agents.length !== 1 ? "s" : ""}
           </strong>
-          <span className="muted">A team that sounds like you.</span>
         </div>
         <button className="button primary" onClick={() => setNewOpen(true)}>
           <Plus size={17} /> New voice agent
@@ -130,9 +143,7 @@ export function Agents({
               </div>
               <strong>{a.name}</strong>
               <span className="agent-domain">
-                {a.company_url
-                  ? new URL(a.company_url).hostname
-                  : "Business voice agent"}
+                {a.company_name || "Voice agent"}
               </span>
               <Status
                 value={
@@ -146,13 +157,6 @@ export function Agents({
               />
             </button>
           ))}
-          <div className="agent-tip">
-            <Shield size={18} />
-            <strong>You’re in control.</strong>
-            <p>
-              Run the voice server locally and see its live status here.
-            </p>
-          </div>
         </aside>
         {current ? (
           <section className="panel agent-editor">
@@ -160,15 +164,13 @@ export function Agents({
               <div>
                 <div className="eyebrow">VOICE AGENT</div>
                 <h2>{current.name}</h2>
-                <span className="mono">
-                  {current.id.slice(0, 8)} · v{current.version}
-                </span>
               </div>
               <div>
+                {dirty && <small className="muted">Unsaved changes</small>}
                 <Status value={runtimeStatus} />
                 <button
                   className="button primary"
-                  disabled={Boolean(busy)}
+                  disabled={Boolean(busy) || !dirty}
                   onClick={save}
                 >
                   {busy === "save" ? (
@@ -187,9 +189,8 @@ export function Agents({
                   label: "Instructions",
                   icon: MessageSquare,
                 },
-                { key: "tools", label: "Tools & behaviour", icon: Settings2 },
-                { key: "runtime", label: "Runtime", icon: AudioLines },
-                { key: "connections", label: "Connections", icon: Code2 },
+                { key: "tools", label: "Actions & languages", icon: Settings2 },
+                { key: "settings", label: "Settings", icon: Code2 },
               ].map((t) => (
                 <button
                   key={t.key}
@@ -243,16 +244,10 @@ export function Agents({
                     </label>
                   </div>
                   <div className="prompt-label">
-                    <label htmlFor="system-prompt">System prompt</label>
+                    <label htmlFor="system-prompt">Call instructions</label>
                     <span>{number(edit.system_prompt.length)} characters</span>
                   </div>
                   <div className="prompt-editor">
-                    <div className="prompt-editor-top">
-                      <span>
-                        <span className="dot purple" /> agent.instructions
-                      </span>
-                      <span>Plain text</span>
-                    </div>
                     <textarea
                       id="system-prompt"
                       value={edit.system_prompt}
@@ -261,14 +256,9 @@ export function Agents({
                         setEdit({ ...edit, system_prompt: e.target.value })
                       }
                     />
-                    <div className="prompt-assistant">
-                      <div className="assistant-label">
-                        <Sparkles size={16} />
-                        <strong>A little help from AI</strong>
-                        <span>
-                          Research a website. Draft a great starting point.
-                        </span>
-                      </div>
+                    <details className="prompt-assistant">
+                      <summary>Help me draft instructions</summary>
+
                       <form
                         onSubmit={async (e) => {
                           e.preventDefault();
@@ -289,7 +279,7 @@ export function Agents({
                       >
                         <input
                           aria-label="AI setup request"
-                          placeholder="Create a voice agent for airasia.com…"
+                          placeholder="Describe your business and include its website…"
                           value={research}
                           onChange={(e) => setResearch(e.target.value)}
                           required
@@ -306,21 +296,23 @@ export function Agents({
                           )}{" "}
                           {busy === "research"
                             ? "Researching…"
-                            : "Generate prompt"}
+                            : "Draft instructions"}
                         </button>
                       </form>
                       <small>
                         Uses live website research. Review the draft before
                         applying it.
                       </small>
-                    </div>
+                    </details>
                   </div>
                 </>
               ) : tab === "tools" ? (
                 <>
                   <h3>Agent actions</h3>
                   <p className="muted">
-                    Knowledge and catalogue answers are always available. WhatsApp follow-ups are sent when useful. Choose which customer actions this agent can take.
+                    Knowledge and catalogue answers are always available.
+                    WhatsApp follow-ups are sent when useful. Choose which
+                    customer actions this agent can take.
                   </p>
                   <div className="tool-options">
                     {[
@@ -342,51 +334,34 @@ export function Agents({
                         text: "Log caller issues for your team to follow up.",
                         icon: Ticket,
                       },
-                    ].filter(t => data.allowed_tools.includes(t.name)).map((t) => (
-                      <label className="tool-option" key={t.name}>
-                        <span className="icon-tile">
-                          <t.icon size={21} />
-                        </span>
-                        <span>
-                          <strong>{t.title}</strong>
-                          <small>{t.text}</small>
-                        </span>
-                        <input
-                          type="checkbox"
-                          role="switch"
-                          checked={edit.tools.includes(t.name)}
-                          onChange={(e) =>
-                            setEdit({
-                              ...edit,
-                              tools: e.target.checked
-                                ? [...edit.tools, t.name]
-                                : edit.tools.filter((v) => v !== t.name),
-                            })
-                          }
-                        />
-                      </label>
-                    ))}
+                    ]
+                      .filter((t) => data.allowed_tools.includes(t.name))
+                      .map((t) => (
+                        <label className="tool-option" key={t.name}>
+                          <span className="icon-tile">
+                            <t.icon size={21} />
+                          </span>
+                          <span>
+                            <strong>{t.title}</strong>
+                            <small>{t.text}</small>
+                          </span>
+                          <input
+                            type="checkbox"
+                            role="switch"
+                            checked={edit.tools.includes(t.name)}
+                            onChange={(e) =>
+                              setEdit({
+                                ...edit,
+                                tools: e.target.checked
+                                  ? [...edit.tools, t.name]
+                                  : edit.tools.filter((v) => v !== t.name),
+                              })
+                            }
+                          />
+                        </label>
+                      ))}
                   </div>
                   <div className="field-row">
-                    <label>
-                      Voice
-                      <select
-                        value={edit.voice}
-                        onChange={(e) =>
-                          setEdit({ ...edit, voice: e.target.value })
-                        }
-                      >
-                        {[
-                          { value: "Aoede", label: "Female" },
-                          { value: "Charon", label: "Male" },
-                        ].map((voice) => (
-                          <option key={voice.value} value={voice.value}>
-                            {voice.label}
-                          </option>
-                        ))}
-                      </select>
-                      <small>Gemini native audio voice.</small>
-                    </label>
                     <label>
                       Concurrent call limit
                       <input
@@ -402,7 +377,7 @@ export function Agents({
                         }
                       />
                       <small>
-                        Admission limit, not a guaranteed throughput benchmark.
+                        Maximum calls your agent can handle at once.
                       </small>
                     </label>
                   </div>
@@ -427,89 +402,139 @@ export function Agents({
                     ))}
                   </div>
                 </>
-              ) : tab === "runtime" ? (
-                <div className="runtime-details">
-                  <h3>Voice server</h3>
-                  <div><span>Status</span><Status value={heartbeatFresh ? current.status : "offline"} /></div>
-                  <div><span>Active calls</span><code>{heartbeatFresh ? number(Number(current.telemetry.active_calls || 0)) : "—"} / {current.max_calls}</code></div>
-                  <div><span>Last heartbeat</span><code>{current.heartbeat_at ? new Date(current.heartbeat_at).toLocaleString("en-GB", { timeZone: "Asia/Colombo" }) : "Never"}</code></div>
-                  <div><span>Configuration</span><code>saved v{current.version} / running {current.deployed_version > 0 ? `v${current.deployed_version}` : "—"}</code></div>
-                  <div><span>Health</span><code>{current.telemetry.error ? String(current.telemetry.error) : heartbeatFresh ? "Runtime responding" : "Start the local voice server"}</code></div>
-                  <div><span>Local command</span><code>./deploy.sh --env local</code></div>
-                </div>
               ) : (
                 <>
-                  <h3>WhatsApp Business connection</h3>
-                  <p className="muted">
-                    Connect this agent to your business number. Credentials are
-                    encrypted and never sent back to the browser.
-                  </p>
-                  <label>
-                    Phone number ID
-                    <input
-                      value={edit.phone_number_id}
-                      placeholder="Meta phone number ID"
-                      onChange={(e) =>
-                        setEdit({ ...edit, phone_number_id: e.target.value })
-                      }
-                    />
-                  </label>
-                  <div className="field-row secret-fields">
-                    {[
-                      {
-                        key: "WHATSAPP_ACCESS_TOKEN",
-                        label: "WhatsApp access token",
-                      },
-                      { key: "WHATSAPP_APP_SECRET", label: "Meta app secret" },
-                      {
-                        key: "VERIFY_TOKEN",
-                        label: "Webhook verification token",
-                      },
-                      {
-                        key: "GEMINI_API_KEY",
-                        label: "Gemini API key (optional override)",
-                      },
-                    ].map((s) => (
-                      <label key={s.key}>
-                        {s.label}
-                        <input
-                          type="password"
-                          autoComplete="new-password"
-                          placeholder={
-                            current.has_credentials
-                              ? "Saved securely · leave blank to keep"
-                              : "Enter credential"
-                          }
-                          value={secrets[s.key] || ""}
-                          onChange={(e) =>
-                            setSecrets({ ...secrets, [s.key]: e.target.value })
-                          }
+                  <details className="settings-disclosure">
+                    <summary>Service status</summary>
+                    <div className="runtime-details">
+                      <h3>Voice server</h3>
+                      <div>
+                        <span>Status</span>
+                        <Status
+                          value={heartbeatFresh ? current.status : "offline"}
                         />
-                      </label>
-                    ))}
-                  </div>
-                  <div className="runtime-details">
-                    <h3>Developer details</h3>
-                    <div>
-                      <span>Agent ID</span>
-                      <code>{current.id}</code>
+                      </div>
+                      <div>
+                        <span>Active calls</span>
+                        <code>
+                          {heartbeatFresh
+                            ? number(
+                                Number(current.telemetry.active_calls || 0),
+                              )
+                            : "—"}{" "}
+                          / {current.max_calls}
+                        </code>
+                      </div>
+                      <div>
+                        <span>Last heartbeat</span>
+                        <code>
+                          {current.heartbeat_at
+                            ? new Date(current.heartbeat_at).toLocaleString(
+                                "en-GB",
+                                { timeZone: "Asia/Colombo" },
+                              )
+                            : "Never"}
+                        </code>
+                      </div>
+                      <div>
+                        <span>Configuration</span>
+                        <code>
+                          saved v{current.version} / running{" "}
+                          {current.deployed_version > 0
+                            ? `v${current.deployed_version}`
+                            : "—"}
+                        </code>
+                      </div>
+                      <div>
+                        <span>Health</span>
+                        <code>
+                          {current.telemetry.error
+                            ? String(current.telemetry.error)
+                            : heartbeatFresh
+                              ? "Runtime responding"
+                              : "Not responding"}
+                        </code>
+                      </div>
                     </div>
-                    <div>
-                      <span>Webhook URL</span>
-                      <code>{`https://portal.serendibai.lk/api/voice/${current.id}/webhook`}</code>
+                  </details>
+                  <details className="settings-disclosure">
+                    <summary>WhatsApp connection</summary>
+                    <h3>WhatsApp Business connection</h3>
+                    <p className="muted">
+                      Connect this agent to your business number. Credentials
+                      are encrypted and never sent back to the browser.
+                    </p>
+                    <label>
+                      Phone number ID
+                      <input
+                        value={edit.phone_number_id}
+                        placeholder="Meta phone number ID"
+                        onChange={(e) =>
+                          setEdit({ ...edit, phone_number_id: e.target.value })
+                        }
+                      />
+                    </label>
+                    <div className="field-row secret-fields">
+                      {[
+                        {
+                          key: "WHATSAPP_ACCESS_TOKEN",
+                          label: "WhatsApp access token",
+                        },
+                        {
+                          key: "WHATSAPP_APP_SECRET",
+                          label: "Meta app secret",
+                        },
+                        {
+                          key: "VERIFY_TOKEN",
+                          label: "Webhook verification token",
+                        },
+                        {
+                          key: "GEMINI_API_KEY",
+                          label: "Gemini API key (optional override)",
+                        },
+                      ].map((s) => (
+                        <label key={s.key}>
+                          {s.label}
+                          <input
+                            type="password"
+                            autoComplete="new-password"
+                            placeholder={
+                              current.has_credentials
+                                ? "Saved securely · leave blank to keep"
+                                : "Enter credential"
+                            }
+                            value={secrets[s.key] || ""}
+                            onChange={(e) =>
+                              setSecrets({
+                                ...secrets,
+                                [s.key]: e.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                      ))}
                     </div>
-                    <div>
-                      <span>Knowledge scope</span>
-                      <code>This workspace only</code>
+                    <div className="runtime-details">
+                      <h3>Developer details</h3>
+                      <div>
+                        <span>Agent ID</span>
+                        <code>{current.id}</code>
+                      </div>
+                      <div>
+                        <span>Webhook URL</span>
+                        <code>{`https://portal.serendibai.lk/api/voice/${current.id}/webhook`}</code>
+                      </div>
+                      <div>
+                        <span>Knowledge scope</span>
+                        <code>This workspace only</code>
+                      </div>
                     </div>
-                  </div>
-                  <p className="notice">
-                    Add the webhook URL to your Meta app, use your saved
-                    verification token, and subscribe to call events. A Meta app
-                    secret is required for the portal webhook. The migrated
-                    agent also retains its existing whatsapp.serendibai.lk
-                    connection.
-                  </p>
+                    <p className="notice">
+                      Add the webhook URL to your Meta app, use your saved
+                      verification token, and subscribe to call events. A Meta
+                      app secret is required for the portal webhook.
+                    </p>
+                  </details>
                   <button
                     className="button danger-outline"
                     disabled={Boolean(busy)}
@@ -524,10 +549,9 @@ export function Agents({
         ) : (
           <section className="panel empty agent-empty">
             <AudioLines size={40} />
-            <h2>Your first voice agent starts here.</h2>
+            <h2>Create your first voice agent</h2>
             <p>
-              Create an agent, give it a personality and connect it to your
-              business.
+              Add a name and instructions, then connect your business number.
             </p>
             <button className="button primary" onClick={() => setNewOpen(true)}>
               <Plus size={17} /> Create voice agent
@@ -535,42 +559,6 @@ export function Agents({
           </section>
         )}
       </div>
-      <section className="panel activity-panel">
-        <div className="panel-heading">
-          <div>
-            <h2>Workspace activity</h2>
-            <p>A clear record of your latest changes.</p>
-          </div>
-          <span className="tag">Audit log</span>
-        </div>
-        {data.events.length ? (
-          <div className="event-list">
-            {data.events.slice(0, 6).map((e) => (
-              <div key={e.id}>
-                <span className="event-dot" />
-                <div>
-                  <strong>{e.action}</strong>
-                  <p>{e.detail}</p>
-                </div>
-                <time>
-                  {new Date(e.created_at).toLocaleString("en-GB", {
-                    timeZone: "Asia/Colombo",
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </time>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty small-empty">
-            <Check size={21} />
-            <p>Changes to your agents and knowledge will appear here.</p>
-          </div>
-        )}
-      </section>
       {newOpen && (
         <Modal title="Create a voice agent" onClose={() => setNewOpen(false)}>
           <form
@@ -582,7 +570,11 @@ export function Agents({
               try {
                 const values = {
                   ...defaultAgent(),
-                  tools: defaultAgent().tools.filter(tool => !toolNames.includes(tool as typeof toolNames[number]) || data.allowed_tools.includes(tool)),
+                  tools: defaultAgent().tools.filter(
+                    (tool) =>
+                      !toolNames.includes(tool as (typeof toolNames)[number]) ||
+                      data.allowed_tools.includes(tool),
+                  ),
                   name: newName,
                   company_name: newCompanyName,
                 };
@@ -691,12 +683,12 @@ export function Agents({
         </Modal>
       )}
       {confirm && (
-        <Modal
-          title="Delete this agent?"
-          onClose={() => setConfirm(null)}
-        >
+        <Modal title="Delete this agent?" onClose={() => setConfirm(null)}>
           <div className="modal-content">
-            <p>The agent configuration will be deleted. Call history and shared workspace knowledge will be preserved.</p>
+            <p>
+              The agent configuration will be deleted. Call history and shared
+              workspace knowledge will be preserved.
+            </p>
             <div className="modal-actions">
               <button className="button" onClick={() => setConfirm(null)}>
                 Cancel
@@ -705,25 +697,22 @@ export function Agents({
                 className="button danger"
                 disabled={Boolean(busy)}
                 onClick={async () => {
-                        setBusy("action");
-                        try {
-                          await api(`agents/${selected}`, "DELETE");
-                          setConfirm(null);
-                          const next = data.agents.find(
-                            (a) => a.id !== selected,
-                          );
-                          if (next) choose(next);
-                          else setSelected("");
-                          await refresh();
-                          notify("Agent deleted.");
-                        } catch (e) {
-                          setError((e as Error).message);
-                          setConfirm(null);
-                        } finally {
-                          setBusy("");
-                        }
-                      }
-                }
+                  setBusy("action");
+                  try {
+                    await api(`agents/${selected}`, "DELETE");
+                    setConfirm(null);
+                    const next = data.agents.find((a) => a.id !== selected);
+                    if (next) choose(next);
+                    else setSelected("");
+                    await refresh();
+                    notify("Agent deleted.");
+                  } catch (e) {
+                    setError((e as Error).message);
+                    setConfirm(null);
+                  } finally {
+                    setBusy("");
+                  }
+                }}
               >
                 {busy ? "Working…" : "Confirm delete"}
               </button>

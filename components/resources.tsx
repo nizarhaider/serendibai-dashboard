@@ -55,7 +55,7 @@ export function Resources({
   const picker = useRef<HTMLInputElement>(null),
     knowledge = section === "knowledge";
   async function upload(file?: File) {
-    if (!file) return;
+    if (!file || busy) return;
     setError("");
     setBusy(true);
     try {
@@ -206,45 +206,6 @@ export function Resources({
           </button>
         </div>
       )}
-      <div className="resource-summary">
-        <div className="resource-stat">
-          <span className="icon-tile lavender">
-            {knowledge ? <BookOpen size={22} /> : <BoxIcon />}
-          </span>
-          <div>
-            <strong>
-              {knowledge ? data.documents.length : data.products.length}
-            </strong>
-            <span>
-              {knowledge ? "knowledge sources" : "products & services"}
-            </span>
-          </div>
-        </div>
-        <div className="resource-stat">
-          <span className="icon-tile mint">
-            <Check size={22} />
-          </span>
-          <div>
-            <strong>
-              {knowledge
-                ? number(data.documents.reduce((n, d) => n + d.characters, 0))
-                : data.products.filter((p) => p.status === "active").length}
-            </strong>
-            <span>
-              {knowledge ? "searchable characters" : "active catalogue items"}
-            </span>
-          </div>
-        </div>
-        <div className="resource-summary-note">
-          <span className="status green">
-            <i /> Connected knowledge
-          </span>
-          <p>
-            Available to your agents when the corresponding search tool is
-            enabled.
-          </p>
-        </div>
-      </div>
       {knowledge ? (
         <section
           className={`upload-zone ${drag ? "dragging" : ""}`}
@@ -269,12 +230,9 @@ export function Resources({
           <h2>
             {busy
               ? "Reading and indexing your document…"
-              : "Good answers begin with good knowledge."}
+              : "Add business information"}
           </h2>
-          <p>
-            Drop a document here, or browse your files to teach your agents
-            something new.
-          </p>
+          <p>Upload FAQs, policies or service guides your agent should use.</p>
           <button
             className="button primary"
             disabled={busy}
@@ -290,11 +248,8 @@ export function Resources({
             <FileSpreadsheet size={32} />
           </span>
           <div>
-            <h2>Your catalogue, without the busywork.</h2>
-            <p>
-              Bring in an Excel workbook or build your table right here. Changes
-              are available to your agents immediately.
-            </p>
+            <h2>Import your catalogue</h2>
+            <p>Use the template to add several products or services at once.</p>
           </div>
           <button className="button" onClick={template}>
             <ArrowDownToLine size={16} /> Download template
@@ -324,8 +279,8 @@ export function Resources({
             </h2>
             <p>
               {knowledge
-                ? "Stored securely in Neon. Searchable as soon as they’re uploaded."
-                : "Edit a row, set availability and keep your agent in the know."}
+                ? "Open a document to check the information your agent can use."
+                : "Only active items are available during calls."}
             </p>
           </div>
           <div className="toolbar-actions">
@@ -376,7 +331,7 @@ export function Resources({
                     ]);
                   }}
                 >
-                  <Plus size={15} /> Add row
+                  <Plus size={15} /> Add item
                 </button>
               </>
             )}
@@ -430,10 +385,21 @@ export function Resources({
                   </div>
                 ))}
             </div>
+            {data.documents.length > 0 &&
+              !data.documents.some((d) =>
+                d.name.toLowerCase().includes(query.toLowerCase()),
+              ) && (
+                <div className="empty">
+                  <h3>No matching documents</h3>
+                  <button className="button" onClick={() => setQuery("")}>
+                    Clear search
+                  </button>
+                </div>
+              )}
             {!data.documents.length && (
               <div className="empty">
                 <BookOpen size={29} />
-                <h3>Your business knowledge belongs here.</h3>
+                <h3>No documents yet</h3>
                 <p>
                   Add FAQs, policies, company information or service guides.
                 </p>
@@ -446,10 +412,10 @@ export function Resources({
               <thead>
                 <tr>
                   <th>NAME & DESCRIPTION</th>
-                  <th>SKU</th>
+                  {editing && <th>SKU</th>}
                   <th>TYPE</th>
                   <th>PRICE</th>
-                  <th>CURRENCY</th>
+                  {editing && <th>CURRENCY</th>}
                   <th>STOCK</th>
                   <th>STATUS</th>
                   <th />
@@ -542,14 +508,18 @@ export function Resources({
                       <>
                         <td>
                           <strong>{p.name}</strong>
-                          <small>{p.description || "No description"}</small>
+                          <small>{p.description}</small>
+                          {p.sku && <small>{p.sku}</small>}
                         </td>
-                        <td className="mono">{p.sku || "—"}</td>
+
                         <td>
                           <span className="tag">{p.category}</span>
                         </td>
-                        <td>{number(p.price)}</td>
-                        <td>{p.currency}</td>
+                        <td>
+                          {p.price == null
+                            ? "Not set"
+                            : `${p.currency} ${number(p.price)}`}
+                        </td>
                         <td>
                           {p.stock == null ? "Unlimited" : number(p.stock)}
                         </td>
@@ -591,7 +561,7 @@ export function Resources({
                 <h3>
                   {query
                     ? "No products match your search."
-                    : "Make your catalogue conversational."}
+                    : "No products or services yet"}
                 </h3>
                 <p>
                   Add products, services, prices and availability. Your agent
@@ -612,7 +582,7 @@ export function Resources({
             ? "Knowledge is shared across this workspace."
             : "Active items are available to agents. Draft and archived items are excluded."}
           <span>
-            <Check size={13} /> Persisted in Neon
+            <Check size={13} /> Saved to your workspace
           </span>
         </div>
       </section>
@@ -723,7 +693,4 @@ export function Resources({
       )}
     </>
   );
-}
-function BoxIcon() {
-  return <FileSpreadsheet size={22} />;
 }
