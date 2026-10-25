@@ -70,11 +70,26 @@ export function Outbound({ data }: { data: PortalData }) {
     if (!batch) return;
     setBusy(rowId); setError("");
     try {
-      const response = await fetch(`/api/outbound?id=${batch.id}&action=${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: rowId }) });
-      const result = await response.json();
-      if (!response.ok) throw Error(result.error);
+      await requestAction(batch.id, rowId, action);
       await load(batch.id);
     } catch (e) { setError((e as Error).message); }
+    finally { setBusy(""); }
+  }
+
+  async function requestAction(batchId: string, rowId: string, action: "call" | "result") {
+    const response = await fetch(`/api/outbound?id=${batchId}&action=${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: rowId }) });
+    const result = await response.json();
+    if (!response.ok) throw Error(result.error);
+  }
+
+  async function runBatch(action: "call" | "result") {
+    if (!batch) return;
+    setBusy("all"); setError("");
+    try {
+      const selected = rows.filter(row => action === "call" ? !row.state : row.state === "completed" && !row.result);
+      for (const row of selected) await requestAction(batch.id, row.id, action);
+      await load(batch.id);
+    } catch (e) { setError((e as Error).message); await load(batch.id); }
     finally { setBusy(""); }
   }
 
@@ -94,6 +109,7 @@ export function Outbound({ data }: { data: PortalData }) {
     {batches.length > 0 && <section className="outbound-card"><h2>Call lists</h2><div className="outbound-lists">{batches.map(item => <button key={item.id} onClick={() => void load(item.id).catch(e => setError(e.message))}>{item.name} · {item.rows} contacts</button>)}</div></section>}
     {batch && <section className="outbound-card">
       <div className="outbound-title"><div><h2>{batch.name}</h2><p>{batch.instructions}</p><small>Result columns: {batch.columns.join(", ")}</small></div><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}>Download CSV</a></div>
+      <div className="outbound-actions"><button className="button primary" disabled={!!busy || !rows.some(row => !row.state)} onClick={() => void runBatch("call")}>{busy === "all" ? "Working…" : "Call remaining"}</button><button className="button" disabled={!!busy || !rows.some(row => row.state === "completed" && !row.result)} onClick={() => void runBatch("result")}>Update completed results</button></div>
       <div className="outbound-table"><table><thead><tr><th>Phone</th><th>Context</th><th>Call</th><th>Result</th><th></th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.phone}</td><td>{Object.entries(row.data).filter(([key]) => !/phone|mobile|whatsapp/i.test(key)).map(([key, value]) => `${key}: ${value}`).join(" · ")}</td><td>{row.state || "Not called"}{row.error && <small>{row.error}</small>}</td><td>{row.result ? batch.columns.map(column => `${column}: ${row.result?.[column] || "—"}`).join(" · ") : "—"}</td><td>{row.state === "completed" ? <button disabled={!!busy} onClick={() => void act(row.id, "result")}>{busy === row.id ? "Working…" : "Update result"}</button> : !row.state || ["failed", "declined", "expired"].includes(row.state) ? <button disabled={!!busy} onClick={() => void act(row.id, "call")}>{busy === row.id ? "Calling…" : "Call"}</button> : null}</td></tr>)}</tbody></table></div>
       <button className="button" onClick={() => void load(batch.id).catch(e => setError(e.message))}>Refresh status</button>
     </section>}

@@ -39,7 +39,7 @@ async function handler(request: Request) {
       return Response.json({ batch, rows }, { headers });
     }
     checkOrigin(request);
-    await rateLimit(`outbound:${user.id}`, 120, 3600);
+    await rateLimit(`outbound:${user.id}`, 1000, 3600);
     if (request.method === "POST" && !id) {
       const form = await request.formData();
       const file = form.get("file");
