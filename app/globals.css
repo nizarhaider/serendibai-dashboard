@@ -2710,7 +2710,7 @@ td small, .resource-stat span:not(.icon-tile), .catalogue-banner p, .upload-zone
   .setup-start > div { flex: 1; }
   .setup-start .button { width: 100%; }
   .booking-row { gap: 12px; }
-  .booking-row .record-title { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .record-title { align-items: flex-start; flex-direction: column; gap: 10px; }
   .customer-card > summary { padding: 18px; gap: 12px; flex-wrap: wrap; }
   .settings-disclosure { padding: 14px; }
   .agent-editor-heading { flex-wrap: wrap; gap: 16px; }

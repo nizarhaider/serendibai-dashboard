@@ -43,7 +43,7 @@ export function Tickets({
         options={[
           { value: "active", label: "Needs attention" },
           { value: "closed", label: "Closed" },
-          { value: "all", label: "All tickets" },
+          { value: "all", label: "All follow-ups" },
         ]}
       />
       {records.length ? (
@@ -93,7 +93,7 @@ export function Tickets({
             {query ? "No matching follow-ups" : "No follow-ups to show"}
           </strong>
           <p>
-            Requests from customer calls appear here. Use “All tickets” to
+            Requests from customer calls appear here. Use “All follow-ups” to
             review closed requests.
           </p>
         </div>
