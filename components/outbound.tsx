@@ -178,6 +178,18 @@ export function Outbound({ data }: { data: PortalData }) {
           <span>{file ? `${contactCount} ${contactCount === 1 ? "contact" : "contacts"} · Click to replace` : "Choose a CSV file or drop it here"}</span>
           {!file && <small>Up to 500 contacts · 1 MB</small>}
         </label>
+        <details className="outbound-example">
+          <summary>See an example: CSV and instructions</summary>
+          <div>
+            <h3>1. Your CSV</h3>
+            <p>Use one row per person. Include a phone column and any information you want to check.</p>
+            <pre><code>{"phone,name,current_role,years_experience\n94XXXXXXXXX,Sample candidate,Sales assistant,2"}</code></pre>
+            <small>Replace the placeholder with a real number including its country code, without spaces. Keep the column headings in the first row.</small>
+            <h3>2. Your instructions</h3>
+            <blockquote>Confirm the candidate’s current role and years of experience. Mark each as verified, corrected or not confirmed, and record any corrections. Ask them to describe their work in English. Rate their spoken English as basic, intermediate or advanced, with a short reason. If there is not enough evidence, mark it as not assessed.</blockquote>
+            <p>The results CSV will include columns based on your instructions—for example, role verification, confirmed experience, English level and assessment notes.</p>
+          </div>
+        </details>
         {file && <>
           <div className="outbound-fields"><label>Phone number column<select disabled={!!busy} value={phoneColumn} onChange={e => setPhoneColumn(e.target.value)}>{headers.map(header => <option key={header}>{header}</option>)}</select></label><label>Calling agent<select disabled={!!busy} value={agentId} onChange={e => setAgentId(e.target.value)}>{agents.length ? agents.map(agent => <option key={agent.id} value={agent.id}>{agent.name} · {agent.company_name}</option>) : <option value="">No agents available</option>}</select></label></div>
           <label>What should the agent check?<textarea disabled={!!busy} value={instructions} onChange={e => setInstructions(e.target.value)} rows={4} minLength={20} maxLength={6000} placeholder="Confirm each candidate’s current role and years of experience. Assess spoken English with two short questions." required /><small>Be specific about what to verify and how to assess it. We’ll create the result columns for you.</small></label>
