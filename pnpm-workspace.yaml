@@ -1,5 +1,4 @@
 allowBuilds:
-  agent-browser: true
   core-js: true
   sharp: true
   unrs-resolver: true

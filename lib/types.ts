@@ -55,7 +55,6 @@ export type Call = {
   transcript: string | null;
   duration_seconds: number | null;
   tokens: number | null;
-  usage: { provider: string; requests: Record<string, unknown>[] } | null;
   created_at: string;
   source: string;
 };
@@ -114,20 +113,10 @@ export type PortalData = {
   appointments: Appointment[];
   orders: Order[];
   tickets: Ticket[];
-  daily: {
-    date: string;
-    calls: number;
-    minutes: number | null;
-    tokens: number | null;
-  }[];
   totals: {
     calls: number;
     answered: number;
     minutes: number | null;
-    tokens: number | null;
-    measured_minutes: number;
-    measured_tokens: number;
   };
-  quotas: { tokens: number; minutes: number; calls: number; label: string };
-  events: { id: string; action: string; detail: string; created_at: string }[];
+  attention: { tickets: number; orders: number; appointments: number };
 };

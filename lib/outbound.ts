@@ -16,7 +16,7 @@ export async function generateFields(instructions: string, headers: string[]) {
   const data = await response.json();
   const values = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || "null");
   if (!Array.isArray(values)) throw new ApiError("Could not prepare result columns.", 502);
-  const columns = values.filter((value): value is string => typeof value === "string" && /^[a-z][a-z0-9_]{0,39}$/.test(value) && !headers.includes(value)).slice(0, 8);
+  const columns = [...new Set(values.filter((value): value is string => typeof value === "string" && /^[a-z][a-z0-9_]{0,39}$/.test(value) && !headers.includes(value)))].slice(0, 8);
   if (!columns.length) throw new ApiError("No result columns were generated.", 502);
   return columns;
 }

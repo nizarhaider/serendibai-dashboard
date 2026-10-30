@@ -44,7 +44,7 @@ export async function registerCase(value: string, slug: string, ip: string) {
     values(${id},${phone},${slug},${target.runtime_agent_id},'outbound')
     on conflict(runtime_agent_id,phone) do update set id=excluded.id,case_slug=excluded.case_slug,outbound_row_id=null,
       direction='outbound',state='pending',call_id=null,message_id=null,error='',expires_at=now()+interval '10 minutes',created_at=now()
-    where portal_case_requests.state not in ('preparing','permission','calling') or portal_case_requests.expires_at<now()
+    where portal_case_requests.state not in ('pending','preparing','permission','calling') or portal_case_requests.expires_at<now()
     returning id`;
   if (!created) throw new ApiError("A demo is already in progress for this number. Finish it or wait for it to expire.", 409);
   const body = JSON.stringify({ id, phone, timestamp: Math.floor(Date.now() / 1000) });

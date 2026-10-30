@@ -16,6 +16,6 @@ export function runtimeSecrets(agent: Record<string, unknown>) {
       (legacy ? process.env.WHATSAPP_ACCESS_TOKEN : "") ||
       "",
     VERIFY_TOKEN: custom.VERIFY_TOKEN || process.env.VERIFY_TOKEN || "",
-    WHATSAPP_APP_SECRET: custom.WHATSAPP_APP_SECRET || "",
+    WHATSAPP_APP_SECRET: custom.WHATSAPP_APP_SECRET || (legacy ? process.env.WHATSAPP_APP_SECRET : "") || "",
   };
 }

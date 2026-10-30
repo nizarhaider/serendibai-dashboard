@@ -11,7 +11,7 @@ async function handler(
   const { id } = await params;
   if (!z.uuid().safeParse(id).success)
     return new Response("Not found", { status: 404 });
-  const [agent] = await db()`select * from portal_agents where id=${id}`;
+  const [agent] = await db()`select * from portal_agents where id=${id} and status<>'archived'`;
   if (!agent) return new Response("Not found", { status: 404 });
   const env = runtimeSecrets(agent),
     url = new URL(request.url);
@@ -21,18 +21,16 @@ async function handler(
       url.searchParams.get("hub.verify_token") === env.VERIFY_TOKEN
       ? new Response(url.searchParams.get("hub.challenge"))
       : new Response("Verification failed", { status: 403 });
+  if (!env.WHATSAPP_APP_SECRET) return new Response("Webhook is not configured", { status: 503 });
   const body = await request.text(),
     expected = Buffer.from(
       `sha256=${createHmac("sha256", env.WHATSAPP_APP_SECRET).update(body).digest("hex")}`,
     ),
     supplied = Buffer.from(request.headers.get("x-hub-signature-256") || "");
-  if (env.WHATSAPP_APP_SECRET) {
-    if (
+  if (
       expected.length !== supplied.length ||
       !timingSafeEqual(expected, supplied)
-    )
-      return new Response("Invalid signature", { status: 403 });
-  }
+  ) return new Response("Invalid signature", { status: 403 });
   const payload = JSON.parse(body);
   if (
     payload.object !== "whatsapp_business_account" ||

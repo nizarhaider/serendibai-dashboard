@@ -264,7 +264,7 @@ export function Portal({
       setError("");
       try {
         const result = await api(
-          `data?days=${nextDays}${nextAgent ? `&agent=${nextAgent}` : ""}`,
+          `data?section=${section}&days=${nextDays}${nextAgent ? `&agent=${nextAgent}` : ""}`,
         );
         if (id === refreshId.current) setData(result);
       } catch (e) {
@@ -273,7 +273,7 @@ export function Portal({
         if (id === refreshId.current) setBusy(false);
       }
     },
-    [days, agent],
+    [days, agent, section],
   );
   function notify(text: string) {
     setMessage(text);
@@ -283,25 +283,17 @@ export function Portal({
     {
       href: "tickets",
       label: "Open follow-ups",
-      count: data.tickets.filter((t) =>
-        ["open", "in_progress"].includes(t.status),
-      ).length,
+      count: data.attention.tickets,
     },
     {
       href: "orders",
       label: "Orders to fulfil",
-      count: data.orders.filter((o) =>
-        ["placed", "processing"].includes(o.status),
-      ).length,
+      count: data.attention.orders,
     },
     {
       href: "appointments",
       label: "Upcoming bookings",
-      count: data.appointments.filter(
-        (a) =>
-          a.status === "booked" &&
-          new Date(a.appointment_at).getTime() >= data.generatedAt,
-      ).length,
+      count: data.attention.appointments,
     },
   ].filter((item) => canAccessSection(data, item.href));
   return (

@@ -39,7 +39,7 @@ export function CallHistory({ data }: { data: PortalData }) {
         row
           .map((value) => {
             const text = String(value ?? "");
-            return `"${(/^[=+@\-\t\r]/.test(text) ? "'" + text : text).replaceAll('"', '""')}"`;
+            return `"${(/^[\s]*[=+@-]/.test(text) ? "'" + text : text).replaceAll('"', '""')}"`;
           })
           .join(","),
       )

@@ -12,8 +12,6 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "@netlify/plugin-nextjs": "5.15.12",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "csv-parse": "^7.0.3",
     "csv-stringify": "^6.9.0",
     "exceljs": "^4.4.0",
@@ -22,7 +20,6 @@
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "tailwind-merge": "^3.6.0",
     "unpdf": "^1.8.1",
     "zod": "^4.6.4"
   },
@@ -31,7 +28,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "agent-browser": "^0.31.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",

@@ -18,11 +18,12 @@ export default async function Page({
   if (!user) redirect("/login");
   if (!canAccessSection(user, section)) redirect("/dashboard");
   const [data, customers] = await Promise.all([
-    getData(user.customer_id, user.email),
+    getData(user.customer_id, user.email, 30, undefined, section),
     section === "admin" ? getCustomers() : Promise.resolve([]),
   ]);
   return (
     <Portal
+      key={section}
       section={section}
       initial={data}
       initialCustomers={JSON.parse(JSON.stringify(customers))}

@@ -16,7 +16,7 @@ import {
   Save,
   Settings2,
   Ticket,
-  Trash2,
+  Archive,
   WandSparkles,
 } from "lucide-react";
 import type { Agent, PortalData } from "@/lib/types";
@@ -60,7 +60,7 @@ export function Agents({
       text: string;
       sources: { url: string; title: string }[];
     } | null>(null),
-    [confirm, setConfirm] = useState<{ action: string } | null>(null),
+    [confirm, setConfirm] = useState(false),
     [secrets, setSecrets] = useState<Record<string, string>>({});
   const current = data.agents.find((a) => a.id === selected);
   const dirty =
@@ -91,7 +91,7 @@ export function Agents({
       await api(`agents/${selected}`, "PUT", { ...edit, credentials: secrets });
       setSecrets({});
       await refresh();
-      notify("Saved. Your agent will use these instructions on new calls.");
+      notify("Agent configuration saved.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -110,9 +110,6 @@ export function Agents({
     <>
       <div className="agents-toolbar">
         <div className="agent-count">
-          <span className="icon-tile lavender">
-            <AudioLines size={20} />
-          </span>
           <strong>
             {data.agents.length} voice agent
             {data.agents.length !== 1 ? "s" : ""}
@@ -135,12 +132,6 @@ export function Agents({
               className={`agent-list-card ${a.id === selected ? "selected" : ""}`}
               onClick={() => choose(a)}
             >
-              <div className="agent-list-top">
-                <span className="agent-avatar">
-                  <AudioLines size={23} />
-                </span>
-                <ChevronRight size={16} />
-              </div>
               <strong>{a.name}</strong>
               <span className="agent-domain">
                 {a.company_name || "Voice agent"}
@@ -162,7 +153,6 @@ export function Agents({
           <section className="panel agent-editor">
             <div className="agent-editor-heading">
               <div>
-                <div className="eyebrow">VOICE AGENT</div>
                 <h2>{current.name}</h2>
               </div>
               <div>
@@ -247,6 +237,7 @@ export function Agents({
                     <label htmlFor="system-prompt">Call instructions</label>
                     <span>{number(edit.system_prompt.length)} characters</span>
                   </div>
+                  <p className="notice">Hosted demo agents use managed call scripts. This editor applies to runtimes configured to use workspace instructions.</p>
                   <div className="prompt-editor">
                     <textarea
                       id="system-prompt"
@@ -538,9 +529,9 @@ export function Agents({
                   <button
                     className="button danger-outline"
                     disabled={Boolean(busy)}
-                    onClick={() => setConfirm({ action: "delete" })}
+                    onClick={() => setConfirm(true)}
                   >
-                    <Trash2 size={15} /> Delete agent configuration
+                    <Archive size={15} /> Archive agent
                   </button>
                 </>
               )}
@@ -683,14 +674,14 @@ export function Agents({
         </Modal>
       )}
       {confirm && (
-        <Modal title="Delete this agent?" onClose={() => setConfirm(null)}>
+        <Modal title="Archive this agent?" onClose={() => setConfirm(false)}>
           <div className="modal-content">
             <p>
-              The agent configuration will be deleted. Call history and shared
-              workspace knowledge will be preserved.
+              The agent will stop accepting calls. Its configuration, call history
+              and shared workspace knowledge will be preserved.
             </p>
             <div className="modal-actions">
-              <button className="button" onClick={() => setConfirm(null)}>
+              <button className="button" onClick={() => setConfirm(false)}>
                 Cancel
               </button>
               <button
@@ -700,21 +691,22 @@ export function Agents({
                   setBusy("action");
                   try {
                     await api(`agents/${selected}`, "DELETE");
-                    setConfirm(null);
+                    setConfirm(false);
                     const next = data.agents.find((a) => a.id !== selected);
-                    if (next) choose(next);
-                    else setSelected("");
+                    setSelected(next?.id || "");
+                    setEdit(next || defaultAgent());
+                    setSecrets({});
                     await refresh();
-                    notify("Agent deleted.");
+                    notify("Agent archived.");
                   } catch (e) {
                     setError((e as Error).message);
-                    setConfirm(null);
+                    setConfirm(false);
                   } finally {
                     setBusy("");
                   }
                 }}
               >
-                {busy ? "Working…" : "Confirm delete"}
+                {busy ? "Working…" : "Archive agent"}
               </button>
             </div>
           </div>

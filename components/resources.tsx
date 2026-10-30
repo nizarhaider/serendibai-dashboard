@@ -246,9 +246,6 @@ export function Resources({
         </section>
       ) : (
         <section className="catalogue-banner">
-          <span className="excel-icon">
-            <FileSpreadsheet size={32} />
-          </span>
           <div>
             <h2>Import your catalogue</h2>
             <p>Use the template to add several products or services at once.</p>

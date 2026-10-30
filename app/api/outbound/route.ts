@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
 import { z } from "zod";
@@ -27,7 +27,7 @@ async function handler(request: Request) {
       }
       uuid.parse(id);
       const [batch] = await sql`select b.id,b.name,b.instructions,b.columns,b.headers,b.agent_id,b.created_at from portal_outbound_batches b where b.id=${id} and b.customer_id=${user.customer_id}`;
-      if (!batch) throw new ApiError("Campaign not found.", 404);
+      if (!batch) throw new ApiError("Call list not found.", 404);
       const rows = await sql`select r.id,r.phone,r.data,r.result,case when q.expires_at<now() and q.state in ('pending','preparing','permission','calling') then 'expired' else q.state end as state,q.error,q.call_id,c.status as call_status,c.transcript from portal_outbound_rows r left join portal_case_requests q on q.outbound_row_id=r.id left join portal_calls c on c.id=${batch.agent_id}::text||':'||q.call_id where r.batch_id=${id} order by r.created_at,r.id`;
       if (url.searchParams.get("format") === "csv") {
         const output = stringify(rows.map(row => Object.fromEntries([...batch.headers, ...batch.columns].map((column: string) => {
@@ -47,7 +47,10 @@ async function handler(request: Request) {
       const agentId = uuid.parse(form.get("agent_id"));
       const phoneColumn = z.string().min(1).max(100).parse(form.get("phone_column"));
       if (!(file instanceof File) || file.size > 1000000 || !file.name.toLowerCase().endsWith(".csv")) throw new ApiError("Upload a CSV under 1 MB.");
-      const records = parse(await file.text(), { columns: true, bom: true, skip_empty_lines: true, relax_quotes: false }) as Record<string, string>[];
+      const records = parse(await file.text(), { columns: (names: string[]) => {
+        if (names.some(name => !name.trim()) || new Set(names).size !== names.length) throw new ApiError("Use unique, non-empty column headings.");
+        return names;
+      }, bom: true, skip_empty_lines: true, relax_quotes: false }) as Record<string, string>[];
       const columns = records.length ? Object.keys(records[0]) : [];
       if (!columns.includes(phoneColumn) || records.length > 500 || !records.length || columns.length > 50) throw new ApiError("CSV needs a phone column and 1–500 rows.");
       const phones = records.map((row, index) => {
@@ -60,11 +63,14 @@ async function handler(request: Request) {
       const [existing] = await sql`select id from portal_outbound_batches where customer_id=${user.customer_id} and source_hash=${sourceHash} order by created_at desc limit 1`;
       if (existing) return Response.json({ id: existing.id }, { headers });
       const resultColumns = await generateFields(instructions, columns);
-      const [batch] = await sql`insert into portal_outbound_batches(customer_id,agent_id,name,instructions,columns,headers,source_hash) values(${user.customer_id},${agentId},${file.name.slice(0, 120)},${instructions},${JSON.stringify(resultColumns)}::jsonb,${JSON.stringify(columns)}::jsonb,${sourceHash}) returning id`;
-      await sql.transaction(records.map((row, index) => sql`insert into portal_outbound_rows(batch_id,phone,data) values(${batch.id},${phones[index]},${JSON.stringify(row)}::jsonb)`));
-      return Response.json({ id: batch.id }, { status: 201, headers });
+      const batchId = randomUUID();
+      await sql.transaction([
+        sql`insert into portal_outbound_batches(id,customer_id,agent_id,name,instructions,columns,headers,source_hash) values(${batchId},${user.customer_id},${agentId},${file.name.slice(0, 120)},${instructions},${JSON.stringify(resultColumns)}::jsonb,${JSON.stringify(columns)}::jsonb,${sourceHash})`,
+        ...records.map((row, index) => sql`insert into portal_outbound_rows(batch_id,phone,data) values(${batchId},${phones[index]},${JSON.stringify(row)}::jsonb)`),
+      ]);
+      return Response.json({ id: batchId }, { status: 201, headers });
     }
-    if (!id) throw new ApiError("Campaign not found.", 404);
+    if (!id) throw new ApiError("Call list not found.", 404);
     uuid.parse(id);
     const action = url.searchParams.get("action");
     const body = await request.json();
@@ -72,10 +78,10 @@ async function handler(request: Request) {
     const [row] = await sql`select r.id,r.phone,r.data,r.result,b.instructions,b.columns,b.agent_id,b.customer_id from portal_outbound_rows r join portal_outbound_batches b on b.id=r.batch_id where r.id=${rowId} and b.id=${id} and b.customer_id=${user.customer_id}`;
     if (!row) throw new ApiError("Row not found.", 404);
     if (action === "call") {
-      const [runtime] = await sql`select runtime.id,runtime.telemetry->>'runtime_url' as runtime_url from portal_agents agent left join portal_agent_cases c on c.agent_id=agent.id join portal_agents runtime on runtime.id=coalesce(c.runtime_agent_id,agent.id) where agent.id=${row.agent_id} and runtime.status='ready' and runtime.heartbeat_at>now()-interval '90 seconds'`;
+      const [runtime] = await sql`select runtime.id,runtime.telemetry->>'runtime_url' as runtime_url from portal_agents agent left join portal_agent_cases c on c.agent_id=agent.id join portal_agents runtime on runtime.id=coalesce(c.runtime_agent_id,agent.id) where agent.id=${row.agent_id} and agent.status<>'archived' and runtime.status='ready' and runtime.heartbeat_at>now()-interval '90 seconds'`;
       if (!runtime || !validRuntimeUrl(runtime.runtime_url || "")) throw new ApiError("The voice agent is offline.", 503);
       const requestId = randomBytes(16).toString("hex");
-      const [created] = await sql`insert into portal_case_requests(id,phone,case_slug,runtime_agent_id,direction,outbound_row_id) values(${requestId},${row.phone},null,${runtime.id},'outbound',${row.id}) on conflict(runtime_agent_id,phone) do update set id=excluded.id,case_slug=null,outbound_row_id=excluded.outbound_row_id,direction='outbound',state='pending',call_id=null,message_id=null,error='',expires_at=now()+interval '10 minutes',created_at=now() where portal_case_requests.state not in ('preparing','permission','calling') or portal_case_requests.expires_at<now() returning id`;
+      const [created] = await sql`insert into portal_case_requests(id,phone,case_slug,runtime_agent_id,direction,outbound_row_id) values(${requestId},${row.phone},null,${runtime.id},'outbound',${row.id}) on conflict(runtime_agent_id,phone) do update set id=excluded.id,case_slug=null,outbound_row_id=excluded.outbound_row_id,direction='outbound',state='pending',call_id=null,message_id=null,error='',expires_at=now()+interval '10 minutes',created_at=now() where portal_case_requests.state not in ('pending','preparing','permission','calling') or portal_case_requests.expires_at<now() returning id`;
       if (!created) throw new ApiError("A call is already in progress for this number.", 409);
       await sql`update portal_outbound_rows set result=null where id=${row.id}`;
       const payload = JSON.stringify({ id: requestId, phone: row.phone, timestamp: Math.floor(Date.now() / 1000) });
@@ -84,6 +90,7 @@ async function handler(request: Request) {
         if (!response.ok) throw Error("Call unavailable");
       } catch {
         await sql`update portal_case_requests set state='failed',error='Could not start the call.' where id=${requestId} and state='pending'`;
+        throw new ApiError("Could not start the call. Refresh its status before retrying.", 502);
       }
       return Response.json({ ok: true }, { headers });
     }

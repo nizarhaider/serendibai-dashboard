@@ -1,26 +1,3 @@
-create table if not exists portal_agent_cases (
-  slug text primary key check(slug in ('support','sales','operations','marketing','talent')),
-  agent_id uuid unique not null references portal_agents(id),
-  runtime_agent_id uuid not null references portal_agents(id),
-  whatsapp_number text not null,
-  title text not null,
-  description text not null,
-  caller_hint text not null
-);
-create table if not exists portal_case_requests (
-  id text primary key,
-  phone text not null,
-  case_slug text not null references portal_agent_cases(slug),
-  runtime_agent_id uuid not null references portal_agents(id),
-  state text not null default 'pending',
-  direction text not null default 'inbound',
-  message_id text,
-  error text not null default '',
-  call_id text unique,
-  expires_at timestamptz not null default now()+interval '10 minutes',
-  created_at timestamptz not null default now(),
-  unique(runtime_agent_id,phone)
-);
 alter table portal_case_requests alter column case_slug drop not null;
 alter table portal_case_requests add column if not exists outbound_row_id uuid references portal_outbound_rows(id);
 alter table portal_case_requests drop constraint if exists portal_case_requests_state_check;
@@ -30,7 +7,6 @@ alter table portal_case_requests add column if not exists error text not null de
 insert into customers(id,business_name,contact_name,portal_tools)
 values('11f34122-0125-43f2-8d18-d7d4ae186eaa','SerendibAI Demo Studio','SerendibAI',array['book_appointment','create_order','create_ticket'])
 on conflict(id) do nothing;
-insert into portal_quotas(customer_id) values('11f34122-0125-43f2-8d18-d7d4ae186eaa') on conflict do nothing;
 insert into portal_agents(id,customer_id,name,company_name,system_prompt,voice,languages,tools)
 select id::uuid,'11f34122-0125-43f2-8d18-d7d4ae186eaa'::uuid,name,company,
   instructions,

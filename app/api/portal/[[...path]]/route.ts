@@ -106,7 +106,6 @@ async function handler(
         await sql.transaction([
           sql`insert into customers(id,business_name,contact_name,email,portal_read_only,portal_tools) values(${customerId},${b.business_name},${b.contact_name},${b.email},${b.read_only},${b.allowed_tools})`,
           sql`insert into portal_users(email,password_hash,customer_id,display_name) values(${b.email},${hashPassword(b.password)},${customerId},${b.contact_name})`,
-          sql`insert into portal_quotas(customer_id) values(${customerId})`,
         ]);
         await audit(customerId, "Customer created", b.business_name);
         return Response.json({ id: customerId }, { status: 201 });
@@ -129,8 +128,6 @@ async function handler(
       throw new ApiError("This account can only view calls and transcripts.", 403);
     if (resourceTools[route || ""] && !user.allowed_tools.includes(resourceTools[route || ""]))
       throw new ApiError("This feature is disabled for your workspace.", 403);
-    if (route === "quotas" && !user.is_admin)
-      throw new ApiError("Administrator access required.", 403);
     if (route === "logout" && method === "POST") {
       const store = await cookies();
       await sql`delete from portal_sessions where token_hash=${digest(store.get("portal_session")?.value || "")}`;
@@ -152,6 +149,7 @@ async function handler(
           user.email,
           days,
           filter ? uuid.parse(filter) : undefined,
+          z.enum(["dashboard", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin"]).parse(url.searchParams.get("section") || "dashboard"),
         ),
         { headers: { "Cache-Control": "private, no-store" } },
       );
@@ -164,22 +162,6 @@ async function handler(
       const result = await draftPrompt(prompt);
       await audit(customer, "Prompt researched", prompt.slice(0, 160));
       return Response.json(result);
-    }
-    if (route === "quotas" && method === "PUT") {
-      const b = z
-        .object({
-          tokens: z.coerce.number().int().positive().max(100000000),
-          minutes: z.coerce.number().int().positive().max(100000),
-          calls: z.coerce.number().int().positive().max(100000),
-        })
-        .parse(await request.json());
-      await sql`update portal_quotas set tokens=${b.tokens},minutes=${b.minutes},calls=${b.calls} where customer_id=${customer}`;
-      await audit(
-        customer,
-        "Workspace limits updated",
-        "Monthly token, minute and call allowances changed.",
-      );
-      return Response.json({ ok: true });
     }
     if (id && method === "PATCH" && ["orders", "tickets", "appointments"].includes(route || "")) {
       uuid.parse(id);
@@ -208,7 +190,7 @@ async function handler(
           throw new ApiError("One or more tools are disabled for your workspace.", 403);
         const tools = [...standardTools, ...b.tools.filter((tool): tool is typeof toolNames[number] => toolNames.includes(tool as typeof toolNames[number]) && user.allowed_tools.includes(tool as typeof toolNames[number]))];
         const count =
-          await sql`select id from portal_agents where customer_id=${customer}`;
+          await sql`select id from portal_agents where customer_id=${customer} and status<>'archived'`;
         if (!id && count.length >= 20)
           throw new ApiError("Workspace limit: 20 agents.");
         let credentials: null | string = null;
@@ -247,11 +229,8 @@ async function handler(
         const [a] =
           await sql`select name from portal_agents where id=${id} and customer_id=${customer}`;
         if (!a) throw new ApiError("Agent not found.", 404);
-        await sql.transaction([
-          sql`update portal_calls set agent_id=null where agent_id=${id} and customer_id=${customer}`,
-          sql`update portal_events set agent_id=null where agent_id=${id} and customer_id=${customer}`,
-          sql`delete from portal_agents where id=${id} and customer_id=${customer}`,
-        ]);
+        await sql`update portal_agents set status='archived',runtime_token_hash=null,version=version+1,updated_at=now() where id=${id} and customer_id=${customer}`;
+        await audit(customer, "Agent archived", a.name, id);
         return Response.json({ ok: true });
       }
     }
@@ -260,11 +239,9 @@ async function handler(
         const { rows } = z
           .object({ rows: z.array(product).min(1).max(500) })
           .parse(await request.json());
-        for (const row of rows.filter((r) => r.id)) {
-          const [own] =
-            await sql`select id from portal_products where id=${row.id} and customer_id=${customer}`;
-          if (!own) throw new ApiError("Product not found.", 404);
-        }
+        const ids = rows.flatMap(row => row.id ? [row.id] : []);
+        const owned = ids.length ? await sql`select id from portal_products where customer_id=${customer} and id=any(${ids}::uuid[])` : [];
+        if (owned.length !== new Set(ids).size) throw new ApiError("Product not found.", 404);
         await sql.transaction(
           rows.map((b) =>
             b.id
@@ -364,4 +341,4 @@ async function handler(
     );
   }
 }
-export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
+export { handler as GET, handler as POST, handler as PUT, handler as PATCH, handler as DELETE };

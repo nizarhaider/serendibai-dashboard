@@ -61,7 +61,12 @@ export async function login(email: string, password: string, ip: string) {
   )
     throw new ApiError("Email or password is incorrect.", 401);
   const token = randomBytes(32).toString("hex");
-  await db()`insert into portal_sessions(token_hash,user_id,expires_at) values(${digest(token)},${user.id},now()+interval '12 hours')`;
+  const sql = db();
+  await sql.transaction([
+    sql`delete from portal_sessions where expires_at<=now()`,
+    sql`delete from portal_rate_limits where expires_at<=now()`,
+    sql`insert into portal_sessions(token_hash,user_id,expires_at) values(${digest(token)},${user.id},now()+interval '12 hours')`,
+  ]);
   (await cookies()).set("portal_session", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

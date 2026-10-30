@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { digest, ApiError } from "@/lib/auth";
-import { runtimeSecrets } from "@/lib/runtime";
+import { runtimeSecrets, validRuntimeUrl } from "@/lib/runtime";
 import { standardTools } from "@/lib/permissions";
 
 export const runtime = "nodejs";
@@ -49,7 +49,7 @@ async function handler(
         .parse(body);
       if (
         b.runtime_url &&
-        !/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(b.runtime_url)
+        !validRuntimeUrl(b.runtime_url)
       )
         throw new ApiError("Invalid runtime URL.");
       const restart = agent.deployed_version === -1;
