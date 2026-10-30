@@ -208,7 +208,7 @@ label {
   font-size: 13px;
   font-weight: 540;
 }
-input:not([type="checkbox"]),
+input:not([type="checkbox"], .sr-only),
 textarea,
 select {
   outline: 0;

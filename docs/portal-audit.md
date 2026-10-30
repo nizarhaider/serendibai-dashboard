@@ -11,6 +11,7 @@ The main simplification opportunity was unused presentation code and excessive d
 | Area | Finding | Change |
 | --- | --- | --- |
 | Mobile catalogue | Import buttons forced introductory text into a narrow vertical column | Wrap the banner; give its description a full mobile row and keep buttons aligned below it |
+| Hidden file inputs | Generic input styles overrode visually hidden field sizing and caused horizontal overflow | Exclude visually hidden controls from generic input styles |
 | Shared controls | Small mobile buttons, cramped filters, rigid action rows, shrinking icons | Consistent minimum heights, wrapping actions, flexible searches and nonshrinking icons |
 | Agent settings | Mobile save controls stacked awkwardly | Allow status and save controls to wrap together |
 | Styling | Old analytics, capacity, activity and decorative selectors remained after their UI disappeared | Removed 137 unused rules; removed hidden decorative markup and unused scaffold assets |
@@ -83,5 +84,7 @@ Rollback, if ever needed: restore the quota table definition from the preceding 
 - Authenticated local production server: all eight customer sections returned HTTP 200 for both API and page; irrelevant calls and sensitive agent fields were absent from section payloads.
 - API boundaries: anonymous 401, non-admin customer administration 403, foreign-origin mutation 403, invalid section/status 400, missing and cross-tenant ticket updates 404.
 - Voice commit `2d2eaaa` passed production deployment workflow `41126755495`.
-- Live portal deployment, schema maintenance and final responsive checks are recorded in the task handoff.
+- One-off disposable records verified successful persisted PATCH updates for orders, tickets and appointments, archival with foreign-key references, and read-only mutation blocking. All temporary records were removed.
+- Portal published to Netlify; guarded quota removal completed, leaving 29 public tables. Removed 34 expired sessions and 44 expired rate-limit entries. Live voice heartbeat was ready and fresh.
+- Live mobile catalogue inspection confirmed corrected banner and toolbar wrapping; final responsive checks are recorded in the task handoff.
 - No real WhatsApp call was placed. Deployment/static checks do not prove caller-heard behavior or an end-to-end outbound results CSV.
