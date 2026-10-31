@@ -14,6 +14,14 @@ const uuid = z.string().uuid();
 const headers = { "Cache-Control": "private, no-store" };
 const instructions = "Call on behalf of Talent 360. Confirm the candidate's current role and years of experience, asking one question at a time. Record each as verified, corrected, not confirmed or not assessed, and note corrections. Ask the candidate to describe their work in English and rate spoken English as basic, intermediate or advanced with a brief evidence-based reason. Use not assessed when unanswered or unclear. Never guess or promise a job.";
 const resultFields = ["role_verification", "confirmed_role", "experience_verification", "confirmed_years_experience", "spoken_english_level", "english_assessment_notes"];
+const compactPhone = (value: string) => value.trim().replace(/[\s()-]/g, "");
+const isMobileNumber = (value: string) => /^(?:(?:\+?94|0094)?7\d{8}|07\d{8}|\+\d{8,15}|00\d{8,15})$/.test(compactPhone(value));
+const normalizeMobile = (value: string) => {
+  const phone = compactPhone(value);
+  if (/^7\d{8}$/.test(phone)) return `94${phone}`;
+  if (/^07\d{8}$/.test(phone)) return `94${phone.slice(1)}`;
+  return normalizePhone(value);
+};
 
 async function handler(request: Request) {
   try {
@@ -45,16 +53,17 @@ async function handler(request: Request) {
     if (request.method === "POST" && !id) {
       const form = await request.formData();
       const file = form.get("file");
-      if (!(file instanceof File) || file.size > 1000000 || !file.name.toLowerCase().endsWith(".csv")) throw new ApiError("Upload a CSV under 1 MB.");
+      if (!(file instanceof File) || file.size > 4000000 || !file.name.toLowerCase().endsWith(".csv")) throw new ApiError("Upload a CSV under 4 MB.");
       const records = parse(await file.text(), { columns: (names: string[]) => {
         if (names.some(name => !name.trim()) || new Set(names).size !== names.length) throw new ApiError("Use unique, non-empty column headings.");
         return names;
       }, bom: true, skip_empty_lines: true, relax_quotes: false }) as Record<string, string>[];
       const columns = records.length ? Object.keys(records[0]) : [];
-      const phoneColumn = columns.find(name => /phone|mobile|whatsapp/i.test(name)) || columns[0];
-      if (records.length > 500 || !records.length || columns.length > 50) throw new ApiError("CSV needs a phone column and 1–500 rows.");
+      if (!records.length) throw new ApiError("CSV needs a header row and at least one contact.");
+      const phoneColumn = columns.map(column => ({ column, matches: records.filter(row => isMobileNumber(row[column] || "")).length })).sort((a, b) => b.matches - a.matches)[0];
+      if (!phoneColumn?.matches) throw new ApiError("Include a mobile number column with values like +94742530708 or 742530708.");
       const phones = records.map((row, index) => {
-        try { return normalizePhone(row[phoneColumn] || ""); }
+        try { return normalizeMobile(row[phoneColumn.column] || ""); }
         catch { throw new ApiError(`Invalid phone number on row ${index + 2}.`); }
       });
       const [agent] = await sql`select id from portal_agents where customer_id=${user.customer_id} and status<>'archived' order by created_at desc limit 1`;
@@ -71,7 +80,7 @@ async function handler(request: Request) {
       const batchId = randomUUID();
       await sql.transaction([
         sql`insert into portal_outbound_batches(id,customer_id,agent_id,name,instructions,columns,headers,source_hash) values(${batchId},${user.customer_id},${agent.id},${file.name.slice(0, 120)},${instructions},${JSON.stringify(resultColumns)}::jsonb,${JSON.stringify(columns)}::jsonb,${sourceHash})`,
-        ...records.map((row, index) => sql`insert into portal_outbound_rows(batch_id,phone,data) values(${batchId},${phones[index]},${JSON.stringify(row)}::jsonb)`),
+        sql`insert into portal_outbound_rows(batch_id,phone,data) select ${batchId},phone,data from jsonb_to_recordset(${JSON.stringify(records.map((data, index) => ({ phone: phones[index], data })))}::jsonb) as rows(phone text,data jsonb)`,
       ]);
       return Response.json({ id: batchId }, { status: 201, headers });
     }

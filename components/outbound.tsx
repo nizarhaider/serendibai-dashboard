@@ -165,7 +165,7 @@ export function Outbound() {
           <span className="outbound-file-icon">{file ? <FileSpreadsheet size={25} /> : <Upload size={25} />}</span>
           <strong>{file ? file.name : "Upload your contacts"}</strong>
           <span>{file ? "CSV selected · Click to replace" : "Choose a CSV file or drop it here"}</span>
-          {!file && <small>Up to 500 contacts · 1 MB</small>}
+          {!file && <small>CSV up to 4 MB</small>}
         </label>
         <a className="button" href="/outbound-template.csv" download><ArrowDownToLine size={16} />Download CSV template</a>
         {file && preview && <div className="outbound-preview"><strong>CSV preview <small>First {preview.rows.length} rows</small></strong>{preview.headers.length ? <div><table><thead><tr>{preview.headers.slice(0, 5).map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{preview.rows.map((row, index) => <tr key={index}>{row.slice(0, 5).map((value, column) => <td key={column} title={value}>{value}</td>)}</tr>)}</tbody></table></div> : <small>Preview unavailable for this CSV.</small>}</div>}
