@@ -70,7 +70,7 @@ async function handler(request: Request) {
       if (!agent) throw new ApiError("No active voice agent is available.", 503);
       const usedColumns = new Set(columns);
       const resultColumns = selectedColumns.map(column => {
-        let field = `${column}_validated`;
+        let field = `${column.replace(/\s+/g, "")}_validated`;
         while (usedColumns.has(field)) field = `${field}_validated`;
         usedColumns.add(field);
         return field;

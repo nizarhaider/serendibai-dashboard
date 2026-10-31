@@ -173,7 +173,7 @@ export function Outbound() {
         </label>
         {file && preview && <>
           <div className="outbound-preview"><strong>CSV preview <small>First {preview.rows.length} rows</small></strong>{preview.headers.length ? <div><table><thead><tr>{preview.headers.map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{preview.rows.map((row, index) => <tr key={index}>{preview.headers.map((_, column) => <td key={column} title={row[column] || ""}>{row[column]}</td>)}</tr>)}</tbody></table></div> : <small>Preview unavailable for this CSV.</small>}</div>
-          {preview.headers.length > 0 && <fieldset className="outbound-validation-columns"><legend>Select columns to validate</legend><div>{preview.headers.map(column => <label key={column}><span><input type="checkbox" checked={selectedColumns.includes(column)} onChange={event => setSelectedColumns(current => event.target.checked ? [...current, column] : current.filter(value => value !== column))} />{column}</span><small>{column}_validated</small></label>)}</div></fieldset>}
+          {preview.headers.length > 0 && <fieldset className="outbound-validation-columns"><legend>Select columns to validate</legend><div>{preview.headers.map(column => <label key={column}><span><input type="checkbox" checked={selectedColumns.includes(column)} onChange={event => setSelectedColumns(current => event.target.checked ? [...current, column] : current.filter(value => value !== column))} />{column}</span></label>)}</div></fieldset>}
         </>}
         <a className="button" href="/outbound-template.csv" download><ArrowDownToLine size={16} />Download CSV template</a>
         {file && <>
