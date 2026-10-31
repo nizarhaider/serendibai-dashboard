@@ -1896,7 +1896,7 @@ td small, .catalogue-banner p, .upload-zone p, .panel-heading p { font-size: 12p
 .case-transcript { border-bottom: 1px solid #dce4df; padding: 20px 0; }
 .case-transcript summary { cursor: pointer; line-height: 1.6; }
 .case-transcript pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.8; padding: 20px 0; }
-.outbound-page { display: grid; gap: 20px; max-width: 1120px; }
+.outbound-page { display: grid; gap: 20px; }
 .outbound-page .button { min-height: 42px; gap: 8px; white-space: nowrap; }
 .outbound-page button:disabled { cursor: not-allowed; }
 .outbound-page :is(button,a,input,select,textarea,summary):focus-visible { outline: 2px solid #287963; outline-offset: 3px; }
@@ -1907,7 +1907,7 @@ td small, .catalogue-banner p, .upload-zone p, .panel-heading p { font-size: 12p
 .outbound-list-picker { flex: 1; max-width: 520px; }
 .outbound-list-picker > span { font-size: 11px; font-weight: 600; letter-spacing: .04em; }
 .outbound-list-picker select { width: 100%; min-height: 44px; }
-.outbound-setup { max-width: 800px; padding: 32px; }
+.outbound-setup { padding: 32px; }
 .outbound-card-heading { display: flex; align-items: center; gap: 14px; }
 .outbound-card-heading > div:nth-child(2) { flex: 1; }
 .outbound-card-heading p { margin-top: 5px; }
