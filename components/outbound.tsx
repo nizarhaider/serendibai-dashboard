@@ -1,13 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowDownToLine, ArrowRight, Check, ChevronDown, FileSpreadsheet, Loader2, Phone, Plus, RefreshCw, Upload, X } from "lucide-react";
-import { parse } from "csv-parse/browser/esm/sync";
-import type { PortalData } from "@/lib/types";
+import { ArrowDownToLine, ArrowRight, FileSpreadsheet, Loader2, Phone, Plus, RefreshCw, Upload, X } from "lucide-react";
 
 type Row = { id: string; phone: string; result: Record<string, string> | null; state: string | null; call_status: string | null; call_id: string | null; error: string | null; transcript: string | null };
-type Batch = { id: string; name: string; instructions: string; columns: string[]; agent_id: string };
+type Batch = { id: string; name: string };
 type SavedList = { id: string; name: string; rows: number; created_at: string };
 const activeStates = ["pending", "preparing", "permission", "calling"];
 const retryStates = ["failed", "declined", "expired"];
@@ -32,14 +29,8 @@ function callProgress(row: Row) {
   return "Not called";
 }
 
-export function Outbound({ data }: { data: PortalData }) {
-  const agents = data.agents.filter(agent => agent.status !== "archived");
+export function Outbound() {
   const [file, setFile] = useState<File | null>(null);
-  const [headers, setHeaders] = useState<string[]>([]);
-  const [contactCount, setContactCount] = useState(0);
-  const [phoneColumn, setPhoneColumn] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [agentId, setAgentId] = useState(agents[0]?.id || "");
   const [batches, setBatches] = useState<SavedList[]>([]);
   const [batch, setBatch] = useState<Batch | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
@@ -97,20 +88,10 @@ export function Outbound({ data }: { data: PortalData }) {
     return () => { controller.abort(); clearTimeout(timer); };
   }, [batchId, watching]);
 
-  async function selectFile(next?: File) {
+  function selectFile(next?: File) {
     if (!next) return;
     setError("");
-    try {
-      if (!next.name.toLowerCase().endsWith(".csv") || next.size > 1000000) throw Error("Choose a CSV file under 1 MB.");
-      const records = parse(await next.text(), { bom: true, skip_empty_lines: true }) as string[][];
-      const names = records[0] || [];
-      if (records.length < 2 || records.length > 501) throw Error("Your CSV needs a header row and between 1 and 500 contacts.");
-      if (!names.length || names.length > 50 || names.some(name => !name.trim()) || new Set(names).size !== names.length) throw Error("Give each column a unique, non-empty heading. Use up to 50 columns.");
-      setHeaders(names);
-      setPhoneColumn(names.find(name => /phone|mobile|whatsapp/i.test(name)) || names[0]);
-      setContactCount(records.length - 1);
-      setFile(next);
-    } catch (e) { setError((e as Error).message); }
+    setFile(next);
   }
 
   async function chooseList(id: string) {
@@ -126,12 +107,11 @@ export function Outbound({ data }: { data: PortalData }) {
     setBusy("create"); setError("");
     try {
       const form = new FormData();
-      form.set("file", file); form.set("phone_column", phoneColumn);
-      form.set("instructions", instructions); form.set("agent_id", agentId);
+      form.set("file", file);
       const result = await request("", { method: "POST", body: form });
       setBatches(await request());
       await loadList(result.id);
-      setShowForm(false); setFile(null); setHeaders([]); setInstructions("");
+      setShowForm(false); setFile(null);
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(""); }
   }
@@ -168,27 +148,22 @@ export function Outbound({ data }: { data: PortalData }) {
       <button className="button" disabled={!!busy || loading} onClick={() => { setShowForm(true); setError(""); }}><Plus size={16} /> New list</button>
     </div>}
     {loading ? <div className="outbound-loading" role="status"><Loader2 className="outbound-spin" size={22} /> Loading your call lists…</div> : showForm || !batch ? <section className="outbound-card outbound-setup">
-      <div className="outbound-card-heading"><div className="outbound-symbol"><Phone size={21} /></div><div><h2>Who would you like to call?</h2><p>Add your contacts. Tell your agent what to check.</p></div>{batch && <button className="icon-button" aria-label="Close new list" disabled={!!busy} onClick={() => setShowForm(false)}><X size={18} /></button>}</div>
-      <ol className="outbound-steps" aria-label="Call setup"><li className={!file ? "current" : "done"}><span>{file ? <Check size={13} /> : "1"}</span>Contacts</li><li className={file ? "current" : ""}><span>2</span>Instructions</li><li><span>3</span>Start calls</li></ol>
+      <div className="outbound-card-heading"><div className="outbound-symbol"><Phone size={21} /></div><div><h2>Upload a call list</h2><p>Choose a CSV and we’ll handle the call setup.</p></div>{batch && <button className="icon-button" aria-label="Close new list" disabled={!!busy} onClick={() => setShowForm(false)}><X size={18} /></button>}</div>
       <form onSubmit={create}>
         <label className={`outbound-upload ${dragging ? "dragging" : ""} ${file ? "has-file" : ""}`} onDragOver={e => { e.preventDefault(); if (!busy) setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={e => { e.preventDefault(); setDragging(false); if (!busy) void selectFile(e.dataTransfer.files[0]); }}>
           <input className="sr-only" type="file" accept=".csv,text/csv" disabled={!!busy} aria-label="Upload contacts CSV" onChange={e => { void selectFile(e.target.files?.[0]); e.target.value = ""; }} />
           <span className="outbound-file-icon">{file ? <FileSpreadsheet size={25} /> : <Upload size={25} />}</span>
           <strong>{file ? file.name : "Upload your contacts"}</strong>
-          <span>{file ? `${contactCount} ${contactCount === 1 ? "contact" : "contacts"} · Click to replace` : "Choose a CSV file or drop it here"}</span>
+          <span>{file ? "CSV selected · Click to replace" : "Choose a CSV file or drop it here"}</span>
           {!file && <small>Up to 500 contacts · 1 MB</small>}
         </label>
         <a className="button" href="/outbound-template.csv" download><ArrowDownToLine size={16} />Download CSV template</a>
         {file && <>
-          <div className="outbound-fields"><label>Phone number column<select disabled={!!busy} value={phoneColumn} onChange={e => setPhoneColumn(e.target.value)}>{headers.map(header => <option key={header}>{header}</option>)}</select></label><label>Calling agent<select disabled={!!busy} value={agentId} onChange={e => setAgentId(e.target.value)}>{agents.length ? agents.map(agent => <option key={agent.id} value={agent.id}>{agent.name} · {agent.company_name}</option>) : <option value="">No agents available</option>}</select></label></div>
-          <label>What should the agent check?<textarea disabled={!!busy} value={instructions} onChange={e => setInstructions(e.target.value)} rows={4} minLength={20} maxLength={6000} placeholder="Confirm each candidate’s current role and years of experience. Assess spoken English with two short questions." required /><small>Be specific about what to verify and how to assess it. We’ll create the result columns for you.</small></label>
-          {!agents.length && <p className="outbound-notice">Add a voice agent in <Link href="/agents">Agent Management</Link> to continue.</p>}
-          <div className="outbound-form-footer"><span>You can review the list before calling.</span><button className="button primary" disabled={!agentId || instructions.trim().length < 20 || !!busy}>{busy === "create" ? <><Loader2 className="outbound-spin" size={16} /> Preparing list…</> : <>Prepare call list <ArrowRight size={16} /></>}</button></div>
+          <button className="button primary" disabled={!!busy}>{busy === "create" ? <><Loader2 className="outbound-spin" size={16} /> Preparing list…</> : <>Create call list <ArrowRight size={16} /></>}</button>
         </>}
       </form>
     </section> : <section className="outbound-card outbound-workspace">
-      <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} {rows.length === 1 ? "contact" : "contacts"} <span>·</span> {data.agents.find(agent => agent.id === batch.agent_id)?.name || "Voice agent"}</p></div><button className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></button></header>
-      <details className="outbound-instructions"><summary>Call instructions <ChevronDown size={15} /></summary><p>{batch.instructions}</p><div className="outbound-columns">{batch.columns.map(column => <span key={column}>{column.replaceAll("_", " ")}</span>)}</div></details>
+      <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} {rows.length === 1 ? "contact" : "contacts"}</p></div><button className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></button></header>
       <div className="outbound-actions"><button className="button primary" disabled={!!busy || !remaining} onClick={() => void run("call")}>{busy === "call-all" ? <><Loader2 className="outbound-spin" size={16} /> Starting {progress.done} of {progress.total}</> : <><Phone size={16} />{remaining ? `Call remaining (${remaining})` : "All contacts attempted"}</>}</button><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}><ArrowDownToLine size={16} />Download CSV</a>{watching && <span className="outbound-live-indicator" role="status"><i />Live updates</span>}</div>
       {busy === "call-all" && <p className="outbound-inline-note" role="status">Keep this page open while calls are being started.</p>}
       {liveError && <p className="outbound-inline-note" role="status">Live updates interrupted. Reconnecting…</p>}

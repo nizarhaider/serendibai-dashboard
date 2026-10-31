@@ -530,7 +530,7 @@ export function Portal({
           ) : section === "agents" ? (
             <Agents data={data} refresh={refresh} notify={notify} />
           ) : section === "outbound" ? (
-            <Outbound data={data} />
+            <Outbound />
           ) : section === "appointments" ? (
             <Appointments data={data} refresh={refresh} />
           ) : section === "orders" ? (

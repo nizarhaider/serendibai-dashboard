@@ -6,12 +6,14 @@ import { ApiError, checkOrigin, requireUser, rateLimit } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { caseSignature, normalizePhone } from "@/lib/cases";
 import { validRuntimeUrl } from "@/lib/runtime";
-import { extractResults, generateFields } from "@/lib/outbound";
+import { extractResults } from "@/lib/outbound";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 const uuid = z.string().uuid();
 const headers = { "Cache-Control": "private, no-store" };
+const instructions = "Call on behalf of Talent 360. Confirm the candidate's current role and years of experience, asking one question at a time. Record each as verified, corrected, not confirmed or not assessed, and note corrections. Ask the candidate to describe their work in English and rate spoken English as basic, intermediate or advanced with a brief evidence-based reason. Use not assessed when unanswered or unclear. Never guess or promise a job.";
+const resultFields = ["role_verification", "confirmed_role", "experience_verification", "confirmed_years_experience", "spoken_english_level", "english_assessment_notes"];
 
 async function handler(request: Request) {
   try {
@@ -36,36 +38,39 @@ async function handler(request: Request) {
         }))), { header: true, columns: [...batch.headers, ...batch.columns], bom: true });
         return new Response(output, { headers: { ...headers, "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="outbound-${id}.csv"` } });
       }
-      return Response.json({ batch, rows }, { headers });
+      return Response.json({ batch: { id: batch.id, name: batch.name }, rows }, { headers });
     }
     checkOrigin(request);
     await rateLimit(`outbound:${user.id}`, 1000, 3600);
     if (request.method === "POST" && !id) {
       const form = await request.formData();
       const file = form.get("file");
-      const instructions = z.string().trim().min(20).max(6000).parse(form.get("instructions"));
-      const agentId = uuid.parse(form.get("agent_id"));
-      const phoneColumn = z.string().min(1).max(100).parse(form.get("phone_column"));
       if (!(file instanceof File) || file.size > 1000000 || !file.name.toLowerCase().endsWith(".csv")) throw new ApiError("Upload a CSV under 1 MB.");
       const records = parse(await file.text(), { columns: (names: string[]) => {
         if (names.some(name => !name.trim()) || new Set(names).size !== names.length) throw new ApiError("Use unique, non-empty column headings.");
         return names;
       }, bom: true, skip_empty_lines: true, relax_quotes: false }) as Record<string, string>[];
       const columns = records.length ? Object.keys(records[0]) : [];
-      if (!columns.includes(phoneColumn) || records.length > 500 || !records.length || columns.length > 50) throw new ApiError("CSV needs a phone column and 1–500 rows.");
+      const phoneColumn = columns.find(name => /phone|mobile|whatsapp/i.test(name)) || columns[0];
+      if (records.length > 500 || !records.length || columns.length > 50) throw new ApiError("CSV needs a phone column and 1–500 rows.");
       const phones = records.map((row, index) => {
         try { return normalizePhone(row[phoneColumn] || ""); }
         catch { throw new ApiError(`Invalid phone number on row ${index + 2}.`); }
       });
-      const [agent] = await sql`select id from portal_agents where id=${agentId} and customer_id=${user.customer_id} and status<>'archived'`;
-      if (!agent) throw new ApiError("Agent not found.", 404);
-      const sourceHash = createHash("sha256").update(JSON.stringify({ name: file.name.slice(0, 120), agentId, instructions, headers: columns, rows: records.map((row, index) => JSON.stringify([phones[index], ...columns.map(column => row[column] || "")])).sort() })).digest("hex");
+      const [agent] = await sql`select id from portal_agents where customer_id=${user.customer_id} and status<>'archived' order by created_at desc limit 1`;
+      if (!agent) throw new ApiError("No active voice agent is available.", 503);
+      const usedColumns = new Set(columns);
+      const resultColumns = resultFields.map(field => {
+        while (usedColumns.has(field)) field = `result_${field}`;
+        usedColumns.add(field);
+        return field;
+      });
+      const sourceHash = createHash("sha256").update(JSON.stringify({ name: file.name.slice(0, 120), agentId: agent.id, instructions, headers: columns, rows: records.map((row, index) => JSON.stringify([phones[index], ...columns.map(column => row[column] || "")])).sort() })).digest("hex");
       const [existing] = await sql`select id from portal_outbound_batches where customer_id=${user.customer_id} and source_hash=${sourceHash} order by created_at desc limit 1`;
       if (existing) return Response.json({ id: existing.id }, { headers });
-      const resultColumns = await generateFields(instructions, columns);
       const batchId = randomUUID();
       await sql.transaction([
-        sql`insert into portal_outbound_batches(id,customer_id,agent_id,name,instructions,columns,headers,source_hash) values(${batchId},${user.customer_id},${agentId},${file.name.slice(0, 120)},${instructions},${JSON.stringify(resultColumns)}::jsonb,${JSON.stringify(columns)}::jsonb,${sourceHash})`,
+        sql`insert into portal_outbound_batches(id,customer_id,agent_id,name,instructions,columns,headers,source_hash) values(${batchId},${user.customer_id},${agent.id},${file.name.slice(0, 120)},${instructions},${JSON.stringify(resultColumns)}::jsonb,${JSON.stringify(columns)}::jsonb,${sourceHash})`,
         ...records.map((row, index) => sql`insert into portal_outbound_rows(batch_id,phone,data) values(${batchId},${phones[index]},${JSON.stringify(row)}::jsonb)`),
       ]);
       return Response.json({ id: batchId }, { status: 201, headers });
