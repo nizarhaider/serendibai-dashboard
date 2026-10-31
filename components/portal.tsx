@@ -514,8 +514,12 @@ export function Portal({
                     <strong>{number(data.totals.answered)}</strong> answered
                   </span>
                   <span>
-                    <strong>{number(data.totals.minutes)}</strong> recorded
-                    minutes
+                    <strong>{number(data.totals.inbound_minutes)}</strong>{" "}
+                    inbound minutes
+                  </span>
+                  <span>
+                    <strong>{number(data.totals.outbound_minutes)}</strong>{" "}
+                    outbound minutes
                   </span>
                 </div>
                 <CallHistory key={`${days}-${agent}`} data={data} />

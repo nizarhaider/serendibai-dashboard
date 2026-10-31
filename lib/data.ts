@@ -23,7 +23,7 @@ export async function getData(
       allowed("appointments", "book_appointment") ? sql`select p.id,p.agent_id,a.name as agent_name,p.call_id,p.customer_phone,p.customer_name,p.service,p.appointment_at,p.duration_minutes,p.notes,p.status,p.created_at from portal_appointments p left join portal_agents a on a.id=p.agent_id where p.customer_id=${customer} order by p.appointment_at limit 2000` : [],
       allowed("orders", "create_order") ? sql`select o.id,o.agent_id,a.name as agent_name,o.call_id,o.customer_phone,o.customer_name,o.items,o.delivery_address,o.notes,o.status,o.created_at from portal_orders o left join portal_agents a on a.id=o.agent_id where o.customer_id=${customer} order by o.created_at desc limit 2000` : [],
       allowed("tickets", "create_ticket") ? sql`select t.id,t.agent_id,a.name as agent_name,t.call_id,t.customer_phone,t.customer_name,t.subject,t.description,t.priority,t.status,t.created_at from portal_tickets t left join portal_agents a on a.id=t.agent_id where t.customer_id=${customer} order by t.created_at desc limit 2000` : [],
-      dashboard ? sql`select count(*)::int as calls,count(*) filter(where status in ('completed','ended','active'))::int as answered,round(sum(duration_seconds)/60,2)::float as minutes from portal_calls where customer_id=${customer} and (${agent || null}::uuid is null or agent_id=${agent || null}::uuid) and created_at>=((now() at time zone 'Asia/Colombo')::date-(${days}-1))::timestamp at time zone 'Asia/Colombo'` : [],
+      dashboard ? sql`select count(c.id)::int as calls,count(*) filter(where c.status in ('completed','ended','active'))::int as answered,round(sum(c.duration_seconds)/60,1)::float as minutes,round(sum(c.duration_seconds) filter(where q.id is null)/60,1)::float as inbound_minutes,round(sum(c.duration_seconds) filter(where q.id is not null)/60,1)::float as outbound_minutes from portal_calls c left join portal_case_requests q on q.runtime_agent_id=c.agent_id and c.id=q.runtime_agent_id::text||':'||q.call_id and q.direction='outbound' where c.customer_id=${customer} and (${agent || null}::uuid is null or c.agent_id=${agent || null}::uuid) and c.created_at>=((now() at time zone 'Asia/Colombo')::date-(${days}-1))::timestamp at time zone 'Asia/Colombo'` : [],
       editable && dashboard ? sql`select
         (select count(*)::int from portal_tickets where customer_id=${customer} and status in ('open','in_progress') and ${account.allowed_tools.includes("create_ticket")}) as tickets,
         (select count(*)::int from portal_orders where customer_id=${customer} and status in ('placed','processing') and ${account.allowed_tools.includes("create_order")}) as orders,
@@ -41,7 +41,7 @@ export async function getData(
       appointments,
       orders,
       tickets,
-      totals: totals[0] || { calls: 0, answered: 0, minutes: null },
+      totals: totals[0] || { calls: 0, answered: 0, minutes: null, inbound_minutes: null, outbound_minutes: null },
       attention: attention[0] || { tickets: 0, orders: 0, appointments: 0 },
     }),
   );

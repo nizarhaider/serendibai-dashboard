@@ -117,6 +117,8 @@ export type PortalData = {
     calls: number;
     answered: number;
     minutes: number | null;
+    inbound_minutes: number | null;
+    outbound_minutes: number | null;
   };
   attention: { tickets: number; orders: number; appointments: number };
 };
