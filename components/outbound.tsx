@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDownToLine, ArrowRight, FileSpreadsheet, Loader2, Phone, Plus, RefreshCw, Upload, X } from "lucide-react";
+import { parse } from "csv-parse/browser/esm/sync";
 
 type Row = { id: string; phone: string; result: Record<string, string> | null; state: string | null; call_status: string | null; call_id: string | null; error: string | null; transcript: string | null };
 type Batch = { id: string; name: string };
 type SavedList = { id: string; name: string; rows: number; created_at: string };
+type Preview = { headers: string[]; rows: string[][] };
 const activeStates = ["pending", "preparing", "permission", "calling"];
 const retryStates = ["failed", "declined", "expired"];
 const date = (value: string) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Colombo" }).format(new Date(value));
@@ -31,6 +33,7 @@ function callProgress(row: Row) {
 
 export function Outbound() {
   const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
   const [batches, setBatches] = useState<SavedList[]>([]);
   const [batch, setBatch] = useState<Batch | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
@@ -88,10 +91,17 @@ export function Outbound() {
     return () => { controller.abort(); clearTimeout(timer); };
   }, [batchId, watching]);
 
-  function selectFile(next?: File) {
+  async function selectFile(next?: File) {
     if (!next) return;
     setError("");
     setFile(next);
+    setPreview(null);
+    try {
+      const records = parse(await next.text(), { bom: true, skip_empty_lines: true }) as string[][];
+      setPreview({ headers: records[0] || [], rows: records.slice(1, 4) });
+    } catch {
+      setPreview({ headers: [], rows: [] });
+    }
   }
 
   async function chooseList(id: string) {
@@ -111,7 +121,7 @@ export function Outbound() {
       const result = await request("", { method: "POST", body: form });
       setBatches(await request());
       await loadList(result.id);
-      setShowForm(false); setFile(null);
+      setShowForm(false); setFile(null); setPreview(null);
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(""); }
   }
@@ -158,6 +168,7 @@ export function Outbound() {
           {!file && <small>Up to 500 contacts · 1 MB</small>}
         </label>
         <a className="button" href="/outbound-template.csv" download><ArrowDownToLine size={16} />Download CSV template</a>
+        {file && preview && <div className="outbound-preview"><strong>CSV preview <small>First {preview.rows.length} rows</small></strong>{preview.headers.length ? <div><table><thead><tr>{preview.headers.slice(0, 5).map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{preview.rows.map((row, index) => <tr key={index}>{row.slice(0, 5).map((value, column) => <td key={column} title={value}>{value}</td>)}</tr>)}</tbody></table></div> : <small>Preview unavailable for this CSV.</small>}</div>}
         {file && <>
           <button className="button primary" disabled={!!busy}>{busy === "create" ? <><Loader2 className="outbound-spin" size={16} /> Preparing list…</> : <>Create call list <ArrowRight size={16} /></>}</button>
         </>}
