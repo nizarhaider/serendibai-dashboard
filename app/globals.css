@@ -1925,6 +1925,13 @@ td small, .catalogue-banner p, .upload-zone p, .panel-heading p { font-size: 12p
 .outbound-preview > div { overflow-x: auto; }
 .outbound-preview table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
 .outbound-preview :is(th,td) { max-width: 220px; padding: 8px 10px; overflow: hidden; border-bottom: 1px solid #e8ede8; text-overflow: ellipsis; white-space: nowrap; }
+.outbound-validation-columns { min-width: 0; padding: 14px; border: 1px solid var(--border); border-radius: 10px; }
+.outbound-validation-columns legend { padding: 0 5px; font-size: 12px; font-weight: 600; }
+.outbound-validation-columns > div { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.outbound-validation-columns label { display: grid; gap: 7px; padding: 9px; border: 1px solid #e8ede8; border-radius: 8px; font-size: 12px; overflow-wrap: anywhere; }
+.outbound-validation-columns label > span { display: flex; align-items: center; gap: 7px; }
+.outbound-validation-columns input { width: auto; }
+.outbound-validation-columns small { color: var(--muted); font-size: 11px; }
 .outbound-loading { min-height: 240px; display: flex; justify-content: center; align-items: center; gap: 12px; color: var(--muted); background: #ffffff80; border: 1px solid var(--border); border-radius: 18px; }
 .outbound-notice { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border: 1px solid #dce5df; border-radius: 10px; background: #fafcf9; line-height: 1.6; }
 .outbound-notice.error { color: #963e32; border-color: #eed3cd; background: #fff5f2; }

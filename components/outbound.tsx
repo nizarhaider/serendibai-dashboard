@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDownToLine, ArrowRight, FileSpreadsheet, Loader2, Phone, Plus, RefreshCw, Upload, X } from "lucide-react";
 import { parse } from "csv-parse/browser/esm/sync";
 
-type Row = { id: string; phone: string; result: Record<string, string> | null; state: string | null; call_status: string | null; call_id: string | null; error: string | null; transcript: string | null };
+type Row = { id: string; phone: string; result: Record<string, string | boolean> | null; state: string | null; call_status: string | null; call_id: string | null; error: string | null; transcript: string | null };
 type Batch = { id: string; name: string };
 type SavedList = { id: string; name: string; rows: number; created_at: string };
 type Preview = { headers: string[]; rows: string[][] };
@@ -34,6 +34,7 @@ function callProgress(row: Row) {
 export function Outbound() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [batches, setBatches] = useState<SavedList[]>([]);
   const [batch, setBatch] = useState<Batch | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
@@ -96,11 +97,13 @@ export function Outbound() {
     setError("");
     setFile(next);
     setPreview(null);
+    setSelectedColumns([]);
     try {
       const records = parse(await next.text(), { bom: true, skip_empty_lines: true }) as string[][];
       setPreview({ headers: records[0] || [], rows: records.slice(1, 4) });
     } catch {
       setPreview({ headers: [], rows: [] });
+      setError("Could not read this CSV. Check its format and try again.");
     }
   }
 
@@ -118,10 +121,11 @@ export function Outbound() {
     try {
       const form = new FormData();
       form.set("file", file);
+      selectedColumns.forEach(column => form.append("validate_column", column));
       const result = await request("", { method: "POST", body: form });
       setBatches(await request());
       await loadList(result.id);
-      setShowForm(false); setFile(null); setPreview(null);
+      setShowForm(false); setFile(null); setPreview(null); setSelectedColumns([]);
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(""); }
   }
@@ -167,10 +171,13 @@ export function Outbound() {
           <span>{file ? "CSV selected · Click to replace" : "Choose a CSV file or drop it here"}</span>
           {!file && <small>CSV up to 4 MB</small>}
         </label>
+        {file && preview && <>
+          <div className="outbound-preview"><strong>CSV preview <small>First {preview.rows.length} rows</small></strong>{preview.headers.length ? <div><table><thead><tr>{preview.headers.map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{preview.rows.map((row, index) => <tr key={index}>{preview.headers.map((_, column) => <td key={column} title={row[column] || ""}>{row[column]}</td>)}</tr>)}</tbody></table></div> : <small>Preview unavailable for this CSV.</small>}</div>
+          {preview.headers.length > 0 && <fieldset className="outbound-validation-columns"><legend>Select columns to validate</legend><div>{preview.headers.map(column => <label key={column}><span><input type="checkbox" checked={selectedColumns.includes(column)} onChange={event => setSelectedColumns(current => event.target.checked ? [...current, column] : current.filter(value => value !== column))} />{column}</span><small>{column}_validated</small></label>)}</div></fieldset>}
+        </>}
         <a className="button" href="/outbound-template.csv" download><ArrowDownToLine size={16} />Download CSV template</a>
-        {file && preview && <div className="outbound-preview"><strong>CSV preview <small>First {preview.rows.length} rows</small></strong>{preview.headers.length ? <div><table><thead><tr>{preview.headers.slice(0, 5).map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{preview.rows.map((row, index) => <tr key={index}>{row.slice(0, 5).map((value, column) => <td key={column} title={value}>{value}</td>)}</tr>)}</tbody></table></div> : <small>Preview unavailable for this CSV.</small>}</div>}
         {file && <>
-          <button className="button primary" disabled={!!busy}>{busy === "create" ? <><Loader2 className="outbound-spin" size={16} /> Preparing list…</> : <>Create call list <ArrowRight size={16} /></>}</button>
+          <button className="button primary" disabled={!selectedColumns.length || !!busy}>{busy === "create" ? <><Loader2 className="outbound-spin" size={16} /> Preparing list…</> : <>Create call list <ArrowRight size={16} /></>}</button>
         </>}
       </form>
     </section> : <section className="outbound-card outbound-workspace">
