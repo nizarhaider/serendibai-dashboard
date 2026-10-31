@@ -47,9 +47,9 @@ export function Outbound() {
   const [dragging, setDragging] = useState(false);
   const selection = useRef(0);
   const batchId = batch?.id;
-  const watching = !!batchId && (busy === "call-all" || rows.some(row => row.id === busy || activeStates.includes(row.state || "")));
   const remaining = rows.filter(row => !row.state).length;
   const missingResults = rows.filter(row => row.state === "completed" && !row.result).length;
+  const watching = !!batchId && (busy === "call-all" || missingResults > 0 || rows.some(row => row.id === busy || activeStates.includes(row.state || "")));
 
   const loadList = useCallback(async (id: string) => {
     const version = ++selection.current;
@@ -81,7 +81,11 @@ export function Outbound() {
     async function poll() {
       try {
         const result = await request(`?id=${batchId}`, { signal: controller.signal });
-        if (!controller.signal.aborted) { setRows(result.rows); setLiveError(false); }
+        for (const row of result.rows.filter((row: Row) => row.state === "completed" && !row.result)) {
+          await request(`?id=${batchId}&action=result`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: row.id }), signal: controller.signal });
+        }
+        const latest = result.rows.some((row: Row) => row.state === "completed" && !row.result) ? await request(`?id=${batchId}`, { signal: controller.signal }) : result;
+        if (!controller.signal.aborted) { setRows(latest.rows); setLiveError(false); }
       } catch {
         if (!controller.signal.aborted) setLiveError(true);
       } finally {
@@ -130,14 +134,14 @@ export function Outbound() {
     finally { setBusy(""); }
   }
 
-  async function run(action: "call" | "result", rowId?: string) {
+  async function run(rowId?: string) {
     if (!batch || busy) return;
-    const selected = rowId ? rows.filter(row => row.id === rowId) : rows.filter(row => action === "call" ? !row.state : row.state === "completed" && !row.result);
-    setBusy(rowId || (action === "call" ? "call-all" : "results"));
+    const selected = rowId ? rows.filter(row => row.id === rowId) : rows.filter(row => !row.state);
+    setBusy(rowId || "call-all");
     setProgress({ done: 0, total: selected.length }); setError("");
     try {
       for (const [index, row] of selected.entries()) {
-        await request(`?id=${batch.id}&action=${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: row.id }) });
+        await request(`?id=${batch.id}&action=call`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: row.id }) });
         setProgress({ done: index + 1, total: selected.length });
         await loadList(batch.id);
       }
@@ -182,11 +186,10 @@ export function Outbound() {
       </form>
     </section> : <section className="outbound-card outbound-workspace">
       <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} {rows.length === 1 ? "contact" : "contacts"}</p></div><button className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></button></header>
-      <div className="outbound-actions"><button className="button primary" disabled={!!busy || !remaining} onClick={() => void run("call")}>{busy === "call-all" ? <><Loader2 className="outbound-spin" size={16} /> Starting {progress.done} of {progress.total}</> : <><Phone size={16} />{remaining ? `Call remaining (${remaining})` : "All contacts attempted"}</>}</button><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}><ArrowDownToLine size={16} />Download CSV</a>{watching && <span className="outbound-live-indicator" role="status"><i />Live updates</span>}</div>
+      <div className="outbound-actions"><button className="button primary" disabled={!!busy || !remaining} onClick={() => void run()}>{busy === "call-all" ? <><Loader2 className="outbound-spin" size={16} /> Starting {progress.done} of {progress.total}</> : <><Phone size={16} />{remaining ? `Call remaining (${remaining})` : "All contacts attempted"}</>}</button><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}><ArrowDownToLine size={16} />Download CSV</a>{watching && <span className="outbound-live-indicator" role="status"><i />Live updates</span>}</div>
       {busy === "call-all" && <p className="outbound-inline-note" role="status">Keep this page open while calls are being started.</p>}
       {liveError && <p className="outbound-inline-note" role="status">Live updates interrupted. Reconnecting…</p>}
-      {missingResults > 0 && <div className="outbound-results"><span>{missingResults} completed {missingResults === 1 ? "call is" : "calls are"} ready to add to your CSV.</span><button disabled={!!busy} onClick={() => void run("result")}>{busy === "results" ? <><Loader2 className="outbound-spin" size={14} />Updating {progress.done} of {progress.total}</> : <>Update results <ArrowRight size={14} /></>}</button></div>}
-      <div className="outbound-table"><table><thead><tr><th scope="col">Phone number</th><th scope="col">Call</th><th scope="col">Status</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td className="outbound-phone">+{row.phone}</td><td>{!row.state || retryStates.includes(row.state) ? <button className="outbound-call-button" disabled={!!busy} onClick={() => void run("call", row.id)}>{busy === row.id ? <Loader2 className="outbound-spin" size={14} /> : <Phone size={14} />}{busy === row.id ? "Starting" : row.state ? "Retry" : "Call"}</button> : <span className="outbound-dash">—</span>}</td><td><span className={`outbound-status ${row.state || "idle"}`}><i />{callProgress(row)}</span>{row.error && <small className="outbound-row-error">{row.error}</small>}{row.call_id && <details className="outbound-transcript"><summary>View transcript</summary><pre>{row.transcript || "Waiting for conversation…"}</pre></details>}</td></tr>)}</tbody></table></div>
+      <div className="outbound-table"><table><thead><tr><th scope="col">Phone number</th><th scope="col">Call</th><th scope="col">Status</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td className="outbound-phone">+{row.phone}</td><td>{!row.state || retryStates.includes(row.state) ? <button className="outbound-call-button" disabled={!!busy} onClick={() => void run(row.id)}>{busy === row.id ? <Loader2 className="outbound-spin" size={14} /> : <Phone size={14} />}{busy === row.id ? "Starting" : row.state ? "Retry" : "Call"}</button> : <span className="outbound-dash">—</span>}</td><td><span className={`outbound-status ${row.state || "idle"}`}><i />{callProgress(row)}</span>{row.error && <small className="outbound-row-error">{row.error}</small>}{row.call_id && <details className="outbound-transcript"><summary>View transcript</summary><pre>{row.transcript || "Waiting for conversation…"}</pre></details>}</td></tr>)}</tbody></table></div>
       <footer className="outbound-table-footer">Progress is saved automatically.</footer>
     </section>}
   </div>;
