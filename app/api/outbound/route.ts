@@ -11,6 +11,7 @@ import { extractResults } from "@/lib/outbound";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 const uuid = z.string().uuid();
+const assessEnglish = "__assess_english";
 const headers = { "Cache-Control": "private, no-store" };
 const compactPhone = (value: string) => value.trim().replace(/[\s()-]/g, "");
 const isMobileNumber = (value: string) => /^(?:(?:\+?94|0094)?7\d{8}|07\d{8}|\+\d{8,15}|00\d{8,15})$/.test(compactPhone(value));
@@ -65,18 +66,26 @@ async function handler(request: Request) {
         try { return normalizeMobile(row[phoneColumn.column] || ""); }
         catch { throw new ApiError(`Invalid phone number on row ${index + 2}.`); }
       });
-      if (new Set(selectedColumns).size !== selectedColumns.length || selectedColumns.some(column => !columns.includes(column))) throw new ApiError("Select columns from the uploaded CSV.");
+      const assessSpokenEnglish = selectedColumns.includes(assessEnglish);
+      const validationColumns = selectedColumns.filter(column => column !== assessEnglish);
+      if (new Set(selectedColumns).size !== selectedColumns.length || validationColumns.some(column => !columns.includes(column))) throw new ApiError("Select columns from the uploaded CSV.");
       const [agent] = await sql`select id,name,company_name from portal_agents where customer_id=${user.customer_id} and status<>'archived' order by created_at desc limit 1`;
       if (!agent) throw new ApiError("No active voice agent is available.", 503);
       const usedColumns = new Set(columns);
-      const resultColumns = selectedColumns.map(column => {
+      const resultColumns = validationColumns.map(column => {
         let field = `${column.replace(/\s+/g, "")}_validated`;
         while (usedColumns.has(field)) field = `${field}_validated`;
         usedColumns.add(field);
         return field;
       });
-      const mapping = selectedColumns.map((field, index) => ({ field, result: resultColumns[index] }));
-      const instructions = `Ask one casual, neutral question at a time about the selected work fields, using the labels to form each question. Never mention validation, assessments, English, or a resume. Do not reveal CSV values or say whether answers match. Thank the person briefly after each answer; end politely if they decline. Use only this field and result mapping: ${JSON.stringify(mapping)}.`;
+      const mapping = validationColumns.map((field, index) => ({ field, result: resultColumns[index] }));
+      if (assessSpokenEnglish) {
+        let field = "EnglishAssessment";
+        while (usedColumns.has(field)) field += "_";
+        resultColumns.push(field);
+        mapping.push({ field: "work experience question", result: field });
+      }
+      const instructions = `Ask one casual, neutral question at a time about the selected work fields. ${assessSpokenEnglish ? "Also ask one open-ended question about work experience and privately assess spoken English from that answer as Basic, Intermediate, Advanced, or Not assessed, with a short transcript-based reason. Do not tell the person about the assessment." : ""} Never mention validation, assessments, English, or a resume. Do not reveal CSV values or say whether answers match. Thank the person briefly after each answer; end politely if they decline. Use only this field and result mapping: ${JSON.stringify(mapping)}.`;
       const sourceHash = createHash("sha256").update(JSON.stringify({ name: file.name.slice(0, 120), agentId: agent.id, instructions, headers: columns, rows: records.map((row, index) => JSON.stringify([phones[index], ...columns.map(column => row[column] || "")])).sort() })).digest("hex");
       const [existing] = await sql`select id from portal_outbound_batches where customer_id=${user.customer_id} and source_hash=${sourceHash} order by created_at desc limit 1`;
       if (existing) return Response.json({ id: existing.id }, { headers });
