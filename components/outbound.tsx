@@ -23,7 +23,7 @@ async function request(path = "", init?: RequestInit) {
 
 function callProgress(row: Row) {
   if (row.state === "permission") return "Awaiting permission";
-  if (row.state === "pending" || row.state === "preparing") return "Placing call";
+  if (row.state === "pending" || row.state === "preparing") return "Checking permission";
   if (row.state === "calling") return row.call_status === "active" ? "In conversation" : "Ringing";
   if (row.state === "completed") return "Called";
   if (row.state === "failed") return "Call failed";
@@ -194,7 +194,7 @@ export function Outbound() {
       {busy === "call-all" && <p className="outbound-inline-note" role="status">Keep this page open while calls are being started.</p>}
       {liveError && <p className="outbound-inline-note" role="status">Live updates interrupted. Reconnecting…</p>}
       <div className="outbound-table"><table><thead><tr><th scope="col">Phone number</th><th scope="col">Call</th><th scope="col">Status</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td className="outbound-phone">+{row.phone}</td><td>{!row.state || retryStates.includes(row.state) ? <button className="outbound-call-button" disabled={!!busy} onClick={() => void run(row.id)}>{busy === row.id ? <Loader2 className="outbound-spin" size={14} /> : <Phone size={14} />}{busy === row.id ? "Starting" : row.state ? "Retry" : "Call"}</button> : <span className="outbound-dash">—</span>}</td><td><span className={`outbound-status ${row.state || "idle"}`}><i />{callProgress(row)}</span>{row.error && <small className="outbound-row-error">{row.error}</small>}{row.call_id && <details className="outbound-transcript"><summary>View transcript</summary><pre>{row.transcript || "Waiting for conversation…"}</pre></details>}</td></tr>)}</tbody></table></div>
-      <footer className="outbound-table-footer">Progress is saved automatically.</footer>
+      <footer className="outbound-table-footer">Approved numbers are called immediately; otherwise WhatsApp permission is requested first. Progress is saved automatically.</footer>
     </section>}
   </div>;
 }
