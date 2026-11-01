@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDownToLine, ArrowRight, FileSpreadsheet, Loader2, Phone, Plus, RefreshCw, Upload, X } from "lucide-react";
 import { parse } from "csv-parse/browser/esm/sync";
 
-type Row = { id: string; phone: string; result: Record<string, string | boolean> | null; state: string | null; call_status: string | null; call_id: string | null; error: string | null; transcript: string | null };
+type Row = { id: string; phone: string; result: Record<string, string | number> | null; state: string | null; call_status: string | null; call_id: string | null; error: string | null; transcript: string | null };
 type Batch = { id: string; name: string };
 type SavedList = { id: string; name: string; rows: number; created_at: string };
 type Preview = { headers: string[]; rows: string[][] };

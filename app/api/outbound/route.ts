@@ -85,7 +85,7 @@ async function handler(request: Request) {
         resultColumns.push(field);
         mapping.push({ field: "work experience question", result: field });
       }
-      const instructions = `Ask one casual, neutral question at a time about the selected work fields. ${assessSpokenEnglish ? "Also ask one open-ended question about work experience and privately assess spoken English from that answer as Basic, Intermediate, Advanced, or Not assessed, with a short transcript-based reason. Do not tell the person about the assessment." : ""} Never mention validation, assessments, English, or a resume. Do not reveal CSV values or say whether answers match. Thank the person briefly after each answer; end politely if they decline. Use only this field and result mapping: ${JSON.stringify(mapping)}.`;
+      const instructions = `Ask one casual, neutral question at a time about the selected work fields. ${assessSpokenEnglish ? "Also ask one open-ended question about work experience without explaining its purpose." : ""} Never mention validation, assessments, English, or a resume. Do not reveal CSV values or say whether answers match. Thank the person briefly after each answer; end politely if they decline. Use only this field and result mapping: ${JSON.stringify(mapping)}.`;
       const sourceHash = createHash("sha256").update(JSON.stringify({ name: file.name.slice(0, 120), agentId: agent.id, instructions, headers: columns, rows: records.map((row, index) => JSON.stringify([phones[index], ...columns.map(column => row[column] || "")])).sort() })).digest("hex");
       const [existing] = await sql`select id from portal_outbound_batches where customer_id=${user.customer_id} and source_hash=${sourceHash} order by created_at desc limit 1`;
       if (existing) return Response.json({ id: existing.id }, { headers });
@@ -123,7 +123,7 @@ async function handler(request: Request) {
     if (action === "result") {
       const [call] = await sql`select q.state,c.transcript from portal_case_requests q join portal_calls c on c.id=${row.agent_id}::text||':'||q.call_id where q.outbound_row_id=${row.id} and q.state='completed'`;
       if (!call?.transcript) throw new ApiError("A completed call transcript is not available yet.");
-      const result = await extractResults(row.instructions, row.columns, row.data, call.transcript);
+      const result = await extractResults(row.instructions, row.columns, call.transcript);
       await sql`update portal_outbound_rows set result=${JSON.stringify(result)}::jsonb where id=${row.id}`;
       return Response.json({ result }, { headers });
     }
