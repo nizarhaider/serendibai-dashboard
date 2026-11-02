@@ -40,7 +40,7 @@ export function Outbound() {
   const [batches, setBatches] = useState<SavedList[]>([]);
   const [batch, setBatch] = useState<Batch | null>(null);
   const [maxRetries, setMaxRetries] = useState(0);
-  const [retryHours, setRetryHours] = useState(24);
+  const [retryDays, setRetryDays] = useState(1);
   const [rows, setRows] = useState<Row[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -61,7 +61,7 @@ export function Outbound() {
     if (version !== selection.current) return;
     setBatch(result.batch);
     setMaxRetries(result.batch.max_retries);
-    setRetryHours(result.batch.retry_hours);
+    setRetryDays(result.batch.retry_hours / 24);
     setRows(result.rows);
     window.history.replaceState(null, "", `/outbound?list=${id}`);
   }, []);
@@ -162,7 +162,7 @@ export function Outbound() {
     if (!batch) return;
     setBusy("settings"); setError("");
     try {
-      await request(`?id=${batch.id}&action=settings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ max_retries: maxRetries, retry_hours: retryHours }) });
+      await request(`?id=${batch.id}&action=settings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ max_retries: maxRetries, retry_days: retryDays }) });
       await loadList(batch.id);
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(""); }
@@ -208,9 +208,9 @@ export function Outbound() {
       <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} {rows.length === 1 ? "contact" : "contacts"}</p></div><button className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></button></header>
       <form className="outbound-retry-settings" onSubmit={saveSettings}>
         <label>Automatic retries <input type="number" min="0" max="5" required value={maxRetries} onChange={e => setMaxRetries(Number(e.target.value))} /></label>
-        <label>Hours between retries <input type="number" min="1" max="720" required value={retryHours} onChange={e => setRetryHours(Number(e.target.value))} /></label>
+        <label>Days between retries <input type="number" min="1" max="14" required value={retryDays} onChange={e => setRetryDays(Number(e.target.value))} /></label>
         <button className="button" disabled={!!busy}>Save settings</button>
-        <small>Retries unanswered calls and failed attempts. Permission declines are not retried. Set retries to 0 to turn off.</small>
+        <small>Choose 1–14 days (7 days is 1 week). Permission declines are not retried. Set retries to 0 to turn off.</small>
       </form>
       <div className="outbound-actions"><button className="button primary" disabled={!!busy || !remaining} onClick={() => void run()}>{busy === "call-all" ? <><Loader2 className="outbound-spin" size={16} /> Starting {progress.done} of {progress.total}</> : <><Phone size={16} />{remaining ? `Call remaining (${remaining})` : "All contacts attempted"}</>}</button><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}><ArrowDownToLine size={16} />Download CSV</a>{watching && <span className="outbound-live-indicator" role="status"><i />Live updates</span>}</div>
       {busy === "call-all" && <p className="outbound-inline-note" role="status">Keep this page open while calls are being started.</p>}

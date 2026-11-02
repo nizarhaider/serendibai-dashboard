@@ -101,8 +101,8 @@ async function handler(request: Request) {
     const action = url.searchParams.get("action");
     const body = await request.json();
     if (action === "settings") {
-      const settings = z.object({ max_retries: z.number().int().min(0).max(5), retry_hours: z.number().int().min(1).max(720) }).parse(body);
-      const [updated] = await sql`update portal_outbound_batches set max_retries=${settings.max_retries},retry_hours=${settings.retry_hours} where id=${id} and customer_id=${user.customer_id} returning id`;
+      const settings = z.object({ max_retries: z.number().int().min(0).max(5), retry_days: z.number().int().min(1).max(14) }).parse(body);
+      const [updated] = await sql`update portal_outbound_batches set max_retries=${settings.max_retries},retry_hours=${settings.retry_days * 24} where id=${id} and customer_id=${user.customer_id} returning id`;
       if (!updated) throw new ApiError("Call list not found.", 404);
       await sql`update portal_case_requests q set state='failed',retry_at=null where q.outbound_row_id in (select id from portal_outbound_rows where batch_id=${id}) and q.state='scheduled' and q.retries_used>=${settings.max_retries}`;
       return Response.json({ ok: true }, { headers });

@@ -65,3 +65,6 @@ alter table portal_outbound_batches add column if not exists max_retries integer
 alter table portal_outbound_batches add column if not exists retry_hours integer not null default 24;
 alter table portal_case_requests add column if not exists retries_used integer not null default 0;
 alter table portal_case_requests add column if not exists retry_at timestamptz;
+alter table portal_outbound_batches drop constraint if exists portal_outbound_batches_retry_hours_check;
+update portal_outbound_batches set retry_hours=least(336,greatest(24,ceil(retry_hours / 24.0)::int * 24)) where retry_hours<24 or retry_hours>336 or retry_hours % 24<>0;
+alter table portal_outbound_batches add constraint portal_outbound_batches_retry_hours_check check(retry_hours between 24 and 336 and retry_hours % 24=0);
