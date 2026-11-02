@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDownToLine, ArrowRight, FileSpreadsheet, Loader2, Phone, Plus, RefreshCw, Upload, X } from "lucide-react";
 import { parse } from "csv-parse/browser/esm/sync";
 
-type Row = { id: string; phone: string; result: Record<string, string | number> | null; state: string | null; call_status: string | null; call_id: string | null; error: string | null; transcript: string | null };
-type Batch = { id: string; name: string };
+type Row = { id: string; phone: string; result: Record<string, string | number> | null; state: string | null; call_status: string | null; call_id: string | null; error: string | null; transcript: string | null; retries_used: number | null; retry_at: string | null };
+type Batch = { id: string; name: string; max_retries: number; retry_hours: number };
 type SavedList = { id: string; name: string; rows: number; created_at: string };
 type Preview = { headers: string[]; rows: string[][] };
-const activeStates = ["pending", "preparing", "permission", "calling"];
+const activeStates = ["pending", "preparing", "permission", "calling", "scheduled"];
 const retryStates = ["failed", "declined", "expired"];
 const assessEnglish = "__assess_english";
 const date = (value: string) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Colombo" }).format(new Date(value));
@@ -22,6 +22,7 @@ async function request(path = "", init?: RequestInit) {
 }
 
 function callProgress(row: Row) {
+  if (row.state === "scheduled") return "Retry scheduled";
   if (row.state === "permission") return "Awaiting permission";
   if (row.state === "pending" || row.state === "preparing") return "Checking permission";
   if (row.state === "calling") return row.call_status === "active" ? "In conversation" : "Ringing";
@@ -38,6 +39,8 @@ export function Outbound() {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [batches, setBatches] = useState<SavedList[]>([]);
   const [batch, setBatch] = useState<Batch | null>(null);
+  const [maxRetries, setMaxRetries] = useState(0);
+  const [retryHours, setRetryHours] = useState(24);
   const [rows, setRows] = useState<Row[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -57,6 +60,8 @@ export function Outbound() {
     const result = await request(`?id=${id}`);
     if (version !== selection.current) return;
     setBatch(result.batch);
+    setMaxRetries(result.batch.max_retries);
+    setRetryHours(result.batch.retry_hours);
     setRows(result.rows);
     window.history.replaceState(null, "", `/outbound?list=${id}`);
   }, []);
@@ -152,6 +157,17 @@ export function Outbound() {
     } finally { setBusy(""); }
   }
 
+  async function saveSettings(event: React.FormEvent) {
+    event.preventDefault();
+    if (!batch) return;
+    setBusy("settings"); setError("");
+    try {
+      await request(`?id=${batch.id}&action=settings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ max_retries: maxRetries, retry_hours: retryHours }) });
+      await loadList(batch.id);
+    } catch (e) { setError((e as Error).message); }
+    finally { setBusy(""); }
+  }
+
   async function refresh() {
     if (!batch || busy) return;
     setBusy("refresh"); setError("");
@@ -190,10 +206,16 @@ export function Outbound() {
       </form>
     </section> : <section className="outbound-card outbound-workspace">
       <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} {rows.length === 1 ? "contact" : "contacts"}</p></div><button className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></button></header>
+      <form className="outbound-retry-settings" onSubmit={saveSettings}>
+        <label>Automatic retries <input type="number" min="0" max="5" required value={maxRetries} onChange={e => setMaxRetries(Number(e.target.value))} /></label>
+        <label>Hours between retries <input type="number" min="1" max="720" required value={retryHours} onChange={e => setRetryHours(Number(e.target.value))} /></label>
+        <button className="button" disabled={!!busy}>Save settings</button>
+        <small>Retries unanswered calls and failed attempts. Permission declines are not retried. Set retries to 0 to turn off.</small>
+      </form>
       <div className="outbound-actions"><button className="button primary" disabled={!!busy || !remaining} onClick={() => void run()}>{busy === "call-all" ? <><Loader2 className="outbound-spin" size={16} /> Starting {progress.done} of {progress.total}</> : <><Phone size={16} />{remaining ? `Call remaining (${remaining})` : "All contacts attempted"}</>}</button><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}><ArrowDownToLine size={16} />Download CSV</a>{watching && <span className="outbound-live-indicator" role="status"><i />Live updates</span>}</div>
       {busy === "call-all" && <p className="outbound-inline-note" role="status">Keep this page open while calls are being started.</p>}
       {liveError && <p className="outbound-inline-note" role="status">Live updates interrupted. Reconnecting…</p>}
-      <div className="outbound-table"><table><thead><tr><th scope="col">Phone number</th><th scope="col">Call</th><th scope="col">Status</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td className="outbound-phone">+{row.phone}</td><td>{!row.state || retryStates.includes(row.state) ? <button className="outbound-call-button" disabled={!!busy} onClick={() => void run(row.id)}>{busy === row.id ? <Loader2 className="outbound-spin" size={14} /> : <Phone size={14} />}{busy === row.id ? "Starting" : row.state ? "Retry" : "Call"}</button> : <span className="outbound-dash">—</span>}</td><td><span className={`outbound-status ${row.state || "idle"}`}><i />{callProgress(row)}</span>{row.error && <small className="outbound-row-error">{row.error}</small>}{row.call_id && <details className="outbound-transcript"><summary>View transcript</summary><pre>{row.transcript || "Waiting for conversation…"}</pre></details>}</td></tr>)}</tbody></table></div>
+      <div className="outbound-table"><table><thead><tr><th scope="col">Phone number</th><th scope="col">Call</th><th scope="col">Status</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td className="outbound-phone">+{row.phone}</td><td>{!row.state || retryStates.includes(row.state) ? <button className="outbound-call-button" disabled={!!busy} onClick={() => void run(row.id)}>{busy === row.id ? <Loader2 className="outbound-spin" size={14} /> : <Phone size={14} />}{busy === row.id ? "Starting" : row.state ? "Retry" : "Call"}</button> : <span className="outbound-dash">—</span>}</td><td><span className={`outbound-status ${row.state || "idle"}`}><i />{callProgress(row)}</span>{row.state && <small className="outbound-row-error">{Math.max(0, batch.max_retries - (row.retries_used || 0))} retries left{row.retry_at && row.state === "scheduled" ? ` · Next: ${date(row.retry_at)} (Colombo)` : ""}</small>}{row.error && <small className="outbound-row-error">{row.error}</small>}{row.call_id && <details className="outbound-transcript"><summary>View transcript</summary><pre>{row.transcript || "Waiting for conversation…"}</pre></details>}</td></tr>)}</tbody></table></div>
       <footer className="outbound-table-footer">Approved numbers are called immediately; otherwise WhatsApp permission is requested first. Progress is saved automatically.</footer>
     </section>}
   </div>;

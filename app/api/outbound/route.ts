@@ -35,9 +35,9 @@ async function handler(request: Request) {
         return Response.json(batches, { headers });
       }
       uuid.parse(id);
-      const [batch] = await sql`select b.id,b.name,b.instructions,b.columns,b.headers,b.agent_id,b.created_at from portal_outbound_batches b where b.id=${id} and b.customer_id=${user.customer_id}`;
+      const [batch] = await sql`select b.id,b.name,b.instructions,b.columns,b.headers,b.agent_id,b.created_at,b.max_retries,b.retry_hours from portal_outbound_batches b where b.id=${id} and b.customer_id=${user.customer_id}`;
       if (!batch) throw new ApiError("Call list not found.", 404);
-      const rows = await sql`select r.id,r.phone,r.data,r.result,case when q.expires_at<now() and q.state in ('pending','preparing','permission','calling') then 'expired' else q.state end as state,q.error,q.call_id,c.status as call_status,c.transcript from portal_outbound_rows r left join portal_case_requests q on q.outbound_row_id=r.id left join portal_calls c on c.id=${batch.agent_id}::text||':'||q.call_id where r.batch_id=${id} order by r.created_at,r.id`;
+      const rows = await sql`select r.id,r.phone,r.data,r.result,case when q.expires_at<now() and q.state in ('pending','preparing','permission','calling') then 'expired' else q.state end as state,q.error,q.call_id,q.retries_used,q.retry_at,c.status as call_status,c.transcript from portal_outbound_rows r left join portal_case_requests q on q.outbound_row_id=r.id left join portal_calls c on c.id=${batch.agent_id}::text||':'||q.call_id where r.batch_id=${id} order by r.created_at,r.id`;
       if (url.searchParams.get("format") === "csv") {
         const output = stringify(rows.map(row => Object.fromEntries([...batch.headers, ...batch.columns].map((column: string) => {
           const value = String(row.result?.[column] ?? row.data[column] ?? "");
@@ -45,7 +45,7 @@ async function handler(request: Request) {
         }))), { header: true, columns: [...batch.headers, ...batch.columns], bom: true });
         return new Response(output, { headers: { ...headers, "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="outbound-${id}.csv"` } });
       }
-      return Response.json({ batch: { id: batch.id, name: batch.name }, rows }, { headers });
+      return Response.json({ batch: { id: batch.id, name: batch.name, max_retries: batch.max_retries, retry_hours: batch.retry_hours }, rows }, { headers });
     }
     checkOrigin(request);
     await rateLimit(`outbound:${user.id}`, 1000, 3600);
@@ -100,6 +100,13 @@ async function handler(request: Request) {
     uuid.parse(id);
     const action = url.searchParams.get("action");
     const body = await request.json();
+    if (action === "settings") {
+      const settings = z.object({ max_retries: z.number().int().min(0).max(5), retry_hours: z.number().int().min(1).max(720) }).parse(body);
+      const [updated] = await sql`update portal_outbound_batches set max_retries=${settings.max_retries},retry_hours=${settings.retry_hours} where id=${id} and customer_id=${user.customer_id} returning id`;
+      if (!updated) throw new ApiError("Call list not found.", 404);
+      await sql`update portal_case_requests q set state='failed',retry_at=null where q.outbound_row_id in (select id from portal_outbound_rows where batch_id=${id}) and q.state='scheduled' and q.retries_used>=${settings.max_retries}`;
+      return Response.json({ ok: true }, { headers });
+    }
     const rowId = uuid.parse(body.row_id);
     const [row] = await sql`select r.id,r.phone,r.data,r.result,b.instructions,b.columns,b.agent_id,b.customer_id from portal_outbound_rows r join portal_outbound_batches b on b.id=r.batch_id where r.id=${rowId} and b.id=${id} and b.customer_id=${user.customer_id}`;
     if (!row) throw new ApiError("Row not found.", 404);
@@ -107,7 +114,7 @@ async function handler(request: Request) {
       const [runtime] = await sql`select runtime.id,runtime.telemetry->>'runtime_url' as runtime_url from portal_agents agent left join portal_agent_cases c on c.agent_id=agent.id join portal_agents runtime on runtime.id=coalesce(c.runtime_agent_id,agent.id) where agent.id=${row.agent_id} and agent.status<>'archived' and runtime.status='ready' and runtime.heartbeat_at>now()-interval '90 seconds'`;
       if (!runtime || !validRuntimeUrl(runtime.runtime_url || "")) throw new ApiError("The voice agent is offline.", 503);
       const requestId = randomBytes(16).toString("hex");
-      const [created] = await sql`insert into portal_case_requests(id,phone,case_slug,runtime_agent_id,direction,outbound_row_id) values(${requestId},${row.phone},null,${runtime.id},'outbound',${row.id}) on conflict(runtime_agent_id,phone) do update set id=excluded.id,case_slug=null,outbound_row_id=excluded.outbound_row_id,direction='outbound',state='pending',call_id=null,message_id=null,error='',expires_at=now()+interval '10 minutes',created_at=now() where portal_case_requests.state not in ('pending','preparing','permission','calling') or portal_case_requests.expires_at<now() returning id`;
+      const [created] = await sql`insert into portal_case_requests(id,phone,case_slug,runtime_agent_id,direction,outbound_row_id) values(${requestId},${row.phone},null,${runtime.id},'outbound',${row.id}) on conflict(runtime_agent_id,phone) do update set id=excluded.id,case_slug=null,outbound_row_id=excluded.outbound_row_id,direction='outbound',state='pending',call_id=null,message_id=null,error='',retries_used=0,retry_at=null,expires_at=now()+interval '10 minutes',created_at=now() where portal_case_requests.state not in ('pending','preparing','permission','calling','scheduled') or (portal_case_requests.state<>'scheduled' and portal_case_requests.expires_at<now()) returning id`;
       if (!created) throw new ApiError("A call is already in progress for this number.", 409);
       await sql`update portal_outbound_rows set result=null where id=${row.id}`;
       const payload = JSON.stringify({ id: requestId, phone: row.phone, timestamp: Math.floor(Date.now() / 1000) });

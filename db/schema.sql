@@ -60,3 +60,8 @@ create table if not exists portal_case_requests (
 );
 alter table portal_case_requests alter column case_slug drop not null;
 alter table portal_case_requests add column if not exists outbound_row_id uuid references portal_outbound_rows(id);
+
+alter table portal_outbound_batches add column if not exists max_retries integer not null default 0;
+alter table portal_outbound_batches add column if not exists retry_hours integer not null default 24;
+alter table portal_case_requests add column if not exists retries_used integer not null default 0;
+alter table portal_case_requests add column if not exists retry_at timestamptz;
