@@ -189,7 +189,6 @@ export function Outbound() {
             <div className="outbound-retry-settings">
               <label>Automatic retries <input type="number" min="0" max="5" required value={maxRetries} onChange={e => setMaxRetries(Number(e.target.value))} /></label>
               <label>Days between retries <input type="number" min="1" max="14" required value={retryDays} onChange={e => setRetryDays(Number(e.target.value))} /></label>
-              <small>Choose 1–14 days (7 days is 1 week). Permission declines are not retried. Set retries to 0 to turn off. Settings cannot be changed after creating the list.</small>
             </div>
           </>}
         </>}
