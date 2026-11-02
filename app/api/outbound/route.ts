@@ -52,6 +52,8 @@ async function handler(request: Request) {
     if (request.method === "POST" && !id) {
       const form = await request.formData();
       const file = form.get("file");
+      const maxRetries = z.coerce.number().int().min(0).max(5).parse(form.get("max_retries"));
+      const retryDays = z.coerce.number().int().min(1).max(14).parse(form.get("retry_days"));
       const selectedColumns = z.array(z.string().min(1)).nonempty().parse(form.getAll("validate_column"));
       if (!(file instanceof File) || file.size > 4000000 || !file.name.toLowerCase().endsWith(".csv")) throw new ApiError("Upload a CSV under 4 MB.");
       const records = parse(await file.text(), { columns: (names: string[]) => {
@@ -87,11 +89,14 @@ async function handler(request: Request) {
       }
       const instructions = `Ask one casual, neutral question at a time about the selected work fields. ${assessSpokenEnglish ? "Also ask one open-ended question about work experience without explaining its purpose." : ""} Never mention validation, assessments, English, or a resume. Do not reveal CSV values or say whether answers match. Thank the person briefly after each answer; end politely if they decline. Use only this field and result mapping: ${JSON.stringify(mapping)}.`;
       const sourceHash = createHash("sha256").update(JSON.stringify({ name: file.name.slice(0, 120), agentId: agent.id, instructions, headers: columns, rows: records.map((row, index) => JSON.stringify([phones[index], ...columns.map(column => row[column] || "")])).sort() })).digest("hex");
-      const [existing] = await sql`select id from portal_outbound_batches where customer_id=${user.customer_id} and source_hash=${sourceHash} order by created_at desc limit 1`;
-      if (existing) return Response.json({ id: existing.id }, { headers });
+      const [existing] = await sql`select id,max_retries,retry_hours from portal_outbound_batches where customer_id=${user.customer_id} and source_hash=${sourceHash} order by created_at desc limit 1`;
+      if (existing) {
+        if (existing.max_retries !== maxRetries || existing.retry_hours !== retryDays * 24) throw new ApiError("This list already exists with different retry settings. Open the saved list to continue.", 409);
+        return Response.json({ id: existing.id }, { headers });
+      }
       const batchId = randomUUID();
       await sql.transaction([
-        sql`insert into portal_outbound_batches(id,customer_id,agent_id,name,instructions,columns,headers,source_hash) values(${batchId},${user.customer_id},${agent.id},${file.name.slice(0, 120)},${instructions},${JSON.stringify(resultColumns)}::jsonb,${JSON.stringify(columns)}::jsonb,${sourceHash})`,
+        sql`insert into portal_outbound_batches(id,customer_id,agent_id,name,instructions,columns,headers,source_hash,max_retries,retry_hours) values(${batchId},${user.customer_id},${agent.id},${file.name.slice(0, 120)},${instructions},${JSON.stringify(resultColumns)}::jsonb,${JSON.stringify(columns)}::jsonb,${sourceHash},${maxRetries},${retryDays * 24})`,
         sql`insert into portal_outbound_rows(batch_id,phone,data) select ${batchId},phone,data from jsonb_to_recordset(${JSON.stringify(records.map((data, index) => ({ phone: phones[index], data })))}::jsonb) as rows(phone text,data jsonb)`,
       ]);
       return Response.json({ id: batchId }, { status: 201, headers });
@@ -100,13 +105,6 @@ async function handler(request: Request) {
     uuid.parse(id);
     const action = url.searchParams.get("action");
     const body = await request.json();
-    if (action === "settings") {
-      const settings = z.object({ max_retries: z.number().int().min(0).max(5), retry_days: z.number().int().min(1).max(14) }).parse(body);
-      const [updated] = await sql`update portal_outbound_batches set max_retries=${settings.max_retries},retry_hours=${settings.retry_days * 24} where id=${id} and customer_id=${user.customer_id} returning id`;
-      if (!updated) throw new ApiError("Call list not found.", 404);
-      await sql`update portal_case_requests q set state='failed',retry_at=null where q.outbound_row_id in (select id from portal_outbound_rows where batch_id=${id}) and q.state='scheduled' and q.retries_used>=${settings.max_retries}`;
-      return Response.json({ ok: true }, { headers });
-    }
     const rowId = uuid.parse(body.row_id);
     const [row] = await sql`select r.id,r.phone,r.data,r.result,b.instructions,b.columns,b.agent_id,b.customer_id from portal_outbound_rows r join portal_outbound_batches b on b.id=r.batch_id where r.id=${rowId} and b.id=${id} and b.customer_id=${user.customer_id}`;
     if (!row) throw new ApiError("Row not found.", 404);

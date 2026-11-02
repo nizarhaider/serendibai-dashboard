@@ -60,8 +60,6 @@ export function Outbound() {
     const result = await request(`?id=${id}`);
     if (version !== selection.current) return;
     setBatch(result.batch);
-    setMaxRetries(result.batch.max_retries);
-    setRetryDays(result.batch.retry_hours / 24);
     setRows(result.rows);
     window.history.replaceState(null, "", `/outbound?list=${id}`);
   }, []);
@@ -131,6 +129,8 @@ export function Outbound() {
     try {
       const form = new FormData();
       form.set("file", file);
+      form.set("max_retries", String(maxRetries));
+      form.set("retry_days", String(retryDays));
       selectedColumns.forEach(column => form.append("validate_column", column));
       const result = await request("", { method: "POST", body: form });
       setBatches(await request());
@@ -157,17 +157,6 @@ export function Outbound() {
     } finally { setBusy(""); }
   }
 
-  async function saveSettings(event: React.FormEvent) {
-    event.preventDefault();
-    if (!batch) return;
-    setBusy("settings"); setError("");
-    try {
-      await request(`?id=${batch.id}&action=settings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ max_retries: maxRetries, retry_days: retryDays }) });
-      await loadList(batch.id);
-    } catch (e) { setError((e as Error).message); }
-    finally { setBusy(""); }
-  }
-
   async function refresh() {
     if (!batch || busy) return;
     setBusy("refresh"); setError("");
@@ -180,7 +169,7 @@ export function Outbound() {
     {error && <div className="outbound-notice error" role="alert"><span>{error}</span><button aria-label="Dismiss error" onClick={() => setError("")}><X size={17} /></button></div>}
     {batches.length > 0 && <div className="outbound-toolbar">
       <label className="outbound-list-picker"><span>Saved call lists</span><select value={batch?.id || ""} disabled={!!busy || loading} onChange={e => void chooseList(e.target.value)}><option value="" disabled>Select a list</option>{batches.map(item => <option key={item.id} value={item.id}>{item.name} · {date(item.created_at)}</option>)}</select></label>
-      <button className="button" disabled={!!busy || loading} onClick={() => { setShowForm(true); setError(""); }}><Plus size={16} /> New list</button>
+      <button className="button" disabled={!!busy || loading} onClick={() => { setShowForm(true); setMaxRetries(0); setRetryDays(1); setError(""); }}><Plus size={16} /> New list</button>
     </div>}
     {loading ? <div className="outbound-loading" role="status"><Loader2 className="outbound-spin" size={22} /> Loading your call lists…</div> : showForm || !batch ? <section className="outbound-card outbound-setup">
       <div className="outbound-card-heading"><div className="outbound-symbol"><Phone size={21} /></div><div><h2>Upload a call list</h2><p>Choose a CSV and we’ll handle the call setup.</p></div>{batch && <button className="icon-button" aria-label="Close new list" disabled={!!busy} onClick={() => setShowForm(false)}><X size={18} /></button>}</div>
@@ -197,6 +186,11 @@ export function Outbound() {
           {preview.headers.length > 0 && <>
             <fieldset className="outbound-options"><legend>Select columns to validate</legend><div>{preview.headers.map(column => <label key={column}><span><input type="checkbox" checked={selectedColumns.includes(column)} onChange={event => setSelectedColumns(current => event.target.checked ? [...current, column] : current.filter(value => value !== column))} />{column}</span></label>)}</div></fieldset>
             <fieldset className="outbound-options"><legend>Additional Tests</legend><div><label><span><input type="checkbox" checked={selectedColumns.includes(assessEnglish)} onChange={event => setSelectedColumns(current => event.target.checked ? [...current, assessEnglish] : current.filter(value => value !== assessEnglish))} />Assess English</span></label></div></fieldset>
+            <div className="outbound-retry-settings">
+              <label>Automatic retries <input type="number" min="0" max="5" required value={maxRetries} onChange={e => setMaxRetries(Number(e.target.value))} /></label>
+              <label>Days between retries <input type="number" min="1" max="14" required value={retryDays} onChange={e => setRetryDays(Number(e.target.value))} /></label>
+              <small>Choose 1–14 days (7 days is 1 week). Permission declines are not retried. Set retries to 0 to turn off. Settings cannot be changed after creating the list.</small>
+            </div>
           </>}
         </>}
         <a className="button" href="/outbound-template.csv" download><ArrowDownToLine size={16} />Download CSV template</a>
@@ -206,12 +200,6 @@ export function Outbound() {
       </form>
     </section> : <section className="outbound-card outbound-workspace">
       <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} {rows.length === 1 ? "contact" : "contacts"}</p></div><button className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></button></header>
-      <form className="outbound-retry-settings" onSubmit={saveSettings}>
-        <label>Automatic retries <input type="number" min="0" max="5" required value={maxRetries} onChange={e => setMaxRetries(Number(e.target.value))} /></label>
-        <label>Days between retries <input type="number" min="1" max="14" required value={retryDays} onChange={e => setRetryDays(Number(e.target.value))} /></label>
-        <button className="button" disabled={!!busy}>Save settings</button>
-        <small>Choose 1–14 days (7 days is 1 week). Permission declines are not retried. Set retries to 0 to turn off.</small>
-      </form>
       <div className="outbound-actions"><button className="button primary" disabled={!!busy || !remaining} onClick={() => void run()}>{busy === "call-all" ? <><Loader2 className="outbound-spin" size={16} /> Starting {progress.done} of {progress.total}</> : <><Phone size={16} />{remaining ? `Call remaining (${remaining})` : "All contacts attempted"}</>}</button><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}><ArrowDownToLine size={16} />Download CSV</a>{watching && <span className="outbound-live-indicator" role="status"><i />Live updates</span>}</div>
       {busy === "call-all" && <p className="outbound-inline-note" role="status">Keep this page open while calls are being started.</p>}
       {liveError && <p className="outbound-inline-note" role="status">Live updates interrupted. Reconnecting…</p>}
