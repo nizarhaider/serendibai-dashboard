@@ -2254,3 +2254,13 @@ td small, .catalogue-banner p, .upload-zone p, .panel-heading p { font-size: 12p
 .outbound-retry-settings label { display: grid; gap: 5px; font-size: 13px; }
 .outbound-retry-settings input { width: 100px; padding: 8px; border: 1px solid #d3d8d5; border-radius: 6px; }
 .outbound-retry-settings small { flex-basis: 100%; color: #666; }
+.connections { max-width: 720px; }
+.connections-header, .connection-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.connections-header { margin-bottom: 20px; }
+.connections-header h2 { font-size: 18px; }
+.connection { padding: 20px 0; border-bottom: 1px solid var(--border); }
+.connection-heading strong { font-size: 16px; }
+.connection-heading small { display: block; margin-top: 4px; color: var(--muted); text-transform: capitalize; }
+.connection .message-reply-toggle { border-bottom: 0; margin-top: 0; }
+.connection .message-reply-toggle small { display: block; }
+.connection textarea { width: 100%; min-height: 70px; }

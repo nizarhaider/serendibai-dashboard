@@ -33,6 +33,14 @@ create table if not exists portal_whatsapp_links (customer_id uuid primary key r
 alter table portal_whatsapp_links add column if not exists message_replies_enabled boolean not null default false;
 alter table portal_whatsapp_links add column if not exists message_reply_instructions text not null default '';
 alter table portal_whatsapp_links add column if not exists voice_enabled boolean not null default true;
+alter table portal_whatsapp_links add column if not exists id uuid;
+update portal_whatsapp_links set id=customer_id where id is null;
+alter table portal_whatsapp_links alter column id set default gen_random_uuid();
+alter table portal_whatsapp_links alter column id set not null;
+alter table portal_whatsapp_links drop constraint if exists portal_whatsapp_links_pkey;
+alter table portal_whatsapp_links add primary key (id);
+alter table portal_whatsapp_links add column if not exists phone text not null default '';
+create index if not exists portal_whatsapp_links_customer on portal_whatsapp_links(customer_id);
 create table if not exists portal_documents (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), name text not null, content text not null, bytes integer not null, type text not null, created_at timestamptz not null default now());
 create index if not exists portal_documents_search on portal_documents using gin(to_tsvector('simple',content));
 create table if not exists portal_products (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), name text not null, sku text not null default '', description text not null default '', category text not null default 'Product', price numeric check(price >= 0), currency text not null default 'LKR', stock integer check(stock >= 0), status text not null default 'active' check(status in ('active','draft','archived')), updated_at timestamptz not null default now());

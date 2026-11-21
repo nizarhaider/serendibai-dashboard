@@ -115,12 +115,13 @@ async function handler(
       }
       if (id && method === "DELETE") {
         uuid.parse(id);
-        const [target] = await sql`select c.business_name,l.enabled,(l.customer_id is not null) as has_link from customers c left join portal_whatsapp_links l on l.customer_id=c.id where c.id=${id} and not exists(select 1 from portal_users u where u.customer_id=c.id and u.is_admin)`;
+        const [target] = await sql`select c.business_name from customers c where c.id=${id} and not exists(select 1 from portal_users u where u.customer_id=c.id and u.is_admin)`;
+        const links = await sql`select id from portal_whatsapp_links where customer_id=${id}`;
         if (!target) throw new ApiError("Customer workspace not found.", 404);
-        if (target.has_link) {
+        for (const link of links) {
           if (!process.env.LINKED_SERVICE_URL || !process.env.LINKED_BRIDGE_SECRET) throw new ApiError("Disable the WhatsApp connection before deleting this workspace.", 503);
           try {
-            const response = await fetch(`${process.env.LINKED_SERVICE_URL}/connection`, { method: "DELETE", headers: { Authorization: `Bearer ${process.env.LINKED_BRIDGE_SECRET}`, "Content-Type": "application/json" }, body: JSON.stringify({ customer: id }), signal: AbortSignal.timeout(10000) });
+            const response = await fetch(`${process.env.LINKED_SERVICE_URL}/connection`, { method: "DELETE", headers: { Authorization: `Bearer ${process.env.LINKED_BRIDGE_SECRET}`, "Content-Type": "application/json" }, body: JSON.stringify({ customer: link.id }), signal: AbortSignal.timeout(30000) });
             if (!response.ok) throw new Error();
           } catch { throw new ApiError("Could not stop the WhatsApp connection. Please try again.", 503); }
         }
@@ -196,39 +197,53 @@ async function handler(
       throw new ApiError("Complete WhatsApp onboarding before opening the workspace.", 403);
     if (user.read_only && !["data", "logout", "onboarding"].includes(route || ""))
       throw new ApiError("This account can only view calls and transcripts.", 403);
-    if (route === "onboarding") {
+    if (route === "onboarding" || route === "connections") {
       if (method === "GET") {
-        const [link] = await sql`select agent_id,enabled,status,case when qr_expires_at>now() then qr else null end as qr,error,voice_enabled,message_replies_enabled,message_reply_instructions from portal_whatsapp_links where customer_id=${customer}`;
-        if (link?.status === "connected") await sql`update portal_users set onboarding_completed=true where customer_id=${customer} and not is_admin`;
-        return Response.json(link || { enabled: false, status: "offline", voice_enabled: true, message_replies_enabled: false, message_reply_instructions: "" }, { headers: { "Cache-Control": "private, no-store" } });
+        const links = await sql`select id,agent_id,phone,enabled,status,case when qr_expires_at>now() then qr else null end as qr,error,voice_enabled,message_replies_enabled,message_reply_instructions from portal_whatsapp_links where customer_id=${customer} order by updated_at desc`;
+        if (links.some(link => link.status === "connected")) await sql`update portal_users set onboarding_completed=true where customer_id=${customer} and not is_admin`;
+        return Response.json(links, { headers: { "Cache-Control": "private, no-store" } });
       }
       if (method === "POST") {
-        const b = z.object({ agent_id: uuid, enabled: z.boolean() }).parse(await request.json());
+        const b = z.object({ agent_id: uuid, id: uuid.optional() }).parse(await request.json());
         const [agent] = await sql`select id from portal_agents where id=${b.agent_id} and customer_id=${customer} and status<>'archived'`;
-        if (!agent) throw new ApiError("Choose an agent in your workspace.", 404);
-        if (!process.env.LINKED_SERVICE_URL || !process.env.LINKED_BRIDGE_SECRET) throw new ApiError("WhatsApp connection service is unavailable.", 503);
-        await sql`insert into portal_whatsapp_links(customer_id,agent_id,enabled,status) values(${customer},${b.agent_id},${b.enabled},${b.enabled ? "connecting" : "offline"}) on conflict(customer_id) do update set agent_id=excluded.agent_id,enabled=excluded.enabled,status=case when portal_whatsapp_links.enabled and excluded.enabled then portal_whatsapp_links.status else excluded.status end,qr=case when portal_whatsapp_links.enabled and excluded.enabled then portal_whatsapp_links.qr else null end,qr_expires_at=case when portal_whatsapp_links.enabled and excluded.enabled then portal_whatsapp_links.qr_expires_at else null end,error='',updated_at=now()`;
-        try {
-          const response = await fetch(`${process.env.LINKED_SERVICE_URL}/connection`, { method: "POST", headers: { Authorization: `Bearer ${process.env.LINKED_BRIDGE_SECRET}`, "Content-Type": "application/json" }, body: JSON.stringify({ customer, enabled: b.enabled }), signal: AbortSignal.timeout(10000) });
-          if (!response.ok) throw new Error("Connection service unavailable");
-        } catch {
-          await sql`update portal_whatsapp_links set enabled=false,status='error',error='Connection service unavailable',qr=null,qr_expires_at=null where customer_id=${customer}`;
-          throw new ApiError("WhatsApp connection service is unavailable. Please try again.", 503);
+        if (!agent) throw new ApiError("Choose an assistant.", 404);
+        if (!process.env.LINKED_SERVICE_URL || !process.env.LINKED_BRIDGE_SECRET) throw new ApiError("Connection service unavailable.", 503);
+        const connection = b.id || randomUUID();
+        if (b.id) {
+          const rows = await sql`update portal_whatsapp_links set agent_id=${b.agent_id},enabled=true,status='connecting',error='',updated_at=now() where id=${connection} and customer_id=${customer} returning id`;
+          if (!rows.length) throw new ApiError("Connection not found.", 404);
+        } else {
+          await sql`insert into portal_whatsapp_links(id,customer_id,agent_id,enabled,status) values(${connection},${customer},${b.agent_id},true,'connecting')`;
         }
+        try {
+          const response = await fetch(`${process.env.LINKED_SERVICE_URL}/connection`, { method: "POST", headers: { Authorization: `Bearer ${process.env.LINKED_BRIDGE_SECRET}`, "Content-Type": "application/json" }, body: JSON.stringify({ customer: connection, enabled: true }), signal: AbortSignal.timeout(10000) });
+          if (!response.ok) throw new Error();
+        } catch {
+          await sql`update portal_whatsapp_links set enabled=false,status='error',error='Connection service unavailable',qr=null,qr_expires_at=null where id=${connection} and customer_id=${customer}`;
+          throw new ApiError("Connection service unavailable. Please try again.", 503);
+        }
+        return Response.json({ id: connection });
+      }
+      if (id && method === "DELETE") {
+        uuid.parse(id);
+        const [link] = await sql`select id from portal_whatsapp_links where id=${id} and customer_id=${customer}`;
+        if (!link) throw new ApiError("Connection not found.", 404);
+        if (!process.env.LINKED_SERVICE_URL || !process.env.LINKED_BRIDGE_SECRET) throw new ApiError("Connection service unavailable.", 503);
+        try {
+          const response = await fetch(`${process.env.LINKED_SERVICE_URL}/connection`, { method: "DELETE", headers: { Authorization: `Bearer ${process.env.LINKED_BRIDGE_SECRET}`, "Content-Type": "application/json" }, body: JSON.stringify({ customer: id }), signal: AbortSignal.timeout(30000) });
+          if (!response.ok) throw new Error();
+        } catch { throw new ApiError("Could not unlink WhatsApp. Check the connection and try again.", 503); }
+        await sql`delete from portal_whatsapp_links where id=${id} and customer_id=${customer}`;
+        return Response.json({ ok: true });
+      }
+      if (id && method === "PATCH") {
+        uuid.parse(id);
+        const b = z.object({ voice_enabled: z.boolean().optional(), message_replies_enabled: z.boolean().optional(), message_reply_instructions: z.string().trim().max(2000).optional() }).parse(await request.json());
+        const rows = await sql`update portal_whatsapp_links set voice_enabled=coalesce(${b.voice_enabled ?? null},voice_enabled),message_replies_enabled=coalesce(${b.message_replies_enabled ?? null},message_replies_enabled),message_reply_instructions=coalesce(${b.message_reply_instructions ?? null},message_reply_instructions),updated_at=now() where id=${id} and customer_id=${customer} returning id`;
+        if (!rows.length) throw new ApiError("Connection not found.", 404);
         return Response.json({ ok: true });
       }
       throw new ApiError("Not found.", 404);
-    }
-    if (route === "message-settings" && method === "POST") {
-      const b = z.object({ enabled: z.boolean(), instructions: z.string().trim().max(2000) }).parse(await request.json());
-      await sql`update portal_whatsapp_links set message_replies_enabled=${b.enabled},message_reply_instructions=${b.instructions},updated_at=now() where customer_id=${customer}`;
-      return Response.json({ ok: true });
-    }
-    if (route === "voice-settings" && method === "POST") {
-      const b = z.object({ enabled: z.boolean() }).parse(await request.json());
-      const rows = await sql`update portal_whatsapp_links set voice_enabled=${b.enabled},updated_at=now() where customer_id=${customer} returning customer_id`;
-      if (!rows.length) throw new ApiError("Connect WhatsApp before changing call answering.", 409);
-      return Response.json({ ok: true });
     }
     if (resourceTools[route || ""] && !user.allowed_tools.includes(resourceTools[route || ""]))
       throw new ApiError("This feature is disabled for your workspace.", 403);
@@ -253,7 +268,7 @@ async function handler(
           user.email,
           days,
           filter ? uuid.parse(filter) : undefined,
-          z.enum(["dashboard", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin", "onboarding"]).parse(url.searchParams.get("section") || "dashboard"),
+          z.enum(["dashboard", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin", "onboarding", "connections"]).parse(url.searchParams.get("section") || "dashboard"),
         ),
         { headers: { "Cache-Control": "private, no-store" } },
       );
