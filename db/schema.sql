@@ -30,6 +30,8 @@ alter table portal_agents drop column if exists operation_at;
 alter table portal_agents alter column voice set default 'Aoede';
 create index if not exists portal_agents_customer on portal_agents(customer_id);
 create table if not exists portal_whatsapp_links (customer_id uuid primary key references customers(id), agent_id uuid not null references portal_agents(id), enabled boolean not null default false, status text not null default 'offline', qr text, qr_expires_at timestamptz, error text not null default '', updated_at timestamptz not null default now());
+alter table portal_whatsapp_links add column if not exists message_replies_enabled boolean not null default false;
+alter table portal_whatsapp_links add column if not exists message_reply_instructions text not null default '';
 create table if not exists portal_documents (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), name text not null, content text not null, bytes integer not null, type text not null, created_at timestamptz not null default now());
 create index if not exists portal_documents_search on portal_documents using gin(to_tsvector('simple',content));
 create table if not exists portal_products (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), name text not null, sku text not null default '', description text not null default '', category text not null default 'Product', price numeric check(price >= 0), currency text not null default 'LKR', stock integer check(stock >= 0), status text not null default 'active' check(status in ('active','draft','archived')), updated_at timestamptz not null default now());

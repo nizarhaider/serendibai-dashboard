@@ -198,9 +198,9 @@ async function handler(
       throw new ApiError("This account can only view calls and transcripts.", 403);
     if (route === "onboarding") {
       if (method === "GET") {
-        const [link] = await sql`select agent_id,enabled,status,case when qr_expires_at>now() then qr else null end as qr,error from portal_whatsapp_links where customer_id=${customer}`;
+        const [link] = await sql`select agent_id,enabled,status,case when qr_expires_at>now() then qr else null end as qr,error,message_replies_enabled,message_reply_instructions from portal_whatsapp_links where customer_id=${customer}`;
         if (link?.status === "connected") await sql`update portal_users set onboarding_completed=true where customer_id=${customer} and not is_admin`;
-        return Response.json(link || { enabled: false, status: "offline" }, { headers: { "Cache-Control": "private, no-store" } });
+        return Response.json(link || { enabled: false, status: "offline", message_replies_enabled: false, message_reply_instructions: "" }, { headers: { "Cache-Control": "private, no-store" } });
       }
       if (method === "POST") {
         const b = z.object({ agent_id: uuid, enabled: z.boolean() }).parse(await request.json());
@@ -218,6 +218,11 @@ async function handler(
         return Response.json({ ok: true });
       }
       throw new ApiError("Not found.", 404);
+    }
+    if (route === "message-settings" && method === "POST") {
+      const b = z.object({ enabled: z.boolean(), instructions: z.string().trim().max(2000) }).parse(await request.json());
+      await sql`update portal_whatsapp_links set message_replies_enabled=${b.enabled},message_reply_instructions=${b.instructions},updated_at=now() where customer_id=${customer}`;
+      return Response.json({ ok: true });
     }
     if (resourceTools[route || ""] && !user.allowed_tools.includes(resourceTools[route || ""]))
       throw new ApiError("This feature is disabled for your workspace.", 403);

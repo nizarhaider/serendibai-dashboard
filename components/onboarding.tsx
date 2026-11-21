@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, AudioLines, Check, LoaderCircle, Smartphone } from "lucide-react";
+import { ArrowRight, AudioLines, Check, LoaderCircle, MessageCircle, Smartphone } from "lucide-react";
 import type { Agent } from "@/lib/types";
 import { api } from "./portal";
 
-type LinkState = { agent_id?: string; enabled: boolean; status: string; qr?: string | null; error?: string };
+type LinkState = { agent_id?: string; enabled: boolean; status: string; qr?: string | null; error?: string; message_replies_enabled?: boolean; message_reply_instructions?: string };
 const steps = ["Choose assistant", "Prepare phone", "Scan QR code", "Finish setup"];
 
 export function Onboarding({ agents, businessName, standalone = false }: { agents: Agent[]; businessName?: string; standalone?: boolean }) {
@@ -15,13 +15,22 @@ export function Onboarding({ agents, businessName, standalone = false }: { agent
   const [agent, setAgent] = useState(agents[0]?.id || "");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [messageBusy, setMessageBusy] = useState(false);
+  const [messageDirty, setMessageDirty] = useState(false);
+  const [messageError, setMessageError] = useState("");
+  const [replyEnabled, setReplyEnabled] = useState(false);
+  const [replyInstructions, setReplyInstructions] = useState("");
   const refresh = useCallback(async () => {
     try {
       const next = await api("onboarding");
       setLink(next);
+      if (!messageDirty) {
+        setReplyEnabled(Boolean(next.message_replies_enabled));
+        setReplyInstructions(next.message_reply_instructions || "");
+      }
       if (next.agent_id) setAgent(next.agent_id);
     } catch (e) { setError((e as Error).message); }
-  }, []);
+  }, [messageDirty]);
   useEffect(() => {
     const initial = setTimeout(refresh, 0);
     const timer = setInterval(refresh, link.status === "pairing" || link.status === "connecting" ? 5000 : 60000);
@@ -32,6 +41,12 @@ export function Onboarding({ agents, businessName, standalone = false }: { agent
     try { await api("onboarding", "POST", { agent_id: agent, enabled }); await refresh(); }
     catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
+  }
+  async function saveMessageSettings() {
+    setMessageBusy(true); setMessageError("");
+    try { await api("message-settings", "POST", { enabled: replyEnabled, instructions: replyInstructions }); setMessageDirty(false); }
+    catch (e) { setMessageError((e as Error).message); }
+    finally { setMessageBusy(false); }
   }
   const connected = link.status === "connected";
   const pairing = Boolean(link.qr && link.enabled);
@@ -77,6 +92,15 @@ export function Onboarding({ agents, businessName, standalone = false }: { agent
           <span className="setup-stage-label">STEP 4 · COMPLETE</span>
           <h2>Your WhatsApp is connected</h2>
           <p>Incoming WhatsApp calls will be handled by <strong>{selectedAgent?.name || "your selected voice assistant"}</strong>. You can keep using WhatsApp Business on your phone.</p>
+          <section className="message-settings" aria-labelledby="message-settings-title">
+            <div className="message-settings-heading"><span className="message-settings-icon"><MessageCircle size={18} /></span><div><span className="setup-stage-label">OPTIONAL PREFERENCE</span><h3 id="message-settings-title">WhatsApp message replies</h3></div></div>
+            <p>Choose whether you want AI replies to incoming WhatsApp messages, and add guidance for how they should sound.</p>
+            <label className="message-reply-toggle"><span><strong>Allow AI to reply to messages</strong><small>This is a saved preference. Automated message replies are not active yet.</small></span><input type="checkbox" checked={replyEnabled} onChange={event => { setReplyEnabled(event.target.checked); setMessageDirty(true); }} aria-label="Allow AI to reply to messages" /></label>
+            <label className="message-instructions-label" htmlFor="message-reply-instructions">Reply guidance <span>Optional</span></label>
+            <textarea id="message-reply-instructions" value={replyInstructions} onChange={event => { setReplyInstructions(event.target.value); setMessageDirty(true); }} maxLength={2000} placeholder="For example: Keep replies brief, friendly, and focused on our services." />
+            {messageError && <div className="setup-alert" role="alert">{messageError}</div>}
+            <button className="button secondary message-save" disabled={messageBusy} onClick={saveMessageSettings}>{messageBusy ? "Saving…" : "Save message preferences"}</button>
+          </section>
           {standalone && <Link className="button primary setup-primary" href="/dashboard">Open my workspace<ArrowRight size={17} /></Link>}
         </div>}
       </section>

@@ -20,6 +20,7 @@ The production portal and company voice service use the `serendib_v2` Neon proje
 - Agent credentials are AES-256-GCM encrypted at rest using `INTERNAL_API_KEY`. The voice runtime uses a scoped runtime token rather than a database credential. Rotate the encryption secret only with a credential migration.
 - Configuration loads for new calls; tool permissions are also checked on every execution. Restart disconnects calls. CPU/memory and active-call counts come from runtime heartbeats, not simulated GPU inference.
 - Meta webhooks require a saved app secret. The stable portal webhook proxies signed events to an HTTPS runtime tunnel. The migrated phone retains its original named Cloudflare tunnel. New agents require their own Meta phone configuration.
+- Connected WhatsApp workspaces can save a message-reply preference and guidance in onboarding. This is configuration only; inbound automated message replies are not active yet.
 
 ## Customer administration
 
