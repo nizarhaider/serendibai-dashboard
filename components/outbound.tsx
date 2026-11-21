@@ -1,4 +1,7 @@
 "use client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDownToLine, ArrowRight, FileSpreadsheet, Loader2, Phone, Plus, RefreshCw, Upload, X } from "lucide-react";
@@ -166,13 +169,13 @@ export function Outbound() {
   }
 
   return <div className="outbound-page">
-    {error && <div className="outbound-notice error" role="alert"><span>{error}</span><button aria-label="Dismiss error" onClick={() => setError("")}><X size={17} /></button></div>}
+    {error && <div className="outbound-notice error" role="alert"><span>{error}</span><Button variant="ghost" aria-label="Dismiss error" onClick={() => setError("")}><X size={17} /></Button></div>}
     {batches.length > 0 && <div className="outbound-toolbar">
-      <label className="outbound-list-picker"><span>Saved call lists</span><select value={batch?.id || ""} disabled={!!busy || loading} onChange={e => void chooseList(e.target.value)}><option value="" disabled>Select a list</option>{batches.map(item => <option key={item.id} value={item.id}>{item.name} · {date(item.created_at)}</option>)}</select></label>
-      <button className="button" disabled={!!busy || loading} onClick={() => { setShowForm(true); setMaxRetries(0); setRetryDays(1); setError(""); }}><Plus size={16} /> New list</button>
+      <label className="outbound-list-picker"><span>Saved call lists</span><NativeSelect value={batch?.id || ""} disabled={!!busy || loading} onChange={e => void chooseList(e.target.value)}><option value="" disabled>Select a list</option>{batches.map(item => <option key={item.id} value={item.id}>{item.name} · {date(item.created_at)}</option>)}</NativeSelect></label>
+      <Button variant="ghost" className="button" disabled={!!busy || loading} onClick={() => { setShowForm(true); setMaxRetries(0); setRetryDays(1); setError(""); }}><Plus size={16} /> New list</Button>
     </div>}
     {loading ? <div className="outbound-loading" role="status"><Loader2 className="outbound-spin" size={22} /> Loading your call lists…</div> : showForm || !batch ? <section className="outbound-card outbound-setup">
-      <div className="outbound-card-heading"><div className="outbound-symbol"><Phone size={21} /></div><div><h2>Upload a call list</h2><p>Choose a CSV and we’ll handle the call setup.</p></div>{batch && <button className="icon-button" aria-label="Close new list" disabled={!!busy} onClick={() => setShowForm(false)}><X size={18} /></button>}</div>
+      <div className="outbound-card-heading"><div className="outbound-symbol"><Phone size={21} /></div><div><h2>Upload a call list</h2><p>Choose a CSV and we’ll handle the call setup.</p></div>{batch && <Button variant="ghost" className="icon-button" aria-label="Close new list" disabled={!!busy} onClick={() => setShowForm(false)}><X size={18} /></Button>}</div>
       <form onSubmit={create}>
         <label className={`outbound-upload ${dragging ? "dragging" : ""} ${file ? "has-file" : ""}`} onDragOver={e => { e.preventDefault(); if (!busy) setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={e => { e.preventDefault(); setDragging(false); if (!busy) void selectFile(e.dataTransfer.files[0]); }}>
           <input className="sr-only" type="file" accept=".csv,text/csv" disabled={!!busy} aria-label="Upload contacts CSV" onChange={e => { void selectFile(e.target.files?.[0]); e.target.value = ""; }} />
@@ -187,22 +190,22 @@ export function Outbound() {
             <fieldset className="outbound-options"><legend>Select columns to validate</legend><div>{preview.headers.map(column => <label key={column}><span><input type="checkbox" checked={selectedColumns.includes(column)} onChange={event => setSelectedColumns(current => event.target.checked ? [...current, column] : current.filter(value => value !== column))} />{column}</span></label>)}</div></fieldset>
             <fieldset className="outbound-options"><legend>Additional Tests</legend><div><label><span><input type="checkbox" checked={selectedColumns.includes(assessEnglish)} onChange={event => setSelectedColumns(current => event.target.checked ? [...current, assessEnglish] : current.filter(value => value !== assessEnglish))} />Assess English</span></label></div></fieldset>
             <div className="outbound-retry-settings">
-              <label>Automatic retries <input type="number" min="0" max="5" required value={maxRetries} onChange={e => setMaxRetries(Number(e.target.value))} /></label>
-              <label>Days between retries <input type="number" min="1" max="14" required value={retryDays} onChange={e => setRetryDays(Number(e.target.value))} /></label>
+              <label>Automatic retries <Input type="number" min="0" max="5" required value={maxRetries} onChange={e => setMaxRetries(Number(e.target.value))} /></label>
+              <label>Days between retries <Input type="number" min="1" max="14" required value={retryDays} onChange={e => setRetryDays(Number(e.target.value))} /></label>
             </div>
           </>}
         </>}
         <a className="button" href="/outbound-template.csv" download><ArrowDownToLine size={16} />Download CSV template</a>
         {file && <>
-          <button className="button primary" disabled={!selectedColumns.length || !!busy}>{busy === "create" ? <><Loader2 className="outbound-spin" size={16} /> Preparing list…</> : <>Create call list <ArrowRight size={16} /></>}</button>
+          <Button variant="ghost" className="button primary" disabled={!selectedColumns.length || !!busy}>{busy === "create" ? <><Loader2 className="outbound-spin" size={16} /> Preparing list…</> : <>Create call list <ArrowRight size={16} /></>}</Button>
         </>}
       </form>
     </section> : <section className="outbound-card outbound-workspace">
-      <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} {rows.length === 1 ? "contact" : "contacts"}</p></div><button className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></button></header>
-      <div className="outbound-actions"><button className="button primary" disabled={!!busy || !remaining} onClick={() => void run()}>{busy === "call-all" ? <><Loader2 className="outbound-spin" size={16} /> Starting {progress.done} of {progress.total}</> : <><Phone size={16} />{remaining ? `Call remaining (${remaining})` : "All contacts attempted"}</>}</button><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}><ArrowDownToLine size={16} />Download CSV</a>{watching && <span className="outbound-live-indicator" role="status"><i />Live updates</span>}</div>
+      <header className="outbound-batch-heading"><div className="outbound-symbol"><FileSpreadsheet size={22} /></div><div><h2>{batch.name.replace(/\.csv$/i, "")}</h2><p>{rows.length} {rows.length === 1 ? "contact" : "contacts"}</p></div><Button variant="ghost" className="icon-button" aria-label="Refresh call status" disabled={!!busy} onClick={() => void refresh()}><RefreshCw size={17} className={busy === "refresh" ? "outbound-spin" : ""} /></Button></header>
+      <div className="outbound-actions"><Button variant="ghost" className="button primary" disabled={!!busy || !remaining} onClick={() => void run()}>{busy === "call-all" ? <><Loader2 className="outbound-spin" size={16} /> Starting {progress.done} of {progress.total}</> : <><Phone size={16} />{remaining ? `Call remaining (${remaining})` : "All contacts attempted"}</>}</Button><a className="button" href={`/api/outbound?id=${batch.id}&format=csv`}><ArrowDownToLine size={16} />Download CSV</a>{watching && <span className="outbound-live-indicator" role="status"><i />Live updates</span>}</div>
       {busy === "call-all" && <p className="outbound-inline-note" role="status">Keep this page open while calls are being started.</p>}
       {liveError && <p className="outbound-inline-note" role="status">Live updates interrupted. Reconnecting…</p>}
-      <div className="outbound-table"><table><thead><tr><th scope="col">Phone number</th><th scope="col">Call</th><th scope="col">Status</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td className="outbound-phone">+{row.phone}</td><td>{!row.state || retryStates.includes(row.state) ? <button className="outbound-call-button" disabled={!!busy} onClick={() => void run(row.id)}>{busy === row.id ? <Loader2 className="outbound-spin" size={14} /> : <Phone size={14} />}{busy === row.id ? "Starting" : row.state ? "Retry" : "Call"}</button> : <span className="outbound-dash">—</span>}</td><td><span className={`outbound-status ${row.state || "idle"}`}><i />{callProgress(row)}</span>{row.state && <small className="outbound-row-error">{Math.max(0, batch.max_retries - (row.retries_used || 0))} retries left{row.retry_at && row.state === "scheduled" ? ` · Next: ${date(row.retry_at)} (Colombo)` : ""}</small>}{row.error && <small className="outbound-row-error">{row.error}</small>}{row.call_id && <details className="outbound-transcript"><summary>View transcript</summary><pre>{row.transcript || "Waiting for conversation…"}</pre></details>}</td></tr>)}</tbody></table></div>
+      <div className="outbound-table"><table><thead><tr><th scope="col">Phone number</th><th scope="col">Call</th><th scope="col">Status</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td className="outbound-phone">+{row.phone}</td><td>{!row.state || retryStates.includes(row.state) ? <Button variant="ghost" className="outbound-call-button" disabled={!!busy} onClick={() => void run(row.id)}>{busy === row.id ? <Loader2 className="outbound-spin" size={14} /> : <Phone size={14} />}{busy === row.id ? "Starting" : row.state ? "Retry" : "Call"}</Button> : <span className="outbound-dash">—</span>}</td><td><span className={`outbound-status ${row.state || "idle"}`}><i />{callProgress(row)}</span>{row.state && <small className="outbound-row-error">{Math.max(0, batch.max_retries - (row.retries_used || 0))} retries left{row.retry_at && row.state === "scheduled" ? ` · Next: ${date(row.retry_at)} (Colombo)` : ""}</small>}{row.error && <small className="outbound-row-error">{row.error}</small>}{row.call_id && <details className="outbound-transcript"><summary>View transcript</summary><pre>{row.transcript || "Waiting for conversation…"}</pre></details>}</td></tr>)}</tbody></table></div>
       <footer className="outbound-table-footer">Approved numbers are called immediately; otherwise WhatsApp permission is requested first. Progress is saved automatically.</footer>
     </section>}
   </div>;

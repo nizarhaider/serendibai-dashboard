@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { CalendarDays, Phone } from "lucide-react";
 import type { PortalData } from "@/lib/types";
@@ -121,7 +122,7 @@ export function Appointments({
               : "Appointments confirmed during calls appear here."}
           </p>
           {(query || status !== "all") && (
-            <button
+            <Button variant="ghost"
               className="button"
               onClick={() => {
                 setQuery("");
@@ -129,7 +130,7 @@ export function Appointments({
               }}
             >
               View all bookings
-            </button>
+            </Button>
           )}
         </div>
       )}

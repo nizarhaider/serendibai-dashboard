@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 import { useState } from "react";
 import type { Customer } from "@/lib/types";
@@ -42,20 +44,20 @@ export function Customers({ initial }: { initial: Customer[] }) {
       <div className="list-toolbar admin-toolbar">
         <div className="search-input">
           <Search size={16} />
-          <input
+          <Input
             aria-label="Search customers"
             placeholder="Search business or email…"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
-        <button
+        <Button variant="ghost"
           className="button primary"
           onClick={() => setCreating(!creating)}
         >
           <Plus size={16} />
           {creating ? "Cancel" : "New customer"}
-        </button>
+        </Button>
       </div>
       {creating && (
         <section className="panel">
@@ -95,20 +97,20 @@ export function Customers({ initial }: { initial: Customer[] }) {
           >
             <label>
               Business name
-              <input name="business_name" required maxLength={160} />
+              <Input name="business_name" required maxLength={160} />
             </label>
             <label>
               Contact name
-              <input name="contact_name" required maxLength={160} />
+              <Input name="contact_name" required maxLength={160} />
             </label>
             <label>
               Email
-              <input name="email" type="email" required autoComplete="off" />
+              <Input name="email" type="email" required autoComplete="off" />
             </label>
             <fieldset><legend>Workspace access</legend>{toolNames.map(tool => <label key={tool}><input type="checkbox" name={tool} defaultChecked /> {toolLabels[tool]}</label>)}<label><input type="checkbox" name="can_edit" defaultChecked /> Allow customer to edit agent settings</label></fieldset>
-            <button className="button primary" disabled={!!busy}>
+            <Button variant="ghost" className="button primary" disabled={!!busy}>
               {busy === "create" ? "Creating…" : "Create account"}
-            </button>
+            </Button>
           </form>
         </section>
       )}
@@ -153,8 +155,8 @@ export function Customers({ initial }: { initial: Customer[] }) {
                   {user.name || customer.contact_name} · {user.email}
                   {user.is_admin ? " · Administrator" : ""}
                   {user.invitation_pending ? user.invitation_sent ? " · Invitation sent" : " · Invitation pending" : ""}
-                  {user.invitation_pending && !user.is_admin && <button className="button" disabled={!!busy} onClick={async () => { setBusy(customer.id); setError(""); setMessage(""); try { await api(`customers/${customer.id}/invite`, "POST"); setCustomers(await api("customers")); setMessage(`Invitation sent to ${user.email}.`); } catch (e) { setError((e as Error).message); } finally { setBusy(""); } }}>Resend invitation</button>}
-                  {!user.is_admin && <button className="button" disabled={!!busy} onClick={async () => { if (!window.confirm(`Remove ${user.email} from ${customer.business_name}?`)) return; setBusy(customer.id); setError(""); setMessage(""); try { await api(`customers/${customer.id}/users/${user.id}`, "DELETE"); setCustomers(await api("customers")); setMessage(`${user.email} removed from ${customer.business_name}.`); } catch (e) { setError((e as Error).message); } finally { setBusy(""); } }}>Remove user</button>}
+                  {user.invitation_pending && !user.is_admin && <Button variant="ghost" className="button" disabled={!!busy} onClick={async () => { setBusy(customer.id); setError(""); setMessage(""); try { await api(`customers/${customer.id}/invite`, "POST"); setCustomers(await api("customers")); setMessage(`Invitation sent to ${user.email}.`); } catch (e) { setError((e as Error).message); } finally { setBusy(""); } }}>Resend invitation</Button>}
+                  {!user.is_admin && <Button variant="ghost" className="button" disabled={!!busy} onClick={async () => { if (!window.confirm(`Remove ${user.email} from ${customer.business_name}?`)) return; setBusy(customer.id); setError(""); setMessage(""); try { await api(`customers/${customer.id}/users/${user.id}`, "DELETE"); setCustomers(await api("customers")); setMessage(`${user.email} removed from ${customer.business_name}.`); } catch (e) { setError((e as Error).message); } finally { setBusy(""); } }}>Remove user</Button>}
                 </p>
               ))}
               <form className="customer-create" onSubmit={async (event) => {
@@ -169,9 +171,9 @@ export function Customers({ initial }: { initial: Customer[] }) {
                 } catch (e) { setError((e as Error).message); }
                 finally { setBusy(""); }
               }}>
-                <label>Contact name<input name="contact_name" required maxLength={160} /></label>
-                <label>Email to invite<input name="email" type="email" required autoComplete="off" /></label>
-                <button className="button primary" disabled={!!busy}>{busy === customer.id ? "Sending…" : "Add email and send invite"}</button>
+                <label>Contact name<Input name="contact_name" required maxLength={160} /></label>
+                <label>Email to invite<Input name="email" type="email" required autoComplete="off" /></label>
+                <Button variant="ghost" className="button primary" disabled={!!busy}>{busy === customer.id ? "Sending…" : "Add email and send invite"}</Button>
               </form>
               <h3>Enabled bot features</h3>
               <div className="customer-features">
@@ -210,20 +212,20 @@ export function Customers({ initial }: { initial: Customer[] }) {
                 With editing off, the customer can only view calls and
                 transcripts.
               </p>
-              <button
+              <Button variant="ghost"
                 className="button primary"
                 disabled={!!busy}
                 onClick={() => save(customer)}
               >
                 {busy === customer.id ? "Saving…" : "Save access"}
-              </button>
-              <button className="button danger" disabled={!!busy} onClick={async () => {
+              </Button>
+              <Button variant="ghost" className="button danger" disabled={!!busy} onClick={async () => {
                 if (!window.confirm(`Permanently delete ${customer.business_name}, including all users, agents, calls, and workspace data?`)) return;
                 setBusy(`delete:${customer.id}`); setError(""); setMessage("");
                 try { await api(`customers/${customer.id}`, "DELETE"); setCustomers(await api("customers")); setMessage(`${customer.business_name} workspace deleted.`); }
                 catch (e) { setError((e as Error).message); }
                 finally { setBusy(""); }
-              }}>{busy === `delete:${customer.id}` ? "Deleting…" : "Delete workspace"}</button>
+              }}>{busy === `delete:${customer.id}` ? "Deleting…" : "Delete workspace"}</Button>
             </div>
           </details>
         ))}

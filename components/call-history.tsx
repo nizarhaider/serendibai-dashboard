@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import {
   ArrowDownToLine,
@@ -58,7 +60,7 @@ export function CallHistory({ data }: { data: PortalData }) {
       <div className="list-toolbar">
         <div className="search-input">
           <Search size={16} />
-          <input
+          <Input
             aria-label="Search recent calls"
             placeholder="Search number, agent or conversation…"
             value={query}
@@ -68,9 +70,9 @@ export function CallHistory({ data }: { data: PortalData }) {
             }}
           />
         </div>
-        <button className="button" disabled={!calls.length} onClick={download}>
+        <Button variant="ghost" className="button" disabled={!calls.length} onClick={download}>
           <ArrowDownToLine size={15} /> Export calls
-        </button>
+        </Button>
       </div>
       <div className="client-calls">
         {calls.slice(currentPage * 10, currentPage * 10 + 10).map((call) => (
@@ -112,9 +114,9 @@ export function CallHistory({ data }: { data: PortalData }) {
                 : "Choose a longer date range, or return after your agent handles a call."}
             </p>
             {query && (
-              <button className="button" onClick={() => setQuery("")}>
+              <Button variant="ghost" className="button" onClick={() => setQuery("")}>
                 Clear search
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -130,25 +132,25 @@ export function CallHistory({ data }: { data: PortalData }) {
         </span>
         {calls.length > 10 && (
           <div>
-            <button
+            <Button variant="ghost"
               className="icon-button"
               aria-label="Previous calls"
               disabled={currentPage === 0}
               onClick={() => setPage(currentPage - 1)}
             >
               <ChevronLeft size={18} />
-            </button>
+            </Button>
             <span>
               {currentPage + 1} / {Math.ceil(calls.length / 10)}
             </span>
-            <button
+            <Button variant="ghost"
               className="icon-button"
               aria-label="Next calls"
               disabled={(currentPage + 1) * 10 >= calls.length}
               onClick={() => setPage(currentPage + 1)}
             >
               <ChevronRight size={18} />
-            </button>
+            </Button>
           </div>
         )}
       </div>

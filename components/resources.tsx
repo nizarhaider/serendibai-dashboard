@@ -1,4 +1,7 @@
 "use client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useRef, useState } from "react";
 import {
   ArrowDownToLine,
@@ -203,9 +206,9 @@ export function Resources({
       {error && (
         <div className="toast error" role="alert">
           {error}
-          <button aria-label="Dismiss error" onClick={() => setError("")}>
+          <Button variant="ghost" aria-label="Dismiss error" onClick={() => setError("")}>
             <X size={16} />
-          </button>
+          </Button>
         </div>
       )}
       {knowledge ? (
@@ -235,13 +238,13 @@ export function Resources({
               : "Add business information"}
           </h2>
           <p>Upload FAQs, policies or service guides your agent should use.</p>
-          <button
+          <Button variant="ghost"
             className="button primary"
             disabled={busy}
             onClick={() => picker.current?.click()}
           >
             <Plus size={16} /> Upload document
-          </button>
+          </Button>
           <small>PDF, Word, TXT, Markdown or CSV · Up to 5 MB per file</small>
         </section>
       ) : (
@@ -250,10 +253,10 @@ export function Resources({
             <h2>Import your catalogue</h2>
             <p>Use the template to add several products or services at once.</p>
           </div>
-          <button className="button" onClick={template}>
+          <Button variant="ghost" className="button" onClick={template}>
             <ArrowDownToLine size={16} /> Download template
-          </button>
-          <button
+          </Button>
+          <Button variant="ghost"
             className="button primary"
             disabled={busy}
             onClick={() => picker.current?.click()}
@@ -264,7 +267,7 @@ export function Resources({
               <ArrowUpFromLine size={16} />
             )}{" "}
             Import Excel
-          </button>
+          </Button>
         </section>
       )}
       <section className="panel resource-panel">
@@ -284,7 +287,7 @@ export function Resources({
           </div>
           <div className="toolbar-actions">
             {!knowledge && !editing && (
-              <select
+              <NativeSelect
                 aria-label="Catalogue status"
                 value={catalogueStatus}
                 onChange={(event) => setCatalogueStatus(event.target.value)}
@@ -293,11 +296,11 @@ export function Resources({
                 <option value="draft">Drafts</option>
                 <option value="archived">Archived</option>
                 <option value="all">All items</option>
-              </select>
+              </NativeSelect>
             )}
             <div className="search-input">
               <Search size={16} />
-              <input
+              <Input
                 aria-label={knowledge ? "Search documents" : "Search products"}
                 placeholder={
                   knowledge ? "Find a document…" : "Search catalogue…"
@@ -311,29 +314,29 @@ export function Resources({
               <>
                 {editing ? (
                   <>
-                    <button className="button" onClick={() => setEditing(null)}>
+                    <Button variant="ghost" className="button" onClick={() => setEditing(null)}>
                       Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button variant="ghost"
                       className="button primary"
                       onClick={() => save(editing)}
                       disabled={busy}
                     >
                       <Save size={15} />
                       {busy ? "Saving…" : "Save changes"}
-                    </button>
+                    </Button>
                   </>
                 ) : (
-                  <button
+                  <Button variant="ghost"
                     className="button"
                     onClick={() =>
                       setEditing(data.products.map((p) => ({ ...p })))
                     }
                   >
                     Edit table
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button variant="ghost"
                   className="button"
                   onClick={() => {
                     setQuery("");
@@ -344,7 +347,7 @@ export function Resources({
                   }}
                 >
                   <Plus size={15} /> Add item
-                </button>
+                </Button>
               </>
             )}
           </div>
@@ -361,7 +364,7 @@ export function Resources({
                     <span className="doc-icon">
                       <FileText size={23} />
                     </span>
-                    <button
+                    <Button variant="ghost"
                       className="document-title"
                       onClick={async () => {
                         try {
@@ -380,11 +383,11 @@ export function Resources({
                           month: "short",
                         })}
                       </span>
-                    </button>
+                    </Button>
                     <span className="status green">
                       <i /> Searchable
                     </span>
-                    <button
+                    <Button variant="ghost"
                       className="icon-button"
                       aria-label={`Delete ${d.name}`}
                       onClick={() =>
@@ -392,7 +395,7 @@ export function Resources({
                       }
                     >
                       <Trash2 size={16} />
-                    </button>
+                    </Button>
                   </div>
                 ))}
             </div>
@@ -402,9 +405,9 @@ export function Resources({
               ) && (
                 <div className="empty">
                   <h3>No matching documents</h3>
-                  <button className="button" onClick={() => setQuery("")}>
+                  <Button variant="ghost" className="button" onClick={() => setQuery("")}>
                     Clear search
-                  </button>
+                  </Button>
                 </div>
               )}
             {!data.documents.length && (
@@ -438,7 +441,7 @@ export function Resources({
                     {editing ? (
                       <>
                         <td>
-                          <input
+                          <Input
                             aria-label={`Product name row ${i + 1}`}
                             value={p.name}
                             placeholder="Product or service name"
@@ -448,7 +451,7 @@ export function Resources({
                               setEditing(rows);
                             }}
                           />
-                          <input
+                          <Input
                             aria-label={`Description row ${i + 1}`}
                             className="description-input"
                             value={p.description}
@@ -472,7 +475,7 @@ export function Resources({
                         ).map((k) => (
                           <td key={k}>
                             {k === "status" ? (
-                              <select
+                              <NativeSelect
                                 aria-label={`Status row ${i + 1}`}
                                 value={p[k]}
                                 onChange={(e) => {
@@ -484,9 +487,9 @@ export function Resources({
                                 {["active", "draft", "archived"].map((s) => (
                                   <option key={s}>{s}</option>
                                 ))}
-                              </select>
+                              </NativeSelect>
                             ) : (
-                              <input
+                              <Input
                                 aria-label={`${k} row ${i + 1}`}
                                 type={
                                   k === "price" || k === "stock"
@@ -545,7 +548,7 @@ export function Resources({
                       </>
                     )}
                     <td>
-                      <button
+                      <Button variant="ghost"
                         className="icon-button"
                         aria-label={`Delete ${p.name || "new row"}`}
                         onClick={() => {
@@ -560,7 +563,7 @@ export function Resources({
                         }}
                       >
                         <Trash2 size={15} />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -580,12 +583,12 @@ export function Resources({
                   Add products, services, prices and availability. Your agent
                   can look them up in real time.
                 </p>
-                <button
+                <Button variant="ghost"
                   className="button"
                   onClick={() => setEditing([blank()])}
                 >
                   <Plus size={15} /> Add item
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -617,10 +620,10 @@ export function Resources({
               able to look it up. You can upload or add it again later.
             </p>
             <div className="modal-actions">
-              <button className="button" onClick={() => setRemove(null)}>
+              <Button variant="ghost" className="button" onClick={() => setRemove(null)}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 className="button danger"
                 disabled={busy}
                 onClick={async () => {
@@ -639,7 +642,7 @@ export function Resources({
                 }}
               >
                 Delete item
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>
@@ -690,16 +693,16 @@ export function Resources({
               <p className="muted">And {imported.length - 12} more rows…</p>
             )}
             <div className="modal-actions">
-              <button className="button" onClick={() => setImported(null)}>
+              <Button variant="ghost" className="button" onClick={() => setImported(null)}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 className="button primary"
                 disabled={busy}
                 onClick={() => save(imported, true)}
               >
                 {busy ? "Importing…" : `Import ${imported.length} items`}
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>

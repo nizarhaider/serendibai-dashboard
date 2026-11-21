@@ -1,3 +1,5 @@
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Search } from "lucide-react";
 
 export function RecordFilters({
@@ -19,14 +21,14 @@ export function RecordFilters({
     <div className="list-toolbar">
       <div className="search-input">
         <Search size={16} />
-        <input
+        <Input
           aria-label={placeholder}
           placeholder={placeholder}
           value={query}
           onChange={(event) => onQuery(event.target.value)}
         />
       </div>
-      <select
+      <NativeSelect
         aria-label="Filter records"
         value={status}
         onChange={(event) => onStatus(event.target.value)}
@@ -36,7 +38,7 @@ export function RecordFilters({
             {option.label}
           </option>
         ))}
-      </select>
+      </NativeSelect>
     </div>
   );
 }

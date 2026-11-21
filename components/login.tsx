@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ArrowUpRight, AudioLines, Loader2 } from "lucide-react";
 export function Login() {
@@ -50,7 +52,7 @@ export function Login() {
           <form onSubmit={submit}>
             <label>
               Email address
-              <input
+              <Input
                 name="email"
                 type="email"
                 autoComplete="username"
@@ -60,7 +62,7 @@ export function Login() {
             </label>
             <label>
               Password
-              <input
+              <Input
                 name="password"
                 type="password"
                 autoComplete="current-password"
@@ -73,11 +75,11 @@ export function Login() {
                 {error}
               </div>
             )}
-            <button className="button primary" disabled={busy}>
+            <Button variant="ghost" className="button primary" disabled={busy}>
               {busy ? <Loader2 className="spin" size={17} /> : null}
               {busy ? "Signing in…" : "Sign in"}
               <ArrowUpRight size={18} />
-            </button>
+            </Button>
           </form>
         </div>
         <a className="back-link" href="https://serendibai.lk">

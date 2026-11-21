@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -66,23 +68,23 @@ export function CaseDemo({ cases }: { cases: AgentCase[] }) {
     <p className="case-eyebrow">Demo studio</p>
     <h1>Try an outbound conversation.</h1>
     <p className="case-intro">Choose an example for a WhatsApp callback. Calls start in English and follow your language.</p>
-    <div className="case-tabs" aria-label="Choose a demo case">{cases.map((item) => <button key={item.slug} disabled={busy} aria-pressed={selected === item.slug} onClick={() => { setSelected(item.slug); setSelection(null); setError(""); }}>{item.title}</button>)}</div>
+    <div className="case-tabs" aria-label="Choose a demo case">{cases.map((item) => <Button variant="ghost" key={item.slug} disabled={busy} aria-pressed={selected === item.slug} onClick={() => { setSelected(item.slug); setSelection(null); setError(""); }}>{item.title}</Button>)}</div>
     <section className="case-card">
       <div><p className="case-eyebrow">{current?.title} agent · Fictional business</p><h2>{current?.company_name}</h2><p>{current?.description}</p><p className="case-hint">{current?.caller_hint}</p><p>Use fictional details. These agents create demo records only. Calls are recorded and transcribed; public showcase clips will be selected separately.</p></div>
       <div className="case-form">
         {!selection ? <div className="case-call-options">
-          <button type="button" className="case-primary" disabled={busy || !current?.available} onClick={() => void requestCall("+94742530708")}>{busy ? "Preparing your call…" : current?.available ? "Call +94 74 253 0708" : "Demo agents are offline"}</button>
+          <Button variant="ghost" type="button" className="case-primary" disabled={busy || !current?.available} onClick={() => void requestCall("+94742530708")}>{busy ? "Preparing your call…" : current?.available ? "Call +94 74 253 0708" : "Demo agents are offline"}</Button>
           <form onSubmit={submit}>
             <label htmlFor="case-phone">Or call another WhatsApp number</label>
-            <input id="case-phone" name="phone" type="tel" autoComplete="tel" placeholder="+94 77 123 4567" maxLength={30} required />
-            <input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="case-trap" defaultValue="" />
-            <button className="case-primary" disabled={busy || !current?.available}>Call this number</button>
+            <Input id="case-phone" name="phone" type="tel" autoComplete="tel" placeholder="+94 77 123 4567" maxLength={30} required />
+            <Input name="company" tabIndex={-1} autoComplete="off" aria-hidden="true" className="case-trap" defaultValue="" />
+            <Button variant="ghost" className="case-primary" disabled={busy || !current?.available}>Call this number</Button>
           </form>
           <p>Calls are recorded and transcribed. WhatsApp may ask you to approve the call first.</p>
         </div> : <div role="status" aria-live="polite">
           <h3>{statuses[selection.state]?.[0] || "Preparing your callback"}</h3>
           <p>{selection.error || statuses[selection.state]?.[1]}</p>
-          {!["pending", "preparing", "permission", "calling"].includes(selection.state) && <button className="case-reset" onClick={() => setSelection(null)}>Select again</button>}
+          {!["pending", "preparing", "permission", "calling"].includes(selection.state) && <Button variant="ghost" className="case-reset" onClick={() => setSelection(null)}>Select again</Button>}
         </div>}
         {error && <p role="alert">{error}</p>}
       </div>

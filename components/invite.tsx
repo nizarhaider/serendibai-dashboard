@@ -1,4 +1,6 @@
 "use client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -28,13 +30,13 @@ export function Invite({ token }: { token: string }) {
         <h2>Create your password</h2><p className="invite-card-copy">Use this password the next time you sign in to your workspace.</p>
         <form onSubmit={submit}>
           <label htmlFor="invite-password">Password</label>
-          <div className="invite-password-wrap"><input id="invite-password" name="password" type={visible ? "text" : "password"} autoComplete="new-password" minLength={12} maxLength={200} required value={password} onChange={event => setPassword(event.target.value)} placeholder="At least 12 characters" /><button type="button" aria-label={visible ? "Hide password" : "Show password"} onClick={() => setVisible(!visible)}>{visible ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
-          <label htmlFor="invite-confirm">Confirm password</label><input id="invite-confirm" name="confirm" type={visible ? "text" : "password"} autoComplete="new-password" maxLength={200} required value={confirm} onChange={event => setConfirm(event.target.value)} placeholder="Enter it again" />
+          <div className="invite-password-wrap"><Input id="invite-password" name="password" type={visible ? "text" : "password"} autoComplete="new-password" minLength={12} maxLength={200} required value={password} onChange={event => setPassword(event.target.value)} placeholder="At least 12 characters" /><Button variant="ghost" type="button" aria-label={visible ? "Hide password" : "Show password"} onClick={() => setVisible(!visible)}>{visible ? <EyeOff size={18} /> : <Eye size={18} />}</Button></div>
+          <label htmlFor="invite-confirm">Confirm password</label><Input id="invite-confirm" name="confirm" type={visible ? "text" : "password"} autoComplete="new-password" maxLength={200} required value={confirm} onChange={event => setConfirm(event.target.value)} placeholder="Enter it again" />
           <p className={`invite-requirement ${password.length >= 12 ? "met" : ""}`}><Check size={15} /> At least 12 characters</p>
           {confirm && password !== confirm && <p className="invite-inline-error">Passwords don’t match yet.</p>}
           {error && <p className="invite-error" role="alert">{error}</p>}
           {!token && <p className="invite-error" role="alert">This invitation link is incomplete. Ask your workspace administrator to send a new one.</p>}
-          <button className="button primary invite-submit" disabled={busy || token.length < 32 || password.length < 12 || password !== confirm}>{busy ? "Setting up…" : "Set password & continue"}</button>
+          <Button variant="ghost" className="button primary invite-submit" disabled={busy || token.length < 32 || password.length < 12 || password !== confirm}>{busy ? "Setting up…" : "Set password & continue"}</Button>
         </form>
         <p className="invite-expiry">Your one-time invitation link is valid for seven days.</p>
       </section>

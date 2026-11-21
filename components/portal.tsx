@@ -1,4 +1,6 @@
 "use client";
+import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 import Link from "next/link";
 import { useCallback, useState, useRef, useEffect } from "react";
 import {
@@ -84,7 +86,7 @@ export function RecordStatus({
   return (
     <label className="record-status">
       <span className="sr-only">Update status</span>
-      <select
+      <NativeSelect
         aria-label="Update status"
         value={value}
         disabled={busy}
@@ -108,7 +110,7 @@ export function RecordStatus({
             {option.replace("_", " ")}
           </option>
         ))}
-      </select>
+      </NativeSelect>
       {error && <small role="alert">{error}</small>}
     </label>
   );
@@ -150,13 +152,13 @@ export function Modal({
       >
         <header>
           <h2>{title}</h2>
-          <button
+          <Button variant="ghost"
             className="icon-button"
             aria-label="Close dialog"
             onClick={onClose}
           >
             <X size={20} />
-          </button>
+          </Button>
         </header>
         {children}
       </section>
@@ -310,7 +312,7 @@ export function Portal({
         Skip to content
       </a>
       {mobile && (
-        <button
+        <Button variant="ghost"
           className="nav-scrim"
           aria-label="Close navigation"
           onClick={() => setMobile(false)}
@@ -369,7 +371,7 @@ export function Portal({
               <strong>{data.display_name || "Workspace member"}</strong>
               <span>{data.email}</span>
             </div>
-            <button
+            <Button variant="ghost"
               aria-label="Sign out"
               onClick={async () => {
                 try {
@@ -381,27 +383,27 @@ export function Portal({
               }}
             >
               <LogOut size={17} />
-            </button>
+            </Button>
           </div>
         </div>
       </aside>
       <div className="main-shell">
         <header className="topbar">
           <div>
-            <button
+            <Button variant="ghost"
               className="icon-button mobile-menu"
               aria-label={mobile ? "Close navigation" : "Open navigation"}
               aria-expanded={mobile}
               onClick={() => setMobile(!mobile)}
             >
               {mobile ? <X size={20} /> : <Menu size={20} />}
-            </button>
+            </Button>
             <span className="muted">{data.business_name}</span>
             <span className="crumb-slash">/</span>
             <strong>{title}</strong>
           </div>
           {section !== "outbound" && (
-            <button
+            <Button variant="ghost"
               className="button refresh-button"
               disabled={busy}
               onClick={() =>
@@ -410,7 +412,7 @@ export function Portal({
             >
               <RefreshCw size={15} className={busy ? "spin" : ""} />
               {busy ? "Refreshing…" : "Refresh"}
-            </button>
+            </Button>
           )}
         </header>
         <main id="main-content">
@@ -428,20 +430,20 @@ export function Portal({
             <div className="toast success" role="status">
               <Check size={18} />
               {message}
-              <button
+              <Button variant="ghost"
                 aria-label="Dismiss notification"
                 onClick={() => setMessage("")}
               >
                 <X size={16} />
-              </button>
+              </Button>
             </div>
           )}
           {error && (
             <div className="toast error" role="alert">
               {error}
-              <button aria-label="Dismiss error" onClick={() => setError("")}>
+              <Button variant="ghost" aria-label="Dismiss error" onClick={() => setError("")}>
                 <X size={16} />
-              </button>
+              </Button>
             </div>
           )}
           {section === "dashboard" ? (
@@ -482,7 +484,7 @@ export function Portal({
                     </p>
                   </div>
                   <div className="toolbar-actions">
-                    <select
+                    <NativeSelect
                       aria-label="Filter by agent"
                       value={agent}
                       disabled={busy}
@@ -497,8 +499,8 @@ export function Portal({
                           {a.name}
                         </option>
                       ))}
-                    </select>
-                    <select
+                    </NativeSelect>
+                    <NativeSelect
                       aria-label="Date range"
                       value={days}
                       disabled={busy}
@@ -511,7 +513,7 @@ export function Portal({
                       <option value="7">Last 7 days</option>
                       <option value="30">Last 30 days</option>
                       <option value="90">Last 90 days</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
                 <div className="conversation-summary" aria-busy={busy}>

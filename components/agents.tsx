@@ -1,4 +1,7 @@
 "use client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import {
   ArrowUpRight,
@@ -115,9 +118,9 @@ export function Agents({
             {data.agents.length !== 1 ? "s" : ""}
           </strong>
         </div>
-        <button className="button primary" onClick={() => setNewOpen(true)}>
+        <Button variant="ghost" className="button primary" onClick={() => setNewOpen(true)}>
           <Plus size={17} /> New voice agent
-        </button>
+        </Button>
       </div>
       {error && (
         <div className="toast error" role="alert">
@@ -127,7 +130,7 @@ export function Agents({
       <div className="agent-workspace">
         <aside className="agent-list">
           {data.agents.map((a) => (
-            <button
+            <Button variant="ghost"
               key={a.id}
               className={`agent-list-card ${a.id === selected ? "selected" : ""}`}
               onClick={() => choose(a)}
@@ -146,7 +149,7 @@ export function Agents({
                     : a.status
                 }
               />
-            </button>
+            </Button>
           ))}
         </aside>
         {current ? (
@@ -158,7 +161,7 @@ export function Agents({
               <div>
                 {dirty && <small className="muted">Unsaved changes</small>}
                 <Status value={runtimeStatus} />
-                <button
+                <Button variant="ghost"
                   className="button primary"
                   disabled={Boolean(busy) || !dirty}
                   onClick={save}
@@ -169,7 +172,7 @@ export function Agents({
                     <Save size={16} />
                   )}{" "}
                   Save changes
-                </button>
+                </Button>
               </div>
             </div>
             <div className="editor-tabs">
@@ -182,14 +185,14 @@ export function Agents({
                 { key: "tools", label: "Actions & languages", icon: Settings2 },
                 { key: "settings", label: "Settings", icon: Code2 },
               ].map((t) => (
-                <button
+                <Button variant="ghost"
                   key={t.key}
                   className={tab === t.key ? "active" : ""}
                   onClick={() => setTab(t.key)}
                 >
                   <t.icon size={16} />
                   {t.label}
-                </button>
+                </Button>
               ))}
             </div>
             <div className="editor-content">
@@ -198,7 +201,7 @@ export function Agents({
                   <div className="field-row">
                     <label>
                       Agent name
-                      <input
+                      <Input
                         value={edit.name}
                         onChange={(e) =>
                           setEdit({ ...edit, name: e.target.value })
@@ -209,7 +212,7 @@ export function Agents({
                       Business website
                       <div className="input-with-icon">
                         <Globe size={16} />
-                        <input
+                        <Input
                           placeholder="https://yourbusiness.com"
                           value={edit.company_url}
                           onChange={(e) =>
@@ -222,7 +225,7 @@ export function Agents({
                   <div className="field-row company-name-row">
                     <label>
                       Company name
-                      <input
+                      <Input
                         value={edit.company_name}
                         onChange={(e) =>
                           setEdit({ ...edit, company_name: e.target.value })
@@ -239,7 +242,7 @@ export function Agents({
                   </div>
                   <p className="notice">Hosted demo agents use managed call scripts. This editor applies to runtimes configured to use workspace instructions.</p>
                   <div className="prompt-editor">
-                    <textarea
+                    <Textarea
                       id="system-prompt"
                       value={edit.system_prompt}
                       placeholder="You are the voice assistant for…\n\nDescribe your business, the way your agent should speak, and what it can help callers with."
@@ -268,7 +271,7 @@ export function Agents({
                           }
                         }}
                       >
-                        <input
+                        <Input
                           aria-label="AI setup request"
                           placeholder="Describe your business and include its website…"
                           value={research}
@@ -276,7 +279,7 @@ export function Agents({
                           required
                           minLength={5}
                         />
-                        <button
+                        <Button variant="ghost"
                           className="button primary"
                           disabled={Boolean(busy)}
                         >
@@ -288,7 +291,7 @@ export function Agents({
                           {busy === "research"
                             ? "Researching…"
                             : "Draft instructions"}
-                        </button>
+                        </Button>
                       </form>
                       <small>
                         Uses live website research. Review the draft before
@@ -355,7 +358,7 @@ export function Agents({
                   <div className="field-row">
                     <label>
                       Concurrent call limit
-                      <input
+                      <Input
                         type="number"
                         min="1"
                         max="20"
@@ -457,7 +460,7 @@ export function Agents({
                     </p>
                     <label>
                       Phone number ID
-                      <input
+                      <Input
                         value={edit.phone_number_id}
                         placeholder="Meta phone number ID"
                         onChange={(e) =>
@@ -486,7 +489,7 @@ export function Agents({
                       ].map((s) => (
                         <label key={s.key}>
                           {s.label}
-                          <input
+                          <Input
                             type="password"
                             autoComplete="new-password"
                             placeholder={
@@ -526,13 +529,13 @@ export function Agents({
                       app secret is required for the portal webhook.
                     </p>
                   </details>
-                  <button
+                  <Button variant="ghost"
                     className="button danger-outline"
                     disabled={Boolean(busy)}
                     onClick={() => setConfirm(true)}
                   >
                     <Archive size={15} /> Archive agent
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -544,9 +547,9 @@ export function Agents({
             <p>
               Add a name and instructions, then connect your business number.
             </p>
-            <button className="button primary" onClick={() => setNewOpen(true)}>
+            <Button variant="ghost" className="button primary" onClick={() => setNewOpen(true)}>
               <Plus size={17} /> Create voice agent
-            </button>
+            </Button>
           </section>
         )}
       </div>
@@ -592,7 +595,7 @@ export function Agents({
             </p>
             <label>
               Agent name
-              <input
+              <Input
                 autoFocus
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
@@ -603,7 +606,7 @@ export function Agents({
             </label>
             <label>
               Company name
-              <input
+              <Input
                 value={newCompanyName}
                 onChange={(e) => setNewCompanyName(e.target.value)}
                 placeholder="e.g. SLT-MOBITEL"
@@ -612,10 +615,10 @@ export function Agents({
               />
             </label>
             {error && <p className="error">{error}</p>}
-            <button className="button primary" disabled={Boolean(busy)}>
+            <Button variant="ghost" className="button primary" disabled={Boolean(busy)}>
               {busy === "new" ? "Creating…" : "Create agent"}
               <ChevronRight size={16} />
-            </button>
+            </Button>
             <small>Start the voice server with ./deploy.sh --env local.</small>
           </form>
         </Modal>
@@ -637,7 +640,7 @@ export function Agents({
                 </p>
               </div>
             </div>
-            <textarea
+            <Textarea
               className="draft-text"
               value={draft.text}
               onChange={(e) => setDraft({ ...draft, text: e.target.value })}
@@ -654,10 +657,10 @@ export function Agents({
               </div>
             )}
             <div className="modal-actions">
-              <button className="button" onClick={() => setDraft(null)}>
+              <Button variant="ghost" className="button" onClick={() => setDraft(null)}>
                 Discard draft
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 className="button primary"
                 onClick={() => {
                   setEdit({ ...edit, system_prompt: draft.text });
@@ -668,7 +671,7 @@ export function Agents({
                 }}
               >
                 <Check size={15} /> Apply to system prompt
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>
@@ -681,10 +684,10 @@ export function Agents({
               and shared workspace knowledge will be preserved.
             </p>
             <div className="modal-actions">
-              <button className="button" onClick={() => setConfirm(false)}>
+              <Button variant="ghost" className="button" onClick={() => setConfirm(false)}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button variant="ghost"
                 className="button danger"
                 disabled={Boolean(busy)}
                 onClick={async () => {
@@ -707,7 +710,7 @@ export function Agents({
                 }}
               >
                 {busy ? "Working…" : "Archive agent"}
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>
