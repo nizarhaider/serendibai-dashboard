@@ -7,7 +7,7 @@ import { ArrowRight, AudioLines, Check, LoaderCircle, MessageCircle, Smartphone 
 import type { Agent } from "@/lib/types";
 import { api } from "./portal";
 
-type LinkState = { agent_id?: string; enabled: boolean; status: string; qr?: string | null; error?: string; message_replies_enabled?: boolean; message_reply_instructions?: string };
+type LinkState = { agent_id?: string; enabled: boolean; status: string; qr?: string | null; error?: string; voice_enabled?: boolean; message_replies_enabled?: boolean; message_reply_instructions?: string };
 const steps = ["Choose assistant", "Prepare phone", "Scan QR code", "Finish setup"];
 
 export function Onboarding({ agents, businessName, standalone = false }: { agents: Agent[]; businessName?: string; standalone?: boolean }) {
@@ -16,6 +16,9 @@ export function Onboarding({ agents, businessName, standalone = false }: { agent
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [messageBusy, setMessageBusy] = useState(false);
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [voiceError, setVoiceError] = useState("");
   const [messageDirty, setMessageDirty] = useState(false);
   const [messageError, setMessageError] = useState("");
   const [replyEnabled, setReplyEnabled] = useState(false);
@@ -24,6 +27,7 @@ export function Onboarding({ agents, businessName, standalone = false }: { agent
     try {
       const next = await api("onboarding");
       setLink(next);
+      setVoiceEnabled(next.voice_enabled !== false);
       if (!messageDirty) {
         setReplyEnabled(Boolean(next.message_replies_enabled));
         setReplyInstructions(next.message_reply_instructions || "");
@@ -47,6 +51,12 @@ export function Onboarding({ agents, businessName, standalone = false }: { agent
     try { await api("message-settings", "POST", { enabled: replyEnabled, instructions: replyInstructions }); setMessageDirty(false); }
     catch (e) { setMessageError((e as Error).message); }
     finally { setMessageBusy(false); }
+  }
+  async function setVoiceAnswering(enabled: boolean) {
+    setVoiceEnabled(enabled); setVoiceBusy(true); setVoiceError("");
+    try { await api("voice-settings", "POST", { enabled }); }
+    catch (e) { setVoiceEnabled(!enabled); setVoiceError((e as Error).message); }
+    finally { setVoiceBusy(false); }
   }
   const connected = link.status === "connected";
   const pairing = Boolean(link.qr && link.enabled);
@@ -91,7 +101,13 @@ export function Onboarding({ agents, businessName, standalone = false }: { agent
           <span className="setup-success-icon"><Check size={28} /></span>
           <span className="setup-stage-label">STEP 4 · COMPLETE</span>
           <h2>Your WhatsApp is connected</h2>
-          <p>Incoming WhatsApp calls will be handled by <strong>{selectedAgent?.name || "your selected voice assistant"}</strong>. You can keep using WhatsApp Business on your phone.</p>
+          <p>{voiceEnabled ? <>Incoming WhatsApp calls will be handled by <strong>{selectedAgent?.name || "your selected voice assistant"}</strong>.</> : "AI answering is paused for incoming WhatsApp calls."} You can keep using WhatsApp Business on your phone.</p>
+          <section className="message-settings voice-settings" aria-labelledby="voice-settings-title">
+            <div className="message-settings-heading"><span className="message-settings-icon"><AudioLines size={18} /></span><div><span className="setup-stage-label">CALL ANSWERING</span><h3 id="voice-settings-title">Voice assistant</h3></div></div>
+            <p>Pause AI call answering without unlinking your WhatsApp Business device.</p>
+            <label className="message-reply-toggle"><span><strong>Answer incoming WhatsApp calls</strong><small>{voiceEnabled ? "The assistant will answer new incoming calls." : "AI answering is paused. Your linked phone stays connected."}</small></span><input type="checkbox" checked={voiceEnabled} disabled={voiceBusy} onChange={event => setVoiceAnswering(event.target.checked)} aria-label="Answer incoming WhatsApp calls" /></label>
+            {voiceError && <div className="setup-alert" role="alert">{voiceError}</div>}
+          </section>
           <section className="message-settings" aria-labelledby="message-settings-title">
             <div className="message-settings-heading"><span className="message-settings-icon"><MessageCircle size={18} /></span><div><span className="setup-stage-label">OPTIONAL PREFERENCE</span><h3 id="message-settings-title">WhatsApp message replies</h3></div></div>
             <p>Choose whether you want AI replies to incoming WhatsApp messages, and add guidance for how they should sound.</p>
