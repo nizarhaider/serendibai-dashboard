@@ -93,6 +93,54 @@ async function handler(
     if (route === "customers") {
       if (!user.is_admin) throw new ApiError("Administrator access required.", 403);
       if (method === "GET") return Response.json(await getCustomers(), { headers: { "Cache-Control": "private, no-store" } });
+      if (id && path[2] === "users" && method === "POST") {
+        uuid.parse(id);
+        const b = z.object({ contact_name: z.string().trim().min(1).max(160), email: z.email().max(250).transform(v => v.toLowerCase()) }).parse(await request.json());
+        const [workspace] = await sql`select id from customers c where c.id=${id} and not exists(select 1 from portal_users u where u.customer_id=c.id and u.is_admin)`;
+        if (!workspace) throw new ApiError("Customer workspace not found.", 404);
+        const [existing] = await sql`select id from portal_users where email=${b.email}`;
+        if (existing) throw new ApiError("That email already has an account.", 409);
+        const userId = randomUUID();
+        await sql`insert into portal_users(id,email,password_hash,customer_id,display_name) values(${userId},${b.email},${hashPassword(randomBytes(32).toString("hex"))},${id},${b.contact_name})`;
+        await audit(id, "Workspace user invited", b.email);
+        try { await sendInvitation(userId, b.email, b.contact_name); return Response.json({ invitation_sent: true }, { status: 201 }); }
+        catch (error) { console.error("Invitation delivery failed", error instanceof Error ? error.name : "Unknown"); return Response.json({ invitation_sent: false }, { status: 201 }); }
+      }
+      if (id && path[2] === "users" && path[3] && method === "DELETE") {
+        uuid.parse(id); const userId = uuid.parse(path[3]);
+        const [target] = await sql`delete from portal_users where id=${userId} and customer_id=${id} and not is_admin returning email`;
+        if (!target) throw new ApiError("Customer user not found.", 404);
+        await audit(id, "Workspace user removed", target.email);
+        return Response.json({ ok: true });
+      }
+      if (id && method === "DELETE") {
+        uuid.parse(id);
+        const [target] = await sql`select c.business_name,l.enabled,(l.customer_id is not null) as has_link from customers c left join portal_whatsapp_links l on l.customer_id=c.id where c.id=${id} and not exists(select 1 from portal_users u where u.customer_id=c.id and u.is_admin)`;
+        if (!target) throw new ApiError("Customer workspace not found.", 404);
+        if (target.has_link) {
+          if (!process.env.LINKED_SERVICE_URL || !process.env.LINKED_BRIDGE_SECRET) throw new ApiError("Disable the WhatsApp connection before deleting this workspace.", 503);
+          try {
+            const response = await fetch(`${process.env.LINKED_SERVICE_URL}/connection`, { method: "DELETE", headers: { Authorization: `Bearer ${process.env.LINKED_BRIDGE_SECRET}`, "Content-Type": "application/json" }, body: JSON.stringify({ customer: id }), signal: AbortSignal.timeout(10000) });
+            if (!response.ok) throw new Error();
+          } catch { throw new ApiError("Could not stop the WhatsApp connection. Please try again.", 503); }
+        }
+        await sql.transaction([
+          sql`delete from portal_case_requests where runtime_agent_id in(select id from portal_agents where customer_id=${id}) or case_slug in(select slug from portal_agent_cases where agent_id in(select id from portal_agents where customer_id=${id}) or runtime_agent_id in(select id from portal_agents where customer_id=${id}))`,
+          sql`delete from portal_agent_cases where agent_id in(select id from portal_agents where customer_id=${id}) or runtime_agent_id in(select id from portal_agents where customer_id=${id})`,
+          sql`delete from portal_setup_tokens where customer_id=${id}`,
+          sql`delete from portal_whatsapp_links where customer_id=${id}`,
+          sql`delete from portal_calls where customer_id=${id}`,
+          sql`delete from portal_events where customer_id=${id}`,
+          sql`delete from portal_documents where customer_id=${id}`,
+          sql`delete from portal_products where customer_id=${id}`,
+          sql`delete from portal_outbound_batches where customer_id=${id}`,
+          sql`delete from portal_users where customer_id=${id}`,
+          sql`delete from portal_agents where customer_id=${id}`,
+          sql`delete from customers where id=${id}`,
+          sql`insert into portal_events(customer_id,action,detail) values(${customer},'Customer workspace deleted',${target.business_name})`,
+        ]);
+        return Response.json({ ok: true });
+      }
       const permissions = z.object({ read_only: z.boolean(), allowed_tools: z.array(z.enum(toolNames)) });
       if (method === "POST") {
         const b = permissions.extend({

@@ -144,17 +144,35 @@ export function Customers({ initial }: { initial: Customer[] }) {
             </summary>
             <div className="customer-access">
               <h3>Users</h3>
+              <p className="muted">Each user invited here shares this workspace’s feature access.</p>
               {!customer.users.length && (
                 <p className="muted">No portal users assigned.</p>
               )}
               {customer.users.map((user) => (
-                <p key={user.email}>
+                <p key={user.id}>
                   {user.name || customer.contact_name} · {user.email}
                   {user.is_admin ? " · Administrator" : ""}
                   {user.invitation_pending ? user.invitation_sent ? " · Invitation sent" : " · Invitation pending" : ""}
                   {user.invitation_pending && !user.is_admin && <button className="button" disabled={!!busy} onClick={async () => { setBusy(customer.id); setError(""); setMessage(""); try { await api(`customers/${customer.id}/invite`, "POST"); setCustomers(await api("customers")); setMessage(`Invitation sent to ${user.email}.`); } catch (e) { setError((e as Error).message); } finally { setBusy(""); } }}>Resend invitation</button>}
+                  {!user.is_admin && <button className="button" disabled={!!busy} onClick={async () => { if (!window.confirm(`Remove ${user.email} from ${customer.business_name}?`)) return; setBusy(customer.id); setError(""); setMessage(""); try { await api(`customers/${customer.id}/users/${user.id}`, "DELETE"); setCustomers(await api("customers")); setMessage(`${user.email} removed from ${customer.business_name}.`); } catch (e) { setError((e as Error).message); } finally { setBusy(""); } }}>Remove user</button>}
                 </p>
               ))}
+              <form className="customer-create" onSubmit={async (event) => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const values = new FormData(form);
+                setBusy(customer.id); setError(""); setMessage("");
+                try {
+                  const result = await api(`customers/${customer.id}/users`, "POST", { contact_name: values.get("contact_name"), email: values.get("email") });
+                  setCustomers(await api("customers")); form.reset();
+                  setMessage(result.invitation_sent ? `Invitation sent to ${values.get("email")}.` : "User added, but the invitation could not be sent. Use Resend invitation.");
+                } catch (e) { setError((e as Error).message); }
+                finally { setBusy(""); }
+              }}>
+                <label>Contact name<input name="contact_name" required maxLength={160} /></label>
+                <label>Email to invite<input name="email" type="email" required autoComplete="off" /></label>
+                <button className="button primary" disabled={!!busy}>{busy === customer.id ? "Sending…" : "Add email and send invite"}</button>
+              </form>
               <h3>Enabled bot features</h3>
               <div className="customer-features">
                 {toolNames.map((tool) => (
@@ -199,6 +217,13 @@ export function Customers({ initial }: { initial: Customer[] }) {
               >
                 {busy === customer.id ? "Saving…" : "Save access"}
               </button>
+              <button className="button danger" disabled={!!busy} onClick={async () => {
+                if (!window.confirm(`Permanently delete ${customer.business_name}, including all users, agents, calls, and workspace data?`)) return;
+                setBusy(`delete:${customer.id}`); setError(""); setMessage("");
+                try { await api(`customers/${customer.id}`, "DELETE"); setCustomers(await api("customers")); setMessage(`${customer.business_name} workspace deleted.`); }
+                catch (e) { setError((e as Error).message); }
+                finally { setBusy(""); }
+              }}>{busy === `delete:${customer.id}` ? "Deleting…" : "Delete workspace"}</button>
             </div>
           </details>
         ))}

@@ -4,7 +4,7 @@ export type Customer = {
   contact_name: string;
   read_only: boolean;
   allowed_tools: string[];
-  users: { email: string; name: string; is_admin: boolean; invitation_pending: boolean; invitation_sent: boolean }[];
+  users: { id: string; email: string; name: string; is_admin: boolean; invitation_pending: boolean; invitation_sent: boolean }[];
   agents: number;
   calls: number;
 };
