@@ -16,6 +16,7 @@ export default async function Page({
     notFound();
   const user = await session();
   if (!user) redirect("/login");
+  if (!user.is_admin && !user.onboarding_completed && section !== "onboarding") redirect("/onboarding");
   if (!canAccessSection(user, section)) redirect("/dashboard");
   const [data, customers] = await Promise.all([
     getData(user.customer_id, user.email, 30, undefined, section),

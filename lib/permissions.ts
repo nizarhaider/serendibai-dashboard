@@ -12,5 +12,6 @@ export const resourceTools: Record<string, string> = {
 export function canAccessSection(user: Access, section: string) {
   if (section === "dashboard") return true;
   if (section === "admin") return user.is_admin;
+  if (section === "onboarding") return true;
   return !user.read_only && (!resourceTools[section] || user.allowed_tools.includes(resourceTools[section]));
 }

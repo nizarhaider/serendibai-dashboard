@@ -10,6 +10,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.1173.0",
     "@neondatabase/serverless": "^1.1.0",
     "@netlify/plugin-nextjs": "5.15.12",
     "csv-parse": "^7.0.3",

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db, audit } from "@/lib/db";
 import {
@@ -17,6 +17,7 @@ import { getData } from "@/lib/data";
 import { draftPrompt } from "@/lib/assistant";
 import { resourceTools, standardTools, toolNames } from "@/lib/permissions";
 import { getCustomers } from "@/lib/customers";
+import { sendInvitation } from "@/lib/invitations";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -98,17 +99,36 @@ async function handler(
           business_name: z.string().trim().min(1).max(160),
           contact_name: z.string().trim().min(1).max(160),
           email: z.email().max(250).transform(v => v.toLowerCase()),
-          password: z.string().min(1).max(200),
         }).parse(await request.json());
         const [existing] = await sql`select id from portal_users where email=${b.email}`;
         if (existing) throw new ApiError("That email already has an account.", 409);
-        const customerId = randomUUID();
-        await sql.transaction([
-          sql`insert into customers(id,business_name,contact_name,email,portal_read_only,portal_tools) values(${customerId},${b.business_name},${b.contact_name},${b.email},${b.read_only},${b.allowed_tools})`,
-          sql`insert into portal_users(email,password_hash,customer_id,display_name) values(${b.email},${hashPassword(b.password)},${customerId},${b.contact_name})`,
-        ]);
+        const unclaimed = await sql`select id from customers c where lower(c.business_name)=lower(${b.business_name}) and not exists(select 1 from portal_users u where u.customer_id=c.id) limit 2`;
+        if (unclaimed.length > 1) throw new ApiError("More than one workspace has that name. Choose a unique name.", 409);
+        const customerId = unclaimed[0]?.id || randomUUID(), userId = randomUUID();
+        const passwordHash = hashPassword(randomBytes(32).toString("hex"));
+        if (unclaimed.length) {
+          await sql.transaction([
+            sql`update customers set contact_name=${b.contact_name},email=${b.email},portal_read_only=${b.read_only},portal_tools=${b.allowed_tools} where id=${customerId}`,
+            sql`insert into portal_users(id,email,password_hash,customer_id,display_name) values(${userId},${b.email},${passwordHash},${customerId},${b.contact_name})`,
+          ]);
+        } else {
+          await sql.transaction([
+            sql`insert into customers(id,business_name,contact_name,email,portal_read_only,portal_tools) values(${customerId},${b.business_name},${b.contact_name},${b.email},${b.read_only},${b.allowed_tools})`,
+            sql`insert into portal_users(id,email,password_hash,customer_id,display_name) values(${userId},${b.email},${passwordHash},${customerId},${b.contact_name})`,
+            sql`insert into portal_agents(customer_id,name,company_name,phone_number_id,tools) values(${customerId},${b.business_name + " agent"},${b.business_name},'',${[...standardTools, ...b.allowed_tools]})`,
+          ]);
+        }
         await audit(customerId, "Customer created", b.business_name);
-        return Response.json({ id: customerId }, { status: 201 });
+        try { await sendInvitation(userId, b.email, b.contact_name); return Response.json({ id: customerId, invitation_sent: true }, { status: 201 }); }
+        catch (error) { console.error("Invitation delivery failed", error instanceof Error ? error.name : "Unknown"); return Response.json({ id: customerId, invitation_sent: false }, { status: 201 }); }
+      }
+      if (id && path[2] === "invite" && method === "POST") {
+        uuid.parse(id);
+        const [target] = await sql`select u.id,u.email,u.display_name from portal_users u where u.customer_id=${id} and not u.is_admin and not u.onboarding_completed limit 1`;
+        if (!target) throw new ApiError("No pending invitation for this customer.", 404);
+        try { await sendInvitation(target.id, target.email, target.display_name); }
+        catch (error) { console.error("Invitation delivery failed", error instanceof Error ? error.name : "Unknown"); throw new ApiError("Invitation could not be sent. Please try again.", 503); }
+        return Response.json({ ok: true });
       }
       if (id && method === "PUT") {
         uuid.parse(id);
@@ -124,11 +144,14 @@ async function handler(
       }
       throw new ApiError("Not found.", 404);
     }
-    if (user.read_only && !["data", "logout"].includes(route || ""))
+    if (!user.is_admin && !user.onboarding_completed && !["onboarding", "logout"].includes(route || ""))
+      throw new ApiError("Complete WhatsApp onboarding before opening the workspace.", 403);
+    if (user.read_only && !["data", "logout", "onboarding"].includes(route || ""))
       throw new ApiError("This account can only view calls and transcripts.", 403);
     if (route === "onboarding") {
       if (method === "GET") {
         const [link] = await sql`select agent_id,enabled,status,case when qr_expires_at>now() then qr else null end as qr,error from portal_whatsapp_links where customer_id=${customer}`;
+        if (link?.status === "connected") await sql`update portal_users set onboarding_completed=true where customer_id=${customer} and not is_admin`;
         return Response.json(link || { enabled: false, status: "offline" }, { headers: { "Cache-Control": "private, no-store" } });
       }
       if (method === "POST") {

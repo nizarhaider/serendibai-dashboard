@@ -62,10 +62,7 @@ export function Customers({ initial }: { initial: Customer[] }) {
           <div className="panel-heading">
             <div>
               <h2>New customer</h2>
-              <p>
-                Starts with access to calls and transcripts. You can enable
-                editing later.
-              </p>
+              <p>The customer receives a password setup link, then connects WhatsApp before entering the workspace.</p>
             </div>
           </div>
           <form
@@ -77,15 +74,18 @@ export function Customers({ initial }: { initial: Customer[] }) {
               setError("");
               setMessage("");
               try {
-                await api("customers", "POST", {
-                  ...Object.fromEntries(new FormData(form)),
-                  read_only: true,
-                  allowed_tools: [],
+                const formData = new FormData(form);
+                const result = await api("customers", "POST", {
+                  business_name: formData.get("business_name"),
+                  contact_name: formData.get("contact_name"),
+                  email: formData.get("email"),
+                  read_only: !formData.has("can_edit"),
+                  allowed_tools: toolNames.filter((tool) => formData.has(tool)),
                 });
                 setCustomers(await api("customers"));
                 form.reset();
                 setCreating(false);
-                setMessage("Customer account created.");
+                setMessage(result.invitation_sent ? "Customer created. The setup invitation has been emailed." : "Customer created, but the invitation email could not be sent. Use Resend invitation below.");
               } catch (e) {
                 setError((e as Error).message);
               } finally {
@@ -105,16 +105,7 @@ export function Customers({ initial }: { initial: Customer[] }) {
               Email
               <input name="email" type="email" required autoComplete="off" />
             </label>
-            <label>
-              Password
-              <input
-                name="password"
-                type="password"
-                required
-                autoComplete="new-password"
-                maxLength={200}
-              />
-            </label>
+            <fieldset><legend>Workspace access</legend>{toolNames.map(tool => <label key={tool}><input type="checkbox" name={tool} defaultChecked /> {toolLabels[tool]}</label>)}<label><input type="checkbox" name="can_edit" defaultChecked /> Allow customer to edit agent settings</label></fieldset>
             <button className="button primary" disabled={!!busy}>
               {busy === "create" ? "Creating…" : "Create account"}
             </button>
@@ -160,6 +151,8 @@ export function Customers({ initial }: { initial: Customer[] }) {
                 <p key={user.email}>
                   {user.name || customer.contact_name} · {user.email}
                   {user.is_admin ? " · Administrator" : ""}
+                  {user.invitation_pending ? user.invitation_sent ? " · Invitation sent" : " · Invitation pending" : ""}
+                  {user.invitation_pending && !user.is_admin && <button className="button" disabled={!!busy} onClick={async () => { setBusy(customer.id); setError(""); setMessage(""); try { await api(`customers/${customer.id}/invite`, "POST"); setCustomers(await api("customers")); setMessage(`Invitation sent to ${user.email}.`); } catch (e) { setError((e as Error).message); } finally { setBusy(""); } }}>Resend invitation</button>}
                 </p>
               ))}
               <h3>Enabled bot features</h3>

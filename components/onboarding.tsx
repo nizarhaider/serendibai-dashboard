@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Agent } from "@/lib/types";
 import { api } from "./portal";
 
@@ -35,7 +36,7 @@ export function Onboarding({ agents }: { agents: Agent[] }) {
     </select></label>
     <p>Status: <strong>{link.status.replaceAll("_", " ")}</strong></p>
     {link.qr && link.enabled && <div><p>In WhatsApp Business, open Linked devices, tap Link a device, and scan this code.</p><Image unoptimized src={`data:image/png;base64,${link.qr}`} alt="WhatsApp device pairing QR code" width={256} height={256} /></div>}
-    {link.error && <p role="alert">{link.error}</p>}{error && <p role="alert">{error}</p>}
+    {link.error && <p role="alert">{link.error}</p>}{error && <p role="alert">{error}</p>}{link.status === "connected" && <p>WhatsApp is connected. <Link className="button primary" href="/dashboard">Continue to workspace</Link></p>}
     <button className="button primary" disabled={busy || !agent} onClick={() => update(!link.enabled)}>{link.enabled ? "Turn off AI answering" : "Connect and turn on AI answering"}</button>
   </section>;
 }
