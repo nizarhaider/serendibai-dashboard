@@ -4,6 +4,7 @@ import { getData } from "@/lib/data";
 import { Portal } from "@/components/portal";
 import { canAccessSection } from "@/lib/permissions";
 import { getCustomers } from "@/lib/customers";
+import { Onboarding } from "@/components/onboarding";
 
 export const dynamic = "force-dynamic";
 export default async function Page({
@@ -22,6 +23,7 @@ export default async function Page({
     getData(user.customer_id, user.email, 30, undefined, section),
     section === "admin" ? getCustomers() : Promise.resolve([]),
   ]);
+  if (!user.is_admin && !user.onboarding_completed) return <Onboarding agents={data.agents} businessName={data.business_name} standalone />;
   return (
     <Portal
       key={section}
