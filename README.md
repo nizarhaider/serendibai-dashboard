@@ -44,4 +44,6 @@ the same `DEMO_SIGNING_SECRET` on Netlify and the voice runtime.
 
 Netlify site `serendibai-portal` builds `pnpm build` from this repository's main branch using the Next.js plugin. Configure secrets in Netlify environment variables. Deploy with `netlify deploy --build --prod --site 3be51ad4-a368-4b12-bf2b-1907eb225079`. The marketing site is a separate project.
 
-Customer self-registration, billing, invitation and linked-device onboarding flows are not enabled. Administrators manage customer access.
+Customer self-registration, billing and invitation flows are not enabled. Administrators manage customer access.
+
+The `/onboarding` page connects a WhatsApp account as an experimental linked device. A customer selects an agent and scans the temporary QR code with WhatsApp Business. Disabling AI answering disconnects the service while keeping the paired session for later. The linked-device service runs separately from the production voice runtime and uses the `LINKED_SERVICE_URL` and `LINKED_BRIDGE_SECRET` environment variables. This connection is unofficial and can stop working if WhatsApp changes its protocol.

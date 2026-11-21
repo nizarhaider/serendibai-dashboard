@@ -28,6 +28,7 @@ import { Appointments } from "./appointments";
 import { Orders } from "./orders";
 import { Tickets } from "./tickets";
 import { Outbound } from "./outbound";
+import { Onboarding } from "./onboarding";
 
 export async function api(path: string, method = "GET", body?: unknown) {
   const response = await fetch(`/api/portal/${path}`, {
@@ -163,6 +164,13 @@ export function Modal({
   );
 }
 const pages = [
+  {
+    href: "onboarding",
+    label: "Onboarding",
+    icon: AudioLines,
+    group: "Setup",
+    description: "Connect your WhatsApp Business account to your voice agent.",
+  },
   {
     href: "dashboard",
     label: "Overview",
@@ -525,6 +533,8 @@ export function Portal({
                 <CallHistory key={`${days}-${agent}`} data={data} />
               </section>
             </>
+          ) : section === "onboarding" ? (
+            <Onboarding agents={data.agents} />
           ) : section === "admin" ? (
             <Customers initial={initialCustomers} />
           ) : section === "agents" ? (

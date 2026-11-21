@@ -126,6 +126,28 @@ async function handler(
     }
     if (user.read_only && !["data", "logout"].includes(route || ""))
       throw new ApiError("This account can only view calls and transcripts.", 403);
+    if (route === "onboarding") {
+      if (method === "GET") {
+        const [link] = await sql`select agent_id,enabled,status,case when qr_expires_at>now() then qr else null end as qr,error from portal_whatsapp_links where customer_id=${customer}`;
+        return Response.json(link || { enabled: false, status: "offline" }, { headers: { "Cache-Control": "private, no-store" } });
+      }
+      if (method === "POST") {
+        const b = z.object({ agent_id: uuid, enabled: z.boolean() }).parse(await request.json());
+        const [agent] = await sql`select id from portal_agents where id=${b.agent_id} and customer_id=${customer} and status<>'archived'`;
+        if (!agent) throw new ApiError("Choose an agent in your workspace.", 404);
+        if (!process.env.LINKED_SERVICE_URL || !process.env.LINKED_BRIDGE_SECRET) throw new ApiError("WhatsApp connection service is unavailable.", 503);
+        await sql`insert into portal_whatsapp_links(customer_id,agent_id,enabled,status) values(${customer},${b.agent_id},${b.enabled},${b.enabled ? "connecting" : "offline"}) on conflict(customer_id) do update set agent_id=excluded.agent_id,enabled=excluded.enabled,status=case when portal_whatsapp_links.enabled and excluded.enabled then portal_whatsapp_links.status else excluded.status end,qr=case when portal_whatsapp_links.enabled and excluded.enabled then portal_whatsapp_links.qr else null end,qr_expires_at=case when portal_whatsapp_links.enabled and excluded.enabled then portal_whatsapp_links.qr_expires_at else null end,error='',updated_at=now()`;
+        try {
+          const response = await fetch(`${process.env.LINKED_SERVICE_URL}/connection`, { method: "POST", headers: { Authorization: `Bearer ${process.env.LINKED_BRIDGE_SECRET}`, "Content-Type": "application/json" }, body: JSON.stringify({ customer, enabled: b.enabled }), signal: AbortSignal.timeout(10000) });
+          if (!response.ok) throw new Error("Connection service unavailable");
+        } catch {
+          await sql`update portal_whatsapp_links set enabled=false,status='error',error='Connection service unavailable',qr=null,qr_expires_at=null where customer_id=${customer}`;
+          throw new ApiError("WhatsApp connection service is unavailable. Please try again.", 503);
+        }
+        return Response.json({ ok: true });
+      }
+      throw new ApiError("Not found.", 404);
+    }
     if (resourceTools[route || ""] && !user.allowed_tools.includes(resourceTools[route || ""]))
       throw new ApiError("This feature is disabled for your workspace.", 403);
     if (route === "logout" && method === "POST") {
@@ -149,7 +171,7 @@ async function handler(
           user.email,
           days,
           filter ? uuid.parse(filter) : undefined,
-          z.enum(["dashboard", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin"]).parse(url.searchParams.get("section") || "dashboard"),
+          z.enum(["dashboard", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin", "onboarding"]).parse(url.searchParams.get("section") || "dashboard"),
         ),
         { headers: { "Cache-Control": "private, no-store" } },
       );
