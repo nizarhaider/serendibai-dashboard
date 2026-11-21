@@ -6,9 +6,9 @@ Customer workspace at https://portal.serendibai.lk. Next.js on Netlify, Neon Pos
 
 Install with `pnpm install`. Configure `DATABASE_URL`, `GEMINI_API_KEY`, `INTERNAL_API_KEY` (encryption secret) and `PORTAL_URL` in `.env.local`. Existing WhatsApp integration variables are optional defaults for the migrated agent. Never expose these as `NEXT_PUBLIC_*` variables.
 
-Run `node --env-file=.env.local scripts/migrate.mjs`, then `pnpm dev`. The transactional migration maintains portal tables in the existing shared database. It does not seed accounts, reset passwords, rewrite agent voices or delete legacy tables.
+Run `node --env-file=.env.local scripts/migrate.mjs`, then `pnpm dev`. The transactional migration maintains portal tables in the shared Neon database. It does not seed accounts, reset passwords or rewrite agent voices.
 
-The former `calls`, `agent_profiles`, `client_catalog`, and `knowledge_documents` tables were removed after their records were copied to portal tables.
+The production portal and company voice service use the `serendib_v2` Neon project. The portal and runtime `DATABASE_URL` settings must refer to this project. The company voice service has its own runtime environment and must remain running during portal changes. Portal users must be created separately; schema migration does not create login credentials.
 
 ## Data and capabilities
 
@@ -44,4 +44,4 @@ the same `DEMO_SIGNING_SECRET` on Netlify and the voice runtime.
 
 Netlify site `serendibai-portal` builds `pnpm build` from this repository's main branch using the Next.js plugin. Configure secrets in Netlify environment variables. Deploy with `netlify deploy --build --prod --site 3be51ad4-a368-4b12-bf2b-1907eb225079`. The marketing site is a separate project.
 
-Customer self-registration, billing and invitation flows are not enabled. Existing administrators manage customer access.
+Customer self-registration, billing, invitation and linked-device onboarding flows are not enabled. Administrators manage customer access.
