@@ -112,7 +112,7 @@ export function Onboarding({ agents, businessName, standalone = false }: { agent
             <div className="message-settings-heading"><span className="message-settings-icon"><MessageCircle size={18} /></span><div><span className="setup-stage-label">OPTIONAL PREFERENCE</span><h3 id="message-settings-title">WhatsApp message replies</h3></div></div>
             <p>Choose whether you want AI replies to incoming WhatsApp messages, and add guidance for how they should sound.</p>
             <label className="message-reply-toggle"><span><strong>Allow AI to reply to messages</strong><small>This is a saved preference. Automated message replies are not active yet.</small></span><input type="checkbox" checked={replyEnabled} onChange={event => { setReplyEnabled(event.target.checked); setMessageDirty(true); }} aria-label="Allow AI to reply to messages" /></label>
-            <label className="message-instructions-label" htmlFor="message-reply-instructions">Reply guidance <span>Optional</span></label>
+            <label className="message-instructions-label" htmlFor="message-reply-instructions">Message guidance <span>Optional</span></label>
             <textarea id="message-reply-instructions" value={replyInstructions} onChange={event => { setReplyInstructions(event.target.value); setMessageDirty(true); }} maxLength={2000} placeholder="For example: Keep replies brief, friendly, and focused on our services." />
             {messageError && <div className="setup-alert" role="alert">{messageError}</div>}
             <button className="button secondary message-save" disabled={messageBusy} onClick={saveMessageSettings}>{messageBusy ? "Saving…" : "Save message preferences"}</button>
