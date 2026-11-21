@@ -2386,3 +2386,6 @@ td small, .catalogue-banner p, .upload-zone p, .panel-heading p { font-size: 12p
 .setup-back { display: flex; justify-content: flex-end; margin-top: 24px; }
 button[data-slot="select-trigger"] { border: 1px solid var(--input); background: var(--background); }
 button[data-slot="button"][data-variant="outline"] { border: 1px solid var(--border); background: var(--background); }
+.connections .connection { display: block; }
+button[data-slot="switch"][data-state="unchecked"] { background: #9aa8a1; }
+button[data-slot="switch"][data-state="checked"] { background: #347052; }
