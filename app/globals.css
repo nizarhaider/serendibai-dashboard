@@ -2384,3 +2384,5 @@ td small, .catalogue-banner p, .upload-zone p, .panel-heading p { font-size: 12p
   }
 }.setup-content-grid, .onboarding-inline .setup-content-grid { grid-template-columns: minmax(0, 1fr); }
 .setup-back { display: flex; justify-content: flex-end; margin-top: 24px; }
+button[data-slot="select-trigger"] { border: 1px solid var(--input); background: var(--background); }
+button[data-slot="button"][data-variant="outline"] { border: 1px solid var(--border); background: var(--background); }
