@@ -43,7 +43,7 @@ export function PortalShell({ account, children }: { account: Account; children:
       const items = nav.filter(item => item.group === group);
       return items.length > 0 && <Box component="nav" aria-label={group} key={group} sx={{ mb: 2 }}>
         <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 600, px: 1.5, mb: 1 }}>{group}</Typography>
-        <List disablePadding>{items.map(item => <ListItemButton key={item.href} component={Link} href={`/${item.href}`} selected={section === item.href} aria-current={section === item.href ? "page" : undefined} onClick={() => setMobile(false)} sx={{ borderRadius: 2, mb: .5, py: 1 }}>
+        <List disablePadding>{items.map(item => <ListItemButton key={item.href} component={Link} href={`/${item.href}`} selected={section === item.href} aria-current={section === item.href ? "page" : undefined} onClick={() => setMobile(false)} sx={{ borderRadius: 2, mb: .5, py: 1, color: "var(--portal-muted)", transition: "color 140ms ease, background-color 140ms ease", "&:hover": { backgroundColor: "var(--portal-accent-hover)", color: "var(--portal-text)" }, "&.Mui-selected, &.Mui-selected:hover": { backgroundColor: "var(--portal-accent-soft)", color: "var(--portal-accent)" }, "&.Mui-selected .MuiListItemIcon-root": { color: "inherit" }, "&:focus-visible": { outline: "2px solid var(--portal-accent)", outlineOffset: "2px" } }}>
           <ListItemIcon sx={{ minWidth: 38 }}><item.icon size={19} /></ListItemIcon><ListItemText primary={item.href === "dashboard" && account.read_only ? "Call history" : item.label} slotProps={{ primary: { sx: { fontSize: 14, fontWeight: 500 } } }} />
         </ListItemButton>)}</List>
       </Box>;

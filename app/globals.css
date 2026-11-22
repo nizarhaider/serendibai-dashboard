@@ -2614,3 +2614,125 @@ html.dark .case-card, html.dark .case-form { background: #1f2937; color: #e5e7eb
 html.dark .case-card .case-hint { background: #273449; color: #dbeafe; }
 html.dark .case-intro, html.dark .case-card p, html.dark .case-note { color: #cbd5e1; }
 html.dark .case-tabs button:not([aria-pressed="true"]) { background: #1f2937; color: #e5e7eb; border-color: #4b5563; }
+
+:root {
+  --portal-canvas: #f3f7f7;
+  --portal-surface: #fff;
+  --portal-raised: #f8fbfb;
+  --portal-text: #152326;
+  --portal-muted: #5e7277;
+  --portal-border: #dde7e8;
+  --portal-accent: #167d74;
+  --portal-accent-soft: #e4f4f1;
+  --portal-accent-hover: #d5ece8;
+  --portal-on-accent: #fff;
+  --portal-success: #16764e;
+  --portal-success-soft: #e4f4eb;
+  --portal-warning: #916214;
+  --portal-warning-soft: #f8f0de;
+  --bg: var(--portal-canvas);
+  --ink: var(--portal-text);
+  --legacy-muted: var(--portal-muted);
+  --primary: var(--portal-accent);
+  --primary-hover: #0f6a62;
+  --border: var(--portal-border);
+  --wash: var(--portal-raised);
+  --ring: var(--portal-accent);
+}
+
+html.dark {
+  --portal-canvas: #0d171a;
+  --portal-surface: #142226;
+  --portal-raised: #1a2a2e;
+  --portal-text: #e8f0f1;
+  --portal-muted: #a7b8bb;
+  --portal-border: #2b4247;
+  --portal-accent: #54d1c2;
+  --portal-accent-soft: #1a3837;
+  --portal-accent-hover: #234442;
+  --portal-on-accent: #092221;
+  --portal-success: #70d2a6;
+  --portal-success-soft: #173a2b;
+  --portal-warning: #f2c66d;
+  --portal-warning-soft: #3b301d;
+  --dark-bg: var(--portal-canvas);
+  --dark-surface: var(--portal-surface);
+  --dark-raised: var(--portal-raised);
+  --dark-border: var(--portal-border);
+  --dark-text: var(--portal-text);
+  --dark-muted: var(--portal-muted);
+  color-scheme: dark;
+}
+
+body, .berry-shell { background: var(--portal-canvas); color: var(--portal-text); }
+.berry-appbar.MuiAppBar-root, .MuiDrawer-paper, .berry-main .MuiPaper-root { background: var(--portal-surface); color: var(--portal-text); }
+.berry-main { background: var(--portal-canvas); color: var(--portal-text); }
+.berry-workspace { background: var(--portal-raised); }
+.berry-workspace strong, .berry-user strong, .berry-main h1, .berry-main h2, .berry-main h3, .berry-main strong { color: var(--portal-text); }
+.berry-toolbar .MuiTypography-root, .berry-workspace small, .berry-user small, .berry-main p, .berry-main label, .berry-main small, .berry-main .muted { color: var(--portal-muted); }
+.berry-user, .berry-main table, .berry-main th, .berry-main td, .berry-main .admin-row, .berry-main .editor-tabs, .berry-main .connection { border-color: var(--portal-border); }
+.berry-main .panel, .berry-main .attention-card, .berry-main .setup-stepper, .berry-main .setup-action-card, .berry-main .setup-aside, .berry-main .outbound-card, .berry-main .case-card, .berry-main .catalogue-banner, .berry-main .upload-zone, .berry-main .prompt-assistant, .berry-main .notice, .berry-main .settings-disclosure, .berry-main .tool-option, .berry-main .customer-card, .berry-main .message-settings { background: var(--portal-surface); color: var(--portal-text); border-color: var(--portal-border); }
+.berry-main .tag, .berry-main .booking-date, .berry-main .priority, .berry-main th, .berry-main .list-toolbar, .berry-main .conversations-panel .list-toolbar { background: var(--portal-raised); color: var(--portal-muted); border-color: var(--portal-border); }
+.berry-main a:not(.button), .berry-auth-back, .invite-card a, .client-calls summary, .case-note a, .setup-cancel { color: var(--portal-accent); }
+.berry-main .tag { background: var(--portal-raised); color: var(--portal-text); }
+.berry-main .button:not(.primary), .berry-main a.button, .berry-main .icon-button, .berry-main .MuiButton-outlined, button[data-slot="button"][data-variant="outline"] { background: var(--portal-raised); color: var(--portal-text); border-color: var(--portal-border); }
+.berry-main .button.primary, .berry-main .MuiButton-containedPrimary, .case-primary.MuiButton-root, .case-tabs button[aria-pressed="true"] { background: var(--portal-accent); color: var(--portal-on-accent); border-color: var(--portal-accent); }
+.berry-main .MuiButton-root.Mui-disabled, .berry-main .button:disabled { background: var(--portal-raised); color: var(--portal-muted); border-color: var(--portal-border); opacity: 1; }
+.MuiDrawer-paper .MuiListItemButton-root { color: var(--portal-muted) !important; border-radius: 9px; transition: background-color 140ms ease, color 140ms ease; }
+.MuiDrawer-paper .MuiListItemButton-root:not(.Mui-selected):hover { background: var(--portal-accent-hover) !important; color: var(--portal-text) !important; }
+html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected, html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected:hover, .MuiDrawer-paper .MuiListItemButton-root.Mui-selected, .MuiDrawer-paper .MuiListItemButton-root.Mui-selected:hover { background: var(--portal-accent-soft) !important; color: var(--portal-accent) !important; }
+.MuiDrawer-paper .MuiListItemButton-root .MuiListItemIcon-root, .MuiDrawer-paper .MuiListItemButton-root .MuiListItemText-primary { color: inherit !important; }
+html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root, html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected .MuiListItemText-primary { color: var(--portal-accent) !important; }
+.MuiDrawer-paper .MuiListItemButton-root:focus-visible { outline: 2px solid var(--portal-accent); outline-offset: 2px; }
+.berry-main .button:not(.primary):hover, .berry-main a.button:hover, .berry-main .icon-button:hover, .berry-main .MuiButton-outlined:hover, .berry-main .MuiButton-text:hover, .berry-main .MuiButton-root:not(.MuiButton-containedPrimary):hover, button[data-slot="button"][data-variant="outline"]:hover { background: var(--portal-accent-hover) !important; color: var(--portal-text) !important; border-color: var(--portal-accent) !important; }
+.berry-main .button.primary:hover, .berry-main .MuiButton-containedPrimary:hover, .case-primary.MuiButton-root:hover, .case-tabs button[aria-pressed="true"]:hover { background: var(--portal-accent) !important; color: var(--portal-on-accent) !important; filter: brightness(.92); }
+.berry-main a:not(.button):hover, .berry-auth-back:hover, .invite-card a:hover, .client-calls summary:hover, .case-note a:hover, .setup-cancel:hover { color: var(--portal-accent); text-decoration: underline; }
+.berry-main .attention-card, .berry-main .attention-card:nth-child(1), .berry-main .attention-card:nth-child(2) { background: var(--portal-surface); color: var(--portal-text); border-color: var(--portal-border); }
+.berry-main .attention-card > span, .berry-main .attention-card > strong, .berry-main .attention-card > svg, .berry-main .attention-card:nth-child(-n+2) > span, .berry-main .attention-card:nth-child(-n+2) > strong, .berry-main .attention-card:nth-child(-n+2) > svg { color: var(--portal-accent); opacity: 1; }
+.berry-main .attention-card:hover, .berry-main .attention-card:nth-child(1):hover, .berry-main .attention-card:nth-child(2):hover, .berry-main tr:hover { background: var(--portal-accent-hover) !important; color: var(--portal-text); border-color: var(--portal-accent); }
+.berry-main .agent-list-card.selected.MuiButton-root, .berry-main .agent-list-card.selected.MuiButton-root:hover { background: var(--portal-accent-soft) !important; color: var(--portal-accent) !important; border-color: var(--portal-accent); }
+.berry-main .agent-list-card.selected .MuiButton-label, .berry-main .agent-list-card.selected strong { color: var(--portal-accent); }
+.berry-main .editor-tabs .MuiTab-root.Mui-selected, .setup-stepper .MuiStepIcon-root.Mui-active, .setup-stepper .MuiStepIcon-root.Mui-completed { color: var(--portal-accent); }
+.berry-main .MuiTabs-indicator { background: var(--portal-accent); }
+.berry-main .status.green, .berry-main .toast.success, .MuiChip-outlinedSuccess, .MuiChip-colorSuccess { background: var(--portal-success-soft); color: var(--portal-success); border-color: var(--portal-success); }
+.berry-main .status.neutral { background: var(--portal-raised); color: var(--portal-muted); border-color: var(--portal-border); }
+.berry-main .status.amber, .berry-main .priority.high, .MuiChip-outlinedWarning, .MuiChip-colorWarning { background: var(--portal-warning-soft); color: var(--portal-warning); border-color: var(--portal-warning); }
+.berry-main .status.red, .berry-main .priority.urgent, .berry-main .toast.error, .berry-main .outbound-notice.error, .berry-main .setup-alert, .MuiChip-outlinedError, .MuiChip-colorError { background: #f8e7e6; color: #9b3835; border-color: #c76b66; }
+.berry-main .upload-icon, .berry-main .doc-icon, .berry-main .outbound-file-icon, .berry-main .outbound-symbol, .setup-brand-icon, .workspace-avatar, .user-avatar { background: var(--portal-accent-soft); color: var(--portal-accent); border-color: var(--portal-accent-soft); }
+.berry-main .outbound-upload:hover, .berry-main .outbound-upload.dragging, .berry-main .outbound-upload:focus-within { background: var(--portal-accent-hover); border-color: var(--portal-accent); }
+.berry-auth, .setup-page { background: var(--portal-canvas); color: var(--portal-text); }
+.berry-auth-title.MuiTypography-root, .setup-brand, .setup-page h1, .setup-page h2, .setup-page h3, .case-eyebrow { color: var(--portal-accent); }
+.berry-auth .MuiOutlinedInput-root, .berry-auth input, .invite-card input, .invite-card .MuiOutlinedInput-root, .setup-select-label select, .message-settings textarea { background: var(--portal-surface); color: var(--portal-text); border-color: var(--portal-border); }
+.berry-auth input::placeholder, .invite-card input::placeholder, .setup-page p, .setup-page label, .setup-page small { color: var(--portal-muted); }
+.invite-card, .setup-stepper, .setup-action-card, .setup-aside, .message-settings, .case-card, .case-form { background: var(--portal-surface); color: var(--portal-text); border-color: var(--portal-border); }
+.case-card .case-hint { background: var(--portal-accent-soft); color: var(--portal-text); }
+.case-tabs button:not([aria-pressed="true"]), .case-reset.MuiButton-root { background: var(--portal-raised); color: var(--portal-text); border-color: var(--portal-border); }
+
+.admin-overview { display: grid; gap: 20px; }
+.admin-totals { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.admin-stat.MuiPaper-root { display: grid; align-content: start; gap: 8px; min-height: 124px; padding: 18px 20px; background: var(--portal-surface); border: 1px solid var(--portal-border); border-radius: 12px; }
+.admin-stat span { color: var(--portal-muted); font-size: 13px; }
+.admin-stat strong { color: var(--portal-text); font-size: 28px; line-height: 1.1; }
+.admin-stat small { color: var(--portal-muted); font-size: 11px; }
+.admin-sections { display: grid; grid-template-columns: minmax(0,2fr) minmax(300px,1fr); align-items: stretch; gap: 18px; }
+.admin-section.MuiPaper-root { min-width: 0; padding: 22px 24px; background: var(--portal-surface); border-color: var(--portal-border); border-radius: 12px; }
+.admin-section .panel-heading { padding: 0 0 18px; }
+.admin-section .panel-heading h2 { color: var(--portal-text); font-size: 17px; font-weight: 650; }
+.admin-section .panel-heading p { color: var(--portal-muted); font-size: 12px; margin-top: 5px; }
+.admin-section .button { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 14px; border: 1px solid var(--portal-border); border-radius: 8px; color: var(--portal-text); background: var(--portal-raised); font-size: 12px; font-weight: 500; white-space: nowrap; transition: background-color 140ms ease,border-color 140ms ease; }
+.admin-section .button:hover { background: var(--portal-accent-hover); border-color: var(--portal-accent); color: var(--portal-text); }
+.admin-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 16px; min-height: 78px; padding: 14px 0; border-top: 1px solid var(--portal-border); }
+.admin-row-main { min-width: 0; display: grid; gap: 6px; }
+.admin-row-main strong { overflow-wrap: anywhere; color: var(--portal-text); font-size: 13px; font-weight: 600; }
+.admin-row-main small { color: var(--portal-muted); font-size: 11px; line-height: 1.5; }
+.admin-row-main small span { color: var(--portal-accent); padding: 0 2px; }
+.admin-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.admin-row-action { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px; border: 1px solid var(--portal-border); border-radius: 8px; color: var(--portal-accent); background: var(--portal-raised); font-size: 11px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color 140ms ease,border-color 140ms ease,color 140ms ease; }
+.admin-row-action:hover { background: var(--portal-accent-hover); border-color: var(--portal-accent); color: var(--portal-text); }
+.admin-count { display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 8px; border-radius: 14px; color: var(--portal-accent); background: var(--portal-accent-soft); font-size: 12px; font-weight: 600; }
+.admin-empty { padding: 18px 0; color: var(--portal-muted); font-size: 13px; }
+html.dark .berry-main .status.red, html.dark .berry-main .priority.urgent, html.dark .berry-main .toast.error, html.dark .berry-main .outbound-notice.error, html.dark .berry-main .setup-alert, html.dark .MuiChip-outlinedError, html.dark .MuiChip-colorError { background: #3c2427; color: #fca5a5; border-color: #75434a; }
+
+@media (max-width: 1100px) { .admin-sections { grid-template-columns: minmax(0,1.6fr) minmax(280px,1fr); } .admin-row { grid-template-columns: minmax(0,1fr); gap: 10px; } .admin-row-actions { justify-content: flex-start; } }
+@media (max-width: 899px) { .admin-sections { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 700px) { .admin-totals { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .admin-stat.MuiPaper-root { min-height: 112px; padding: 14px; } .admin-section.MuiPaper-root { padding: 18px 16px; } .admin-section .panel-heading { align-items: flex-start; } .admin-row-actions { width: 100%; } .admin-row-action { flex: 1 1 auto; justify-content: center; } }

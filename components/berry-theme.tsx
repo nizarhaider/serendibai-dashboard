@@ -4,20 +4,19 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 const theme = createTheme({
   palette: {
-    primary: { light: "#e3f2fd", main: "#2196f3", dark: "#1e88e5" },
-    secondary: { light: "#ede7f6", main: "#673ab7", dark: "#5e35b1" },
-    text: { primary: "#364152", secondary: "#697586" },
-    divider: "#e3e8ef",
-    background: { default: "#eef2f6", paper: "#fff" },
+    primary: { light: "#e4f4f1", main: "#167d74", dark: "#0f6a62" },
+    secondary: { light: "#e4f4f1", main: "#167d74", dark: "#0f6a62" },
+    text: { primary: "#152326", secondary: "#5e7277" },
+    divider: "#dde7e8",
+    background: { default: "#f3f7f7", paper: "#fff" },
   },
   typography: { fontFamily: "var(--font-sans), sans-serif", button: { textTransform: "none", fontWeight: 500 } },
   shape: { borderRadius: 8 },
   components: {
-    MuiListItemButton: { styleOverrides: { root: { "&.Mui-selected, &.Mui-selected:hover": { color: "#5e35b1", backgroundColor: "#ede7f6" }, "&.Mui-selected .MuiListItemIcon-root": { color: "#5e35b1" }, "&:hover": { backgroundColor: "#ede7f6", color: "#5e35b1" } } } },
     MuiOutlinedInput: { styleOverrides: { root: { borderRadius: 8 }, input: { fontWeight: 500 } } },
-    MuiTableCell: { styleOverrides: { head: { color: "#121926", fontWeight: 500 }, root: { borderColor: "#e3e8ef" } } },
+    MuiTableCell: { styleOverrides: { head: { color: "#152326", fontWeight: 500 }, root: { borderColor: "#dde7e8" } } },
     MuiButton: { defaultProps: { disableElevation: true }, styleOverrides: { root: { borderRadius: 8 } } },
-    MuiCard: { styleOverrides: { root: { borderRadius: 12, boxShadow: "none", border: "1px solid #e3e8ef" } } },
+    MuiCard: { styleOverrides: { root: { borderRadius: 12, boxShadow: "none", border: "1px solid #dde7e8" } } },
   },
 });
 
