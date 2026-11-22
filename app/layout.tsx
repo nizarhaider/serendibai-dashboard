@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { BerryTheme } from "@/components/berry-theme";
 import "./globals.css";
 
-const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-sans" });
 export const metadata: Metadata = {
   title: "SerendibAI · Customer Portal",
   description:
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={roboto.variable}>
+    <html lang="en">
       <body><AppRouterCacheProvider options={{ enableCssLayer: true }}><BerryTheme>{children}</BerryTheme></AppRouterCacheProvider></body>
     </html>
   );

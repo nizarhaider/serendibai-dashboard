@@ -45,6 +45,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 :root {
+  --font-sans: "Roboto";
   --legacy-muted: #5c6f6c;
   --ink: #0e1c1b;
   --muted: oklch(0.97 0 0);
