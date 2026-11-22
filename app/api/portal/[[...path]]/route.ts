@@ -15,7 +15,7 @@ import {
 } from "@/lib/auth";
 import { getData } from "@/lib/data";
 import { draftPrompt } from "@/lib/assistant";
-import { resourceTools, standardTools, toolNames } from "@/lib/permissions";
+import { canAccessSection, resourceTools, standardTools, toolNames } from "@/lib/permissions";
 import { getCustomers } from "@/lib/customers";
 import { sendInvitation } from "@/lib/invitations";
 
@@ -265,7 +265,7 @@ async function handler(
           .parse(url.searchParams.get("days") || 30),
         filter = url.searchParams.get("agent");
       const section = z.enum(["dashboard", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin", "onboarding", "connections"]).parse(url.searchParams.get("section") || "dashboard");
-      if (user.is_admin && !["dashboard", "agents", "admin"].includes(section)) throw new ApiError("Customer workspace access required.", 403);
+      if (!canAccessSection(user, section)) throw new ApiError("This page is not available for your account.", 403);
       return Response.json(
         await getData(
           customer,

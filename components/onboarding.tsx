@@ -2,6 +2,7 @@
 import { Card, Step, StepLabel, Stepper } from "@mui/material";
 
 import { useCallback, useEffect, useState } from "react";
+import useSWR from "swr";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, AudioLines, Check, LoaderCircle, Plus, Trash2 } from "lucide-react";
@@ -53,13 +54,12 @@ function Setup({ agents, businessName, standalone, onDone, initial }: { agents: 
 export function Onboarding({ agents, businessName }: { agents: Agent[]; businessName?: string; standalone?: boolean }) { return <Setup agents={agents} businessName={businessName} standalone />; }
 
 export function Connections({ agents }: { agents: Agent[] }) {
-  const [links, setLinks] = useState<Connection[]>([]);
+  const { data: links = [], error: loadError, isLoading, mutate } = useSWR<Connection[]>("connections", api, { revalidateIfStale: false, shouldRetryOnError: false });
   const [adding, setAdding] = useState(false);
   const [selected, setSelected] = useState<Connection>();
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
-  const refresh = useCallback(async () => { try { setLinks(await api("connections")); } catch (e) { setError((e as Error).message); } }, []);
-  useEffect(() => { const initial = setTimeout(refresh, 0); return () => clearTimeout(initial); }, [refresh]);
+  const refresh = useCallback(async () => { try { await mutate(); } catch (e) { setError((e as Error).message); } }, [mutate]);
   async function change(id: string, values: Partial<Connection>) {
     setBusy(id); setError("");
     try { await api(`connections/${id}`, "PATCH", values); await refresh(); }
@@ -74,5 +74,5 @@ export function Connections({ agents }: { agents: Agent[] }) {
     finally { setBusy(""); }
   }
   if (adding) return <Setup agents={agents} initial={selected} onDone={() => { setAdding(false); setSelected(undefined); void refresh(); }} />;
-  return <section className="connections"><div className="connections-header"><h2>WhatsApp numbers</h2><Button className="button primary" onClick={() => setAdding(true)}><Plus size={16} /> Add number</Button></div>{error && <div className="setup-alert" role="alert">{error}</div>}{!links.length && <p>No numbers connected.</p>}{links.map(link => <div className="connection" key={link.id}><div className="connection-heading"><div><strong>{link.phone ? `+${link.phone}` : "WhatsApp connection"}</strong><small>{link.status}</small>{link.status !== "connected" && <Button variant="ghost" className="setup-cancel" onClick={() => { setSelected(link); setAdding(true); }}>Continue setup</Button>}</div><Button variant="ghost" className="icon-button" disabled={!!busy} aria-label="Delete connection" onClick={() => remove(link)}><Trash2 size={17} /></Button></div><label className="message-reply-toggle"><span>Answer calls</span><Switch aria-label="Answer calls" checked={link.voice_enabled} disabled={!!busy} onCheckedChange={checked => change(link.id, { voice_enabled: checked })} /></label><label className="message-reply-toggle"><span>Reply to messages <small>Not active yet</small></span><Switch aria-label="Reply to messages" checked={link.message_replies_enabled} disabled={!!busy} onCheckedChange={checked => change(link.id, { message_replies_enabled: checked })} /></label></div>)}</section>;
+  return <section className="connections"><div className="connections-header"><h2>WhatsApp numbers</h2><Button className="button primary" onClick={() => setAdding(true)}><Plus size={16} /> Add number</Button></div>{(error || loadError) && <div className="setup-alert" role="alert">{error || loadError.message}</div>}{isLoading ? <p>Loading connections…</p> : !links.length && !loadError && <p>No numbers connected.</p>}{links.map(link => <div className="connection" key={link.id}><div className="connection-heading"><div><strong>{link.phone ? `+${link.phone}` : "WhatsApp connection"}</strong><small>{link.status}</small>{link.status !== "connected" && <Button variant="ghost" className="setup-cancel" onClick={() => { setSelected(link); setAdding(true); }}>Continue setup</Button>}</div><Button variant="ghost" className="icon-button" disabled={!!busy} aria-label="Delete connection" onClick={() => remove(link)}><Trash2 size={17} /></Button></div><label className="message-reply-toggle"><span>Answer calls</span><Switch aria-label="Answer calls" checked={link.voice_enabled} disabled={!!busy} onCheckedChange={checked => change(link.id, { voice_enabled: checked })} /></label><label className="message-reply-toggle"><span>Reply to messages <small>Not active yet</small></span><Switch aria-label="Reply to messages" checked={link.message_replies_enabled} disabled={!!busy} onCheckedChange={checked => change(link.id, { message_replies_enabled: checked })} /></label></div>)}</section>;
 }

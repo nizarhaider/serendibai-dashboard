@@ -2531,3 +2531,5 @@ th { background: #f8fafc; border-color: #e3e8ef; }
 .case-reset.MuiButton-root { color: #673ab7; }
 .tool-option .MuiSwitch-root { margin-left: auto; flex-shrink: 0; }
 .tool-option .MuiSwitch-input { margin: 0; width: 100%; height: 100%; }
+.workspace-message { padding: 24px; color: var(--legacy-muted); }
+.page-heading .berry-refresh { margin-left: auto; gap: 8px; }

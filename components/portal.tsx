@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import Link from "next/link";
 import { useCallback, useState, useRef } from "react";
-import { AppBar, Avatar, Box, Card, Chip, Dialog, DialogContent, DialogTitle, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from "@mui/material";
+import { Card, Chip, Dialog, DialogContent, DialogTitle, IconButton } from "@mui/material";
+import { mutate as updateCache, useSWRConfig } from "swr";
 import {
   ArrowRight,
   AudioLines,
@@ -12,8 +13,6 @@ import {
   CalendarDays,
   Check,
   LayoutDashboard,
-  LogOut,
-  Menu,
   PhoneOutgoing,
   PackageCheck,
   RefreshCw,
@@ -50,6 +49,11 @@ export async function api(path: string, method = "GET", body?: unknown) {
   }
   const result = await response.json();
   if (!response.ok) throw Error(result.error || "Request failed.");
+  if (method !== "GET" && typeof window !== "undefined") {
+    const current = window.location.pathname.slice(1);
+    void updateCache(key => typeof key === "string" && key.startsWith("data?") && !key.startsWith(`data?section=${current}&`) && key !== `data?section=${current}`, undefined, { revalidate: false });
+    if (path.startsWith("customers")) void updateCache("customers");
+  }
   return result;
 }
 export const number = (n: number | null | undefined) =>
@@ -128,7 +132,7 @@ export function Modal({
     </Dialog>
   );
 }
-const pages = [
+export const pages = [
   {
     href: "connections",
     label: "Connections",
@@ -217,21 +221,18 @@ export function Portal({
   initialCustomers?: Customer[];
   workspace?: string;
 }) {
-  const [data, setData] = useState(initial);
+  const { mutate } = useSWRConfig();
+  const [filteredData, setFilteredData] = useState<PortalData | null>(null);
+  const data = filteredData || initial;
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [mobile, setMobile] = useState(false);
   const [days, setDays] = useState(30);
   const [agent, setAgent] = useState("");
   const refreshId = useRef(0);
-  const nav = pages.filter((page) => canAccessSection(data, page.href)).map(page => data.is_admin ? { ...page, group: "Administration" } : page);
   const page = pages.find((page) => page.href === section)!;
   const title = data.is_admin && section === "dashboard" && workspace ? `${initialCustomers.find(customer => customer.id === workspace)?.business_name || "Workspace"} calls` :
     section === "dashboard" && data.read_only ? "Call history" : page.label;
-  const initials = (data.display_name || data.business_name)
-    .charAt(0)
-    .toUpperCase();
   const refresh = useCallback(
     async (nextDays = days, nextAgent = agent) => {
       const id = ++refreshId.current;
@@ -241,15 +242,29 @@ export function Portal({
         const result = await api(
           `data?section=${section}&days=${nextDays}${nextAgent ? `&agent=${nextAgent}` : ""}${data.is_admin && workspace && ["agents", "dashboard"].includes(section) ? `&workspace=${encodeURIComponent(workspace)}` : ""}`,
         );
-        if (id === refreshId.current) setData(result);
+        if (id === refreshId.current) {
+          if (nextDays === 30 && !nextAgent) {
+            setFilteredData(null);
+            void mutate(`data?section=${section}${data.is_admin && workspace && ["agents", "dashboard"].includes(section) ? `&workspace=${encodeURIComponent(workspace)}` : ""}`, result, false);
+          } else setFilteredData(result);
+        }
       } catch (e) {
         if (id === refreshId.current) setError((e as Error).message);
       } finally {
         if (id === refreshId.current) setBusy(false);
       }
     },
-    [days, agent, section, workspace, data.is_admin],
+    [days, agent, section, workspace, data.is_admin, mutate],
   );
+  async function refreshPage() {
+    if (section === "admin" || (data.is_admin && section === "dashboard" && !workspace)) {
+      setBusy(true);
+      try { await mutate("customers"); } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+    } else {
+      if (section === "connections") void mutate("connections").catch((e) => setError((e as Error).message));
+      await refresh();
+    }
+  }
   function notify(text: string) {
     setMessage(text);
     setError("");
@@ -271,30 +286,8 @@ export function Portal({
       count: data.attention.appointments,
     },
   ].filter((item) => canAccessSection(data, item.href));
-  const navigation = <Box sx={{ width: 260, height: "100%", display: "flex", flexDirection: "column", p: 2 }}>
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><Link className="berry-brand" href="/dashboard"><span className="brand-icon"><AudioLines size={22} /></span>SerendibAI</Link><IconButton aria-label="Close navigation" onClick={() => setMobile(false)} sx={{ display: { md: "none" } }}><X size={20} /></IconButton></Box>
-    <Box className="berry-workspace"><Avatar sx={{ bgcolor: "secondary.light", color: "secondary.dark", width: 38, height: 38 }}>{data.business_name.charAt(0)}</Avatar><Box><strong>{data.is_admin ? "Administration" : data.business_name}</strong><small>{data.is_admin ? "Portal oversight" : data.read_only ? "View-only workspace" : "Your workspace"}</small></Box></Box>
-    {["Daily work", "Setup", "Administration"].map(group => {
-      const items = nav.filter(item => item.group === group);
-      return items.length > 0 && <Box component="nav" aria-label={group} key={group} sx={{ mb: 2 }}>
-        <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 600, px: 1.5, mb: 1 }}>{group}</Typography>
-        <List disablePadding>{items.map(item => <ListItemButton key={item.href} component={Link} href={`/${item.href}`} selected={section === item.href} aria-current={section === item.href ? "page" : undefined} onClick={() => setMobile(false)} sx={{ borderRadius: 2, mb: .5, py: 1 }}>
-          <ListItemIcon sx={{ minWidth: 38 }}><item.icon size={19} /></ListItemIcon><ListItemText primary={item.href === "dashboard" && data.read_only ? "Call history" : item.label} slotProps={{ primary: { sx: { fontSize: 14, fontWeight: 500 } } }} />
-        </ListItemButton>)}</List>
-      </Box>;
-    })}
-    <Box className="berry-user"><Avatar sx={{ bgcolor: "primary.light", color: "primary.dark", width: 36, height: 36 }}>{initials}</Avatar><Box sx={{ minWidth: 0, flex: 1 }}><strong>{data.display_name || "Workspace member"}</strong><small>{data.email}</small></Box><IconButton aria-label="Sign out" size="small" onClick={async () => { try { await api("logout", "POST"); window.location.href = "/login"; } catch (e) { setError((e as Error).message); } }}><LogOut size={18} /></IconButton></Box>
-  </Box>;
   return (
-    <Box className="berry-shell">
-      <a href="#main-content" className="skip-link">Skip to content</a>
-      <AppBar position="fixed" color="inherit" elevation={0} className="berry-appbar">
-        <Toolbar className="berry-toolbar"><IconButton aria-label="Open navigation" onClick={() => setMobile(true)} sx={{ display: { md: "none" }, mr: 1 }}><Menu size={21} /></IconButton><Typography variant="body2" color="text.secondary">{data.is_admin ? "Administration" : data.business_name} / <strong>{title}</strong></Typography>
-        {section !== "outbound" && <Button variant="outline" className="berry-refresh" disabled={busy} onClick={() => (section === "admin" || (data.is_admin && section === "dashboard" && !workspace)) ? window.location.reload() : refresh()}><RefreshCw size={15} className={busy ? "spin" : ""} />{busy ? "Refreshing…" : "Refresh"}</Button>}</Toolbar>
-      </AppBar>
-      <Drawer variant="permanent" open sx={{ display: { xs: "none", md: "block" }, "& .MuiDrawer-paper": { width: 260, border: 0 } }}>{navigation}</Drawer>
-      <Drawer variant="temporary" open={mobile} onClose={() => setMobile(false)} sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: 260 } }}>{navigation}</Drawer>
-      <Box component="main" id="main-content" className="berry-main">
+    <>
           <div className="page-heading">
             <div>
               <h1>{title}</h1>
@@ -306,6 +299,7 @@ export function Portal({
                   : page.description}
               </p>
             </div>
+            {section !== "outbound" && <Button variant="outline" className="berry-refresh" disabled={busy} onClick={() => void refreshPage()}><RefreshCw size={15} className={busy ? "spin" : ""} />{busy ? "Refreshing…" : "Refresh"}</Button>}
           </div>
           {message && (
             <div className="toast success" role="status">
@@ -409,7 +403,7 @@ export function Portal({
           ) : section === "connections" ? (
             <Connections agents={data.agents} />
           ) : section === "admin" ? (
-            <Customers initial={initialCustomers} />
+            <Customers key={JSON.stringify(initialCustomers)} initial={initialCustomers} />
           ) : section === "agents" ? (
             <Agents data={data} refresh={refresh} notify={notify} customers={initialCustomers} workspace={workspace} />
           ) : section === "outbound" ? (
@@ -428,7 +422,6 @@ export function Portal({
               notify={notify}
             />
           )}
-      </Box>
-    </Box>
+    </>
   );
 }

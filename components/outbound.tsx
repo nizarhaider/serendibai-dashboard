@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { mutate } from "swr";
 import { ArrowDownToLine, ArrowRight, FileSpreadsheet, Loader2, Phone, Plus, RefreshCw, Upload, X } from "lucide-react";
 import { parse } from "csv-parse/browser/esm/sync";
 
@@ -24,6 +25,7 @@ async function request(path = "", init?: RequestInit) {
   if (response.status === 401) throw Error("Your session has expired. Sign in again to continue.");
   const result = await response.json();
   if (!response.ok) throw Error(result.error || "Something went wrong. Please try again.");
+  if (init?.method === "POST") void mutate(key => typeof key === "string" && key.startsWith("data?section=dashboard"), undefined, { revalidate: false });
   return result;
 }
 

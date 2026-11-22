@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
   AudioLines,
@@ -57,6 +58,7 @@ export function Agents({
   customers: Customer[];
   workspace: string;
 }) {
+  const router = useRouter();
   const [selected, setSelected] = useState(data.agents[0]?.id || ""),
     [edit, setEdit] = useState<Editable>(data.agents[0] || defaultAgent()),
     [tab, setTab] = useState("instructions"),
@@ -118,7 +120,7 @@ export function Agents({
       : current?.status || "draft";
   return (
     <>
-      <label>Workspace <NativeSelect value={workspace} onChange={(event) => { window.location.href = `/agents${event.target.value ? `?workspace=${event.target.value}` : ""}`; }}><option value="" disabled>Select a customer workspace</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}</NativeSelect></label>
+      <label>Workspace <NativeSelect value={workspace} onChange={(event) => { router.push(`/agents${event.target.value ? `?workspace=${event.target.value}` : ""}`); }}><option value="" disabled>Select a customer workspace</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}</NativeSelect></label>
       <div className="agents-toolbar">
         <div className="agent-count">
           <strong>
