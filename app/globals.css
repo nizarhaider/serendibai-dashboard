@@ -2533,3 +2533,21 @@ th { background: #f8fafc; border-color: #e3e8ef; }
 .tool-option .MuiSwitch-input { margin: 0; width: 100%; height: 100%; }
 .workspace-message { padding: 24px; color: var(--legacy-muted); }
 .page-heading .berry-refresh { margin-left: auto; gap: 8px; }
+
+html.dark { color-scheme: dark; --ink: #e5e7eb; --legacy-muted: #a1a1aa; --primary: #90caf9; --border: #374151; --bg: #111827; --wash: #1f2937; --ring: #90caf9; --muted-foreground: #a1a1aa; background: #111827; }
+html.dark body, html.dark .berry-shell { background: #111827; color: #e5e7eb; }
+html.dark .berry-appbar.MuiAppBar-root, html.dark .MuiDrawer-paper, html.dark .berry-shell .MuiPaper-root { background: #1f2937; color: #e5e7eb; }
+html.dark .berry-main { background: #111827; color: #e5e7eb; }
+html.dark .berry-brand, html.dark .berry-main .page-heading h1, html.dark .agent-editor-heading h2, html.dark .setup-heading h1, html.dark .setup-action-card h2, html.dark .admin-row, html.dark .berry-workspace strong, html.dark .berry-user strong { color: #f3f4f6; }
+html.dark .berry-toolbar .MuiTypography-root, html.dark .berry-toolbar .MuiTypography-root strong, html.dark .berry-workspace small, html.dark .berry-user small, html.dark .berry-user button, html.dark .berry-main p, html.dark .berry-main label, html.dark .berry-main small { color: #a1a1aa; }
+html.dark .berry-workspace, html.dark .berry-main .panel, html.dark .berry-main .attention-card:not(:nth-child(-n+2)), html.dark .berry-main .setup-stepper, html.dark .berry-main .setup-action-card, html.dark .berry-main .setup-aside, html.dark .berry-main .outbound-card, html.dark .berry-main .case-card { background: #1f2937; border-color: #374151; color: #e5e7eb; }
+html.dark .berry-main .attention-card:nth-child(-n+2) { color: #fff; }
+html.dark .berry-main .MuiOutlinedInput-root, html.dark .berry-main input, html.dark .berry-main textarea, html.dark .berry-main select, html.dark .berry-main .MuiNativeSelect-select, html.dark .berry-main .outbound-upload, html.dark .berry-main .case-form { background: #111827; color: #e5e7eb; border-color: #4b5563; }
+html.dark .berry-main input::placeholder, html.dark .berry-main textarea::placeholder { color: #9ca3af; }
+html.dark .berry-main table, html.dark .berry-main th, html.dark .berry-main td, html.dark .berry-main .admin-row, html.dark .berry-user { border-color: #374151; }
+html.dark .berry-main th { background: #1f2937; color: #e5e7eb; }
+html.dark .berry-main tr:hover, html.dark .berry-main .button:not(.primary):hover, html.dark .berry-main .agent-list-card.selected.MuiButton-root { background: #273449; }
+html.dark .berry-main .button:not(.primary), html.dark .berry-main .icon-button, html.dark .berry-main .MuiButton-outlined { color: #d1d5db; border-color: #4b5563; }
+html.dark .berry-main .editor-tabs, html.dark .berry-main .connection { border-color: #374151; }
+html.dark .berry-main .editor-tabs .MuiTab-root { color: #a1a1aa; }
+html.dark .theme-toggle { color: #fbbf24; }
