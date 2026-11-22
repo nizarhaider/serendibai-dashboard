@@ -1,4 +1,7 @@
 "use client";
+import Checkbox from "@mui/material/Checkbox";
+import { Card, Switch, Tab, Tabs } from "@mui/material";
+import { NativeSelect } from "./ui/native-select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -115,7 +118,7 @@ export function Agents({
       : current?.status || "draft";
   return (
     <>
-      <label>Workspace <select value={workspace} onChange={(event) => { window.location.href = `/agents${event.target.value ? `?workspace=${event.target.value}` : ""}`; }}><option value="" disabled>Select a customer workspace</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}</select></label>
+      <label>Workspace <NativeSelect value={workspace} onChange={(event) => { window.location.href = `/agents${event.target.value ? `?workspace=${event.target.value}` : ""}`; }}><option value="" disabled>Select a customer workspace</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}</NativeSelect></label>
       <div className="agents-toolbar">
         <div className="agent-count">
           <strong>
@@ -158,7 +161,7 @@ export function Agents({
           ))}
         </aside>
         {current ? (
-          <section className="panel agent-editor">
+          <Card component="section" className="panel agent-editor">
             <div className="agent-editor-heading">
               <div>
                 <h2>{current.name}</h2>
@@ -180,26 +183,11 @@ export function Agents({
                 </Button>
               </div>
             </div>
-            <div className="editor-tabs">
-              {[
-                {
-                  key: "instructions",
-                  label: "Instructions",
-                  icon: MessageSquare,
-                },
-                { key: "tools", label: "Actions & languages", icon: Settings2 },
-                { key: "settings", label: "Settings", icon: Code2 },
-              ].map((t) => (
-                <Button variant="ghost"
-                  key={t.key}
-                  className={tab === t.key ? "active" : ""}
-                  onClick={() => setTab(t.key)}
-                >
-                  <t.icon size={16} />
-                  {t.label}
-                </Button>
-              ))}
-            </div>
+            <Tabs value={tab} onChange={(_, value: string) => setTab(value)} variant="scrollable" scrollButtons="auto" className="editor-tabs" aria-label="Voice agent settings">
+              <Tab value="instructions" label="Instructions" icon={<MessageSquare size={16} />} iconPosition="start" />
+              <Tab value="tools" label="Actions & languages" icon={<Settings2 size={16} />} iconPosition="start" />
+              <Tab value="settings" label="Settings" icon={<Code2 size={16} />} iconPosition="start" />
+            </Tabs>
             <div className="editor-content">
               {tab === "instructions" ? (
                 <>
@@ -344,9 +332,8 @@ export function Agents({
                             <strong>{t.title}</strong>
                             <small>{t.text}</small>
                           </span>
-                          <input
-                            type="checkbox"
-                            role="switch"
+                          <Switch
+                            slotProps={{ input: { "aria-label": t.title } }}
                             checked={edit.tools.includes(t.name)}
                             onChange={(e) =>
                               setEdit({
@@ -384,8 +371,7 @@ export function Agents({
                   <div className="language-options">
                     {["English", "Sinhala", "Tamil"].map((l) => (
                       <label key={l}>
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={edit.languages.includes(l)}
                           onChange={(e) =>
                             setEdit({
@@ -544,9 +530,9 @@ export function Agents({
                 </>
               )}
             </div>
-          </section>
+          </Card>
         ) : (
-          <section className="panel empty agent-empty">
+          <Card component="section" className="panel empty agent-empty">
             <AudioLines size={40} />
             <h2>Create your first voice agent</h2>
             <p>
@@ -555,7 +541,7 @@ export function Agents({
             <Button variant="ghost" className="button primary" disabled={!workspace} onClick={() => setNewOpen(true)}>
               <Plus size={17} /> Create voice agent
             </Button>
-          </section>
+          </Card>
         )}
       </div>
       {newOpen && (

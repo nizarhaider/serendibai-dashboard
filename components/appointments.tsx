@@ -1,4 +1,5 @@
 "use client";
+import Card from "@mui/material/Card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { CalendarDays, Phone } from "lucide-react";
@@ -35,7 +36,7 @@ export function Appointments({
         (status === "past" ? -1 : 1),
     );
   return (
-    <section className="panel records-panel">
+    <Card component="section" className="panel records-panel">
       <RecordFilters
         query={query}
         onQuery={setQuery}
@@ -137,6 +138,6 @@ export function Appointments({
       <div className="list-footer">
         {appointments.length} bookings · All times in Sri Lanka
       </div>
-    </section>
+    </Card>
   );
 }

@@ -1,4 +1,6 @@
 "use client";
+import Checkbox from "@mui/material/Checkbox";
+import Card from "@mui/material/Card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -60,7 +62,7 @@ export function Customers({ initial }: { initial: Customer[] }) {
         </Button>
       </div>
       {creating && (
-        <section className="panel">
+        <Card component="section" className="panel">
           <div className="panel-heading">
             <div>
               <h2>New customer</h2>
@@ -107,12 +109,12 @@ export function Customers({ initial }: { initial: Customer[] }) {
               Email
               <Input name="email" type="email" required autoComplete="off" />
             </label>
-            <fieldset><legend>Workspace access</legend>{toolNames.map(tool => <label key={tool}><input type="checkbox" name={tool} defaultChecked /> {toolLabels[tool]}</label>)}<label><input type="checkbox" name="can_edit" defaultChecked /> Allow customer to manage workspace resources</label></fieldset>
+            <fieldset><legend>Workspace access</legend>{toolNames.map(tool => <label key={tool}><Checkbox  name={tool} defaultChecked /> {toolLabels[tool]}</label>)}<label><Checkbox  name="can_edit" defaultChecked /> Allow customer to manage workspace resources</label></fieldset>
             <Button variant="ghost" className="button primary" disabled={!!busy}>
               {busy === "create" ? "Creating…" : "Create account"}
             </Button>
           </form>
-        </section>
+        </Card>
       )}
       {error && (
         <p className="toast error" role="alert">
@@ -179,8 +181,8 @@ export function Customers({ initial }: { initial: Customer[] }) {
               <div className="customer-features">
                 {toolNames.map((tool) => (
                   <label key={tool}>
-                    <input
-                      type="checkbox"
+                    <Checkbox
+
                       checked={customer.allowed_tools.includes(tool)}
                       disabled={!!busy}
                       onChange={(event) =>
@@ -198,8 +200,8 @@ export function Customers({ initial }: { initial: Customer[] }) {
                 ))}
               </div>
               <label className="customer-editing">
-                <input
-                  type="checkbox"
+                <Checkbox
+
                   checked={!customer.read_only}
                   disabled={!!busy}
                   onChange={(event) =>

@@ -1,4 +1,6 @@
 "use client";
+import { Table, TableHead, TableBody, TableRow, TableCell } from "@mui/material";
+import Card from "@mui/material/Card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -270,7 +272,7 @@ export function Resources({
           </Button>
         </section>
       )}
-      <section className="panel resource-panel">
+      <Card component="section" className="panel resource-panel">
         <div className="panel-heading">
           <div>
             <h2>
@@ -422,25 +424,25 @@ export function Resources({
           </>
         ) : (
           <div className="table-scroll catalogue-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>NAME & DESCRIPTION</th>
-                  {editing && <th>SKU</th>}
-                  <th>TYPE</th>
-                  <th>PRICE</th>
-                  {editing && <th>CURRENCY</th>}
-                  <th>STOCK</th>
-                  <th>STATUS</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell component="th">NAME & DESCRIPTION</TableCell>
+                  {editing && <TableCell component="th">SKU</TableCell>}
+                  <TableCell component="th">TYPE</TableCell>
+                  <TableCell component="th">PRICE</TableCell>
+                  {editing && <TableCell component="th">CURRENCY</TableCell>}
+                  <TableCell component="th">STOCK</TableCell>
+                  <TableCell component="th">STATUS</TableCell>
+                  <TableCell component="th" />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {products.map((p, i) => (
-                  <tr key={p.id || `new-${i}`}>
+                  <TableRow key={p.id || `new-${i}`}>
                     {editing ? (
                       <>
-                        <td>
+                        <TableCell>
                           <Input
                             aria-label={`Product name row ${i + 1}`}
                             value={p.name}
@@ -462,7 +464,7 @@ export function Resources({
                               setEditing(rows);
                             }}
                           />
-                        </td>
+                        </TableCell>
                         {(
                           [
                             "sku",
@@ -473,7 +475,7 @@ export function Resources({
                             "status",
                           ] as const
                         ).map((k) => (
-                          <td key={k}>
+                          <TableCell key={k}>
                             {k === "status" ? (
                               <NativeSelect
                                 aria-label={`Status row ${i + 1}`}
@@ -515,39 +517,39 @@ export function Resources({
                                 }}
                               />
                             )}
-                          </td>
+                          </TableCell>
                         ))}
                       </>
                     ) : (
                       <>
-                        <td>
+                        <TableCell>
                           <strong>{p.name}</strong>
                           <small>{p.description}</small>
                           {p.sku && <small>{p.sku}</small>}
-                        </td>
+                        </TableCell>
 
-                        <td>
+                        <TableCell>
                           <span className="tag">{p.category}</span>
-                        </td>
-                        <td>
+                        </TableCell>
+                        <TableCell>
                           {p.price == null
                             ? "Not set"
                             : `${p.currency} ${number(p.price)}`}
-                        </td>
-                        <td>
+                        </TableCell>
+                        <TableCell>
                           {p.stock == null ? "Unlimited" : number(p.stock)}
-                        </td>
-                        <td>
+                        </TableCell>
+                        <TableCell>
                           <span
                             className={`status ${p.status === "active" ? "green" : "neutral"}`}
                           >
                             <i />
                             {p.status}
                           </span>
-                        </td>
+                        </TableCell>
                       </>
                     )}
-                    <td>
+                    <TableCell>
                       <Button variant="ghost"
                         className="icon-button"
                         aria-label={`Delete ${p.name || "new row"}`}
@@ -564,11 +566,11 @@ export function Resources({
                       >
                         <Trash2 size={15} />
                       </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
             {!products.length && (
               <div className="empty">
                 <FileSpreadsheet size={30} />
@@ -601,7 +603,7 @@ export function Resources({
             <Check size={13} /> Saved to your workspace
           </span>
         </div>
-      </section>
+      </Card>
       {preview && (
         <Modal title={preview.name} onClose={() => setPreview(null)} wide>
           <div className="modal-content">
@@ -666,28 +668,28 @@ export function Resources({
             </div>
             {error && <p className="error">{error}</p>}
             <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>NAME</th>
-                    <th>CATEGORY</th>
-                    <th>PRICE</th>
-                    <th>STATUS</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell component="th">NAME</TableCell>
+                    <TableCell component="th">CATEGORY</TableCell>
+                    <TableCell component="th">PRICE</TableCell>
+                    <TableCell component="th">STATUS</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {imported.slice(0, 12).map((r, i) => (
-                    <tr key={i}>
-                      <td>{r.name}</td>
-                      <td>{r.category}</td>
-                      <td>
+                    <TableRow key={i}>
+                      <TableCell>{r.name}</TableCell>
+                      <TableCell>{r.category}</TableCell>
+                      <TableCell>
                         {r.currency} {number(r.price)}
-                      </td>
-                      <td>{r.status}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell>{r.status}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
             {imported.length > 12 && (
               <p className="muted">And {imported.length - 12} more rows…</p>

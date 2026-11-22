@@ -1,4 +1,5 @@
 "use client";
+import Card from "@mui/material/Card";
 import { useState } from "react";
 import { RecordFilters } from "./record-filters";
 import { MapPin, PackageCheck, Phone } from "lucide-react";
@@ -34,7 +35,7 @@ export function Orders({
         .includes(query.toLowerCase()),
   );
   return (
-    <section className="panel records-panel">
+    <Card component="section" className="panel records-panel">
       <RecordFilters
         query={query}
         onQuery={setQuery}
@@ -92,6 +93,6 @@ export function Orders({
           </p>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

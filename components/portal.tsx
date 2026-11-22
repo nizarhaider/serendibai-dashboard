@@ -2,12 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import Link from "next/link";
-import { useCallback, useState, useRef, useEffect } from "react";
+import { useCallback, useState, useRef } from "react";
+import { AppBar, Avatar, Box, Card, Chip, Dialog, DialogContent, DialogTitle, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from "@mui/material";
 import {
   ArrowRight,
   AudioLines,
   BookOpen,
-  Box,
+  Box as BoxIcon,
   CalendarDays,
   Check,
   LayoutDashboard,
@@ -56,18 +57,9 @@ export const number = (n: number | null | undefined) =>
     ? "—"
     : new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(n);
 export function Status({ value }: { value: string }) {
-  return (
-    <span
-      className={`status ${["ready", "running", "active", "connected", "completed", "ended"].includes(value) ? "green" : ["provisioning", "starting", "restarting"].includes(value) ? "amber" : ["failed", "error", "cancelled", "offline"].includes(value) ? "red" : "neutral"}`}
-    >
-      <i />
-      {value === "draft"
-        ? "Not deployed"
-        : value === "ready"
-          ? "Online"
-          : value.charAt(0).toUpperCase() + value.slice(1).replaceAll("_", " ")}
-    </span>
-  );
+  const color = ["ready", "running", "active", "connected", "completed", "ended"].includes(value) ? "success" : ["provisioning", "starting", "restarting"].includes(value) ? "warning" : ["failed", "error", "cancelled", "offline"].includes(value) ? "error" : "default";
+  const label = value === "draft" ? "Not deployed" : value === "ready" ? "Online" : value.charAt(0).toUpperCase() + value.slice(1).replaceAll("_", " ");
+  return <Chip label={label} color={color} size="small" variant="outlined" />;
 }
 export function RecordStatus({
   id,
@@ -127,43 +119,13 @@ export function Modal({
   onClose: () => void;
   wide?: boolean;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
   return (
-    <dialog
-      ref={dialog}
-      className="modal-backdrop"
-      onClick={onClose}
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-    >
-      <section
-        className={`modal ${wide ? "wide" : ""}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") onClose();
-        }}
-      >
-        <header>
-          <h2>{title}</h2>
-          <Button variant="ghost"
-            className="icon-button"
-            aria-label="Close dialog"
-            onClick={onClose}
-          >
-            <X size={20} />
-          </Button>
-        </header>
-        {children}
-      </section>
-    </dialog>
+    <Dialog open onClose={onClose} fullWidth maxWidth={wide ? "md" : "sm"} aria-labelledby="dialog-title">
+      <DialogTitle id="dialog-title" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        {title}<IconButton aria-label="Close dialog" onClick={onClose} size="small"><X size={20} /></IconButton>
+      </DialogTitle>
+      <DialogContent dividers>{children}</DialogContent>
+    </Dialog>
   );
 }
 const pages = [
@@ -230,7 +192,7 @@ const pages = [
   {
     href: "catalogue",
     label: "Products & services",
-    icon: Box,
+    icon: BoxIcon,
     group: "Setup",
     description:
       "Keep prices, descriptions and availability ready for customer calls.",
@@ -309,116 +271,30 @@ export function Portal({
       count: data.attention.appointments,
     },
   ].filter((item) => canAccessSection(data, item.href));
+  const navigation = <Box sx={{ width: 260, height: "100%", display: "flex", flexDirection: "column", p: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><Link className="berry-brand" href="/dashboard"><span className="brand-icon"><AudioLines size={22} /></span>SerendibAI</Link><IconButton aria-label="Close navigation" onClick={() => setMobile(false)} sx={{ display: { md: "none" } }}><X size={20} /></IconButton></Box>
+    <Box className="berry-workspace"><Avatar sx={{ bgcolor: "secondary.light", color: "secondary.dark", width: 38, height: 38 }}>{data.business_name.charAt(0)}</Avatar><Box><strong>{data.is_admin ? "Administration" : data.business_name}</strong><small>{data.is_admin ? "Portal oversight" : data.read_only ? "View-only workspace" : "Your workspace"}</small></Box></Box>
+    {["Daily work", "Setup", "Administration"].map(group => {
+      const items = nav.filter(item => item.group === group);
+      return items.length > 0 && <Box component="nav" aria-label={group} key={group} sx={{ mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ color: "text.primary", fontWeight: 600, px: 1.5, mb: 1 }}>{group}</Typography>
+        <List disablePadding>{items.map(item => <ListItemButton key={item.href} component={Link} href={`/${item.href}`} selected={section === item.href} aria-current={section === item.href ? "page" : undefined} onClick={() => setMobile(false)} sx={{ borderRadius: 2, mb: .5, py: 1 }}>
+          <ListItemIcon sx={{ minWidth: 38 }}><item.icon size={19} /></ListItemIcon><ListItemText primary={item.href === "dashboard" && data.read_only ? "Call history" : item.label} slotProps={{ primary: { sx: { fontSize: 14, fontWeight: 500 } } }} />
+        </ListItemButton>)}</List>
+      </Box>;
+    })}
+    <Box className="berry-user"><Avatar sx={{ bgcolor: "primary.light", color: "primary.dark", width: 36, height: 36 }}>{initials}</Avatar><Box sx={{ minWidth: 0, flex: 1 }}><strong>{data.display_name || "Workspace member"}</strong><small>{data.email}</small></Box><IconButton aria-label="Sign out" size="small" onClick={async () => { try { await api("logout", "POST"); window.location.href = "/login"; } catch (e) { setError((e as Error).message); } }}><LogOut size={18} /></IconButton></Box>
+  </Box>;
   return (
-    <div className="app-shell">
-      <a href="#main-content" className="skip-link">
-        Skip to content
-      </a>
-      {mobile && (
-        <Button variant="ghost"
-          className="nav-scrim"
-          aria-label="Close navigation"
-          onClick={() => setMobile(false)}
-        />
-      )}
-      <aside
-        className={`sidebar ${mobile ? "mobile-open" : ""}`}
-        aria-label="Workspace navigation"
-        onKeyDown={(event) => {
-          if (event.key === "Escape") setMobile(false);
-        }}
-      >
-        <Link className="brand" href="/dashboard">
-          <span className="brand-icon">
-            <AudioLines size={22} />
-          </span>
-          SerendibAI
-        </Link>
-        <div className="workspace-switch">
-          <div className="workspace-avatar">{data.business_name.charAt(0)}</div>
-          <div>
-            <strong>{data.is_admin ? "Administration" : data.business_name}</strong>
-            <span>
-              {data.is_admin ? "Portal oversight" : data.read_only ? "View-only workspace" : "Your workspace"}
-            </span>
-          </div>
-        </div>
-        {["Daily work", "Setup", "Administration"].map((group) => {
-          const items = nav.filter((item) => item.group === group);
-          return (
-            items.length > 0 && (
-              <nav key={group} aria-label={group}>
-                <div className="nav-label">{group}</div>
-                {items.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${item.href}`}
-                    aria-current={section === item.href ? "page" : undefined}
-                    className={section === item.href ? "active" : ""}
-                    onClick={() => setMobile(false)}
-                  >
-                    <item.icon size={18} />
-                    {item.href === "dashboard" && data.read_only
-                      ? "Call history"
-                      : item.label}
-                  </Link>
-                ))}
-              </nav>
-            )
-          );
-        })}
-        <div className="sidebar-bottom">
-          <div className="user-block">
-            <div className="user-avatar">{initials}</div>
-            <div>
-              <strong>{data.display_name || "Workspace member"}</strong>
-              <span>{data.email}</span>
-            </div>
-            <Button variant="ghost"
-              aria-label="Sign out"
-              onClick={async () => {
-                try {
-                  await api("logout", "POST");
-                  window.location.href = "/login";
-                } catch (e) {
-                  setError((e as Error).message);
-                }
-              }}
-            >
-              <LogOut size={17} />
-            </Button>
-          </div>
-        </div>
-      </aside>
-      <div className="main-shell">
-        <header className="topbar">
-          <div>
-            <Button variant="ghost"
-              className="icon-button mobile-menu"
-              aria-label={mobile ? "Close navigation" : "Open navigation"}
-              aria-expanded={mobile}
-              onClick={() => setMobile(!mobile)}
-            >
-              {mobile ? <X size={20} /> : <Menu size={20} />}
-            </Button>
-            <span className="muted">{data.is_admin ? "Administration" : data.business_name}</span>
-            <span className="crumb-slash">/</span>
-            <strong>{title}</strong>
-          </div>
-          {section !== "outbound" && (
-            <Button variant="ghost"
-              className="button refresh-button"
-              disabled={busy}
-              onClick={() =>
-                (section === "admin" || (data.is_admin && section === "dashboard" && !workspace)) ? window.location.reload() : refresh()
-              }
-            >
-              <RefreshCw size={15} className={busy ? "spin" : ""} />
-              {busy ? "Refreshing…" : "Refresh"}
-            </Button>
-          )}
-        </header>
-        <main id="main-content">
+    <Box className="berry-shell">
+      <a href="#main-content" className="skip-link">Skip to content</a>
+      <AppBar position="fixed" color="inherit" elevation={0} className="berry-appbar">
+        <Toolbar className="berry-toolbar"><IconButton aria-label="Open navigation" onClick={() => setMobile(true)} sx={{ display: { md: "none" }, mr: 1 }}><Menu size={21} /></IconButton><Typography variant="body2" color="text.secondary">{data.is_admin ? "Administration" : data.business_name} / <strong>{title}</strong></Typography>
+        {section !== "outbound" && <Button variant="outline" className="berry-refresh" disabled={busy} onClick={() => (section === "admin" || (data.is_admin && section === "dashboard" && !workspace)) ? window.location.reload() : refresh()}><RefreshCw size={15} className={busy ? "spin" : ""} />{busy ? "Refreshing…" : "Refresh"}</Button>}</Toolbar>
+      </AppBar>
+      <Drawer variant="permanent" open sx={{ display: { xs: "none", md: "block" }, "& .MuiDrawer-paper": { width: 260, border: 0 } }}>{navigation}</Drawer>
+      <Drawer variant="temporary" open={mobile} onClose={() => setMobile(false)} sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: 260 } }}>{navigation}</Drawer>
+      <Box component="main" id="main-content" className="berry-main">
           <div className="page-heading">
             <div>
               <h1>{title}</h1>
@@ -470,7 +346,7 @@ export function Portal({
                   ))}
                 </div>
               )}
-              <section className="panel conversations-panel">
+              <Card component="section" className="panel conversations-panel">
                 <div className="panel-heading">
                   <div>
                     <h2>Conversations</h2>
@@ -528,7 +404,7 @@ export function Portal({
                   </span>
                 </div>
                 <CallHistory key={`${days}-${agent}`} data={data} />
-              </section>
+              </Card>
             </>
           ) : section === "connections" ? (
             <Connections agents={data.agents} />
@@ -552,8 +428,7 @@ export function Portal({
               notify={notify}
             />
           )}
-        </main>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

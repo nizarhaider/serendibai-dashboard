@@ -1,4 +1,5 @@
 "use client";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -26,66 +27,19 @@ export function Login() {
     }
   }
   return (
-    <div className="login-page">
-      <section className="login-story">
-        <a className="brand" href="https://serendibai.lk">
-          <span className="brand-icon">
-            <AudioLines size={22} />
-          </span>
-          SerendibAI
-        </a>
-        <div className="login-statement">
-          <h1>
-            Your conversations.
-            <br />
-            One workspace.
-          </h1>
-          <p>
-            Review calls, follow up with customers, and keep your agents ready.
-          </p>
-        </div>
-      </section>
-      <section className="login-form">
-        <div className="login-form-inner">
-          <h2>Sign in</h2>
-          <p>Use your business account to open your workspace.</p>
-          <form onSubmit={submit}>
-            <label>
-              Email address
-              <Input
-                name="email"
-                type="email"
-                autoComplete="username"
-                placeholder="you@company.com"
-                required
-              />
-            </label>
-            <label>
-              Password
-              <Input
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                placeholder="Enter your password"
-                required
-              />
-            </label>
-            {error && (
-              <div className="error" role="alert">
-                {error}
-              </div>
-            )}
-            <Button variant="ghost" className="button primary" disabled={busy}>
-              {busy ? <Loader2 className="spin" size={17} /> : null}
-              {busy ? "Signing in…" : "Sign in"}
-              <ArrowUpRight size={18} />
-            </Button>
-          </form>
-        </div>
-        <a className="back-link" href="https://serendibai.lk">
-          Back to serendibai.lk <ArrowUpRight size={14} />
-        </a>
-      </section>
-    </div>
+    <Box className="berry-auth">
+      <Card className="berry-auth-card"><CardContent>
+        <a className="berry-brand" href="https://serendibai.lk"><span className="brand-icon"><AudioLines size={22} /></span>SerendibAI</a>
+        <Typography component="h1" variant="h4" className="berry-auth-title">Welcome back</Typography>
+        <Typography color="text.secondary">Sign in to your workspace</Typography>
+        <form className="berry-auth-form" onSubmit={submit}>
+          <label>Email address<Input name="email" type="email" autoComplete="username" placeholder="you@company.com" required /></label>
+          <label>Password<Input name="password" type="password" autoComplete="current-password" placeholder="Enter your password" required /></label>
+          {error && <div className="error" role="alert">{error}</div>}
+          <Button variant="ghost" className="button primary" disabled={busy}>{busy ? <Loader2 className="spin" size={17} /> : null}{busy ? "Signing in…" : "Sign in"}<ArrowUpRight size={18} /></Button>
+        </form>
+        <a className="berry-auth-back" href="https://serendibai.lk">Back to serendibai.lk <ArrowUpRight size={14} /></a>
+      </CardContent></Card>
+    </Box>
   );
 }

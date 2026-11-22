@@ -1,4 +1,5 @@
 "use client";
+import Card from "@mui/material/Card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -69,7 +70,7 @@ export function CaseDemo({ cases }: { cases: AgentCase[] }) {
     <h1>Try an outbound conversation.</h1>
     <p className="case-intro">Choose an example for a WhatsApp callback. Calls start in English and follow your language.</p>
     <div className="case-tabs" aria-label="Choose a demo case">{cases.map((item) => <Button variant="ghost" key={item.slug} disabled={busy} aria-pressed={selected === item.slug} onClick={() => { setSelected(item.slug); setSelection(null); setError(""); }}>{item.title}</Button>)}</div>
-    <section className="case-card">
+    <Card component="section" className="case-card">
       <div><p className="case-eyebrow">{current?.title} agent · Fictional business</p><h2>{current?.company_name}</h2><p>{current?.description}</p><p className="case-hint">{current?.caller_hint}</p><p>Use fictional details. These agents create demo records only. Calls are recorded and transcribed; public showcase clips will be selected separately.</p></div>
       <div className="case-form">
         {!selection ? <div className="case-call-options">
@@ -88,7 +89,7 @@ export function CaseDemo({ cases }: { cases: AgentCase[] }) {
         </div>}
         {error && <p role="alert">{error}</p>}
       </div>
-    </section>
+    </Card>
     <p className="case-note">Already approved WhatsApp calls from us? We call immediately. Otherwise, accept the permission request and we call automatically. <Link href="/cases/transcripts">View case transcripts</Link></p>
   </main>;
 }
