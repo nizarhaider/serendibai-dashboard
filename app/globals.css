@@ -2534,20 +2534,83 @@ th { background: #f8fafc; border-color: #e3e8ef; }
 .workspace-message { padding: 24px; color: var(--legacy-muted); }
 .page-heading .berry-refresh { margin-left: auto; gap: 8px; }
 
-html.dark { color-scheme: dark; --ink: #e5e7eb; --legacy-muted: #a1a1aa; --primary: #90caf9; --border: #374151; --bg: #111827; --wash: #1f2937; --ring: #90caf9; --muted-foreground: #a1a1aa; background: #111827; }
-html.dark body, html.dark .berry-shell { background: #111827; color: #e5e7eb; }
-html.dark .berry-appbar.MuiAppBar-root, html.dark .MuiDrawer-paper, html.dark .berry-shell .MuiPaper-root { background: #1f2937; color: #e5e7eb; }
-html.dark .berry-main { background: #111827; color: #e5e7eb; }
-html.dark .berry-brand, html.dark .berry-main .page-heading h1, html.dark .agent-editor-heading h2, html.dark .setup-heading h1, html.dark .setup-action-card h2, html.dark .admin-row, html.dark .berry-workspace strong, html.dark .berry-user strong { color: #f3f4f6; }
-html.dark .berry-toolbar .MuiTypography-root, html.dark .berry-toolbar .MuiTypography-root strong, html.dark .berry-workspace small, html.dark .berry-user small, html.dark .berry-user button, html.dark .berry-main p, html.dark .berry-main label, html.dark .berry-main small { color: #a1a1aa; }
-html.dark .berry-workspace, html.dark .berry-main .panel, html.dark .berry-main .attention-card:not(:nth-child(-n+2)), html.dark .berry-main .setup-stepper, html.dark .berry-main .setup-action-card, html.dark .berry-main .setup-aside, html.dark .berry-main .outbound-card, html.dark .berry-main .case-card { background: #1f2937; border-color: #374151; color: #e5e7eb; }
+html.dark { color-scheme: dark; --ink: #e5e7eb; --legacy-muted: #a1a1aa; --primary: #90caf9; --border: #374151; --bg: #111827; --wash: #1f2937; --ring: #90caf9; --muted-foreground: #a1a1aa; --dark-bg: #111827; --dark-surface: #1f2937; --dark-raised: #273449; --dark-border: #374151; --dark-text: #e5e7eb; --dark-muted: #a1a1aa; background: var(--dark-bg); }
+html.dark body, html.dark .berry-shell { background: var(--dark-bg); color: var(--dark-text); }
+html.dark .berry-appbar.MuiAppBar-root, html.dark .MuiDrawer-paper, html.dark .MuiPaper-root { background: var(--dark-surface); color: var(--dark-text); }
+html.dark .berry-main { background: var(--dark-bg); color: var(--dark-text); }
+html.dark .berry-brand, html.dark .berry-main h1, html.dark .berry-main h2, html.dark .berry-main h3, html.dark .berry-workspace strong, html.dark .berry-user strong { color: #f3f4f6; }
+html.dark .berry-toolbar .MuiTypography-root, html.dark .berry-toolbar .MuiTypography-root strong, html.dark .berry-workspace small, html.dark .berry-user small, html.dark .berry-main p, html.dark .berry-main label, html.dark .berry-main small, html.dark .berry-main .muted { color: var(--dark-muted); }
+html.dark .MuiListItemButton-root.Mui-selected, html.dark .MuiListItemButton-root.Mui-selected:hover { background: #312e45 !important; color: #d8b4fe !important; }
+html.dark .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root, html.dark .MuiListItemButton-root.Mui-selected .MuiListItemText-primary { color: #d8b4fe !important; }
+html.dark .MuiListItemButton-root, html.dark .MuiListItemIcon-root, html.dark .MuiIconButton-root { color: #cbd5e1; }
+html.dark .berry-workspace, html.dark .berry-main .panel, html.dark .berry-main .attention-card:not(:nth-child(-n+2)), html.dark .berry-main .setup-stepper, html.dark .berry-main .setup-action-card, html.dark .berry-main .setup-aside, html.dark .berry-main .outbound-card, html.dark .berry-main .case-card, html.dark .berry-main .catalogue-banner, html.dark .berry-main .upload-zone, html.dark .berry-main .prompt-assistant, html.dark .berry-main .notice, html.dark .berry-main .settings-disclosure, html.dark .berry-main .tool-option, html.dark .berry-main .customer-card, html.dark .berry-main .message-settings { background: var(--dark-surface); border-color: var(--dark-border); color: var(--dark-text); }
 html.dark .berry-main .attention-card:nth-child(-n+2) { color: #fff; }
-html.dark .berry-main .MuiOutlinedInput-root, html.dark .berry-main input, html.dark .berry-main textarea, html.dark .berry-main select, html.dark .berry-main .MuiNativeSelect-select, html.dark .berry-main .outbound-upload, html.dark .berry-main .case-form { background: #111827; color: #e5e7eb; border-color: #4b5563; }
-html.dark .berry-main input::placeholder, html.dark .berry-main textarea::placeholder { color: #9ca3af; }
-html.dark .berry-main table, html.dark .berry-main th, html.dark .berry-main td, html.dark .berry-main .admin-row, html.dark .berry-user { border-color: #374151; }
-html.dark .berry-main th { background: #1f2937; color: #e5e7eb; }
-html.dark .berry-main tr:hover, html.dark .berry-main .button:not(.primary):hover, html.dark .berry-main .agent-list-card.selected.MuiButton-root { background: #273449; }
-html.dark .berry-main .button:not(.primary), html.dark .berry-main .icon-button, html.dark .berry-main .MuiButton-outlined { color: #d1d5db; border-color: #4b5563; }
-html.dark .berry-main .editor-tabs, html.dark .berry-main .connection { border-color: #374151; }
-html.dark .berry-main .editor-tabs .MuiTab-root { color: #a1a1aa; }
+html.dark .berry-main .MuiOutlinedInput-root, html.dark .berry-main input, html.dark .berry-main textarea, html.dark .berry-main select, html.dark .berry-main .MuiNativeSelect-select, html.dark .berry-main .outbound-upload, html.dark .berry-main .case-form, html.dark .berry-main .prompt-editor, html.dark .berry-main .prompt-editor textarea, html.dark .berry-main .customer-create input, html.dark .berry-main .record-status select { background: var(--dark-bg); color: var(--dark-text); border-color: #4b5563; }
+html.dark .berry-main input::placeholder, html.dark .berry-main textarea::placeholder { color: #9ca3af; opacity: 1; }
+html.dark .berry-main option, html.dark .MuiMenu-paper, html.dark .MuiPopover-paper { background: var(--dark-surface); color: var(--dark-text); }
+html.dark .berry-main table, html.dark .berry-main th, html.dark .berry-main td, html.dark .berry-main .admin-row, html.dark .berry-user, html.dark .berry-main .editor-tabs, html.dark .berry-main .connection, html.dark .berry-main .runtime-details, html.dark .berry-main .runtime-details > div { border-color: var(--dark-border); }
+html.dark .berry-main th, html.dark .berry-main .list-toolbar, html.dark .berry-main .conversations-panel .list-toolbar, html.dark .berry-main .runtime-details h3, html.dark .berry-main .client-calls .transcript, html.dark .berry-main .outbound-transcript pre, html.dark .berry-main .outbound-loading, html.dark .berry-main .outbound-preview, html.dark .berry-main .setup-step-number, html.dark .berry-main .setup-phone-steps li, html.dark .berry-main .setup-aside-icon, html.dark .berry-main .message-save { background: var(--dark-raised); color: var(--dark-text); border-color: var(--dark-border); }
+html.dark .berry-main tr:hover, html.dark .berry-main .button:not(.primary):hover, html.dark .berry-main .MuiButton-text:hover, html.dark .berry-main .agent-list-card.selected.MuiButton-root { background: var(--dark-raised) !important; }
+html.dark .berry-main .button:not(.primary), html.dark .berry-main a.button, html.dark .berry-main .icon-button, html.dark .berry-main .MuiButton-outlined { background: var(--dark-raised); color: #e5e7eb; border-color: #4b5563; }
+html.dark .berry-main .MuiButton-root.Mui-disabled, html.dark .berry-main .button:disabled { background: #293548; color: #aebbd0; border-color: #3c4c61; opacity: 1; }
+html.dark .berry-main .MuiTableCell-root { color: var(--dark-text); border-color: var(--dark-border); }
+html.dark .berry-main .MuiTableCell-head { background: var(--dark-raised); color: #d1d5db; }
+html.dark .berry-main .tool-option strong, html.dark .berry-main .runtime-details span, html.dark .berry-main .runtime-details code { color: #cbd5e1; }
+html.dark .berry-main .agent-list-card.selected.MuiButton-root { color: #d8b4fe; border-color: #8b6ab2; }
+html.dark .berry-main .editor-tabs .MuiTab-root { color: #cbd5e1; }
+html.dark .berry-main .editor-tabs .MuiTab-root.Mui-selected { color: #d8b4fe; }
+html.dark .berry-main .MuiTabs-indicator { background: #c084fc; }
+html.dark .berry-main .status.green, html.dark .berry-main .status.neutral { background: #193529; color: #a7f3d0; border-color: #28503f; }
+html.dark .berry-main .status.amber, html.dark .berry-main .priority.high { background: #3b2d19; color: #fcd34d; border-color: #68502a; }
+html.dark .berry-main .status.red, html.dark .berry-main .priority.urgent { background: #3c2427; color: #fca5a5; border-color: #683a40; }
+html.dark .berry-main .toast.success { background: #173527; color: #bbf7d0; border-color: #28503f; }
+html.dark .berry-main .toast.error, html.dark .berry-main .outbound-notice.error, html.dark .berry-main .setup-alert, html.dark .berry-main [role="alert"]:not(.workspace-message) { background: #3b2427; color: #fecaca; border-color: #6b3b42; }
+html.dark .berry-main .booking-date, html.dark .berry-main .priority { background: var(--dark-raised); color: #cbd5e1; }
+html.dark .berry-main .record-notes { color: #cbd5e1; }
 html.dark .theme-toggle { color: #fbbf24; }
+html.dark .berry-main .attention-card:nth-child(3) > span, html.dark .berry-main .attention-card:nth-child(3) > strong, html.dark .berry-main .attention-card:nth-child(3) > svg { color: #dbeafe; }
+html.dark .berry-main .attention-card:nth-child(2) { background: #1976d2; border-color: #1976d2; }
+html.dark .berry-main .attention-card:nth-child(2):hover { background: #1565c0; }
+html.dark .MuiDrawer-paper .MuiTypography-root { color: #e5e7eb; }
+html.dark .berry-main a:not(.button), html.dark .berry-main summary, html.dark .berry-main .prompt-assistant > summary, html.dark .berry-main .client-calls summary, html.dark .berry-main .record-extra summary, html.dark .berry-main .case-note a, html.dark .berry-main .setup-cancel { color: #93c5fd; }
+html.dark .berry-main .tag { background: #273449; color: #cbd5e1; border-color: #475569; }
+html.dark .berry-main .agent-list-card.selected .MuiButton-label, html.dark .berry-main .agent-list-card.selected strong { color: #e9d5ff; }
+html.dark .MuiChip-outlinedSuccess { color: #86efac; border-color: #4b7655; }
+html.dark .MuiChip-outlinedWarning { color: #fcd34d; border-color: #755b2b; }
+html.dark .MuiChip-outlinedError { color: #fca5a5; border-color: #75434a; }
+html.dark .MuiChip-outlinedDefault { color: #cbd5e1; border-color: #64748b; }
+html.dark .berry-main .upload-icon, html.dark .berry-main .doc-icon, html.dark .berry-main .outbound-file-icon, html.dark .berry-main .outbound-symbol { background: #273449; color: #c4b5fd; border-color: #475569; }
+html.dark .berry-main .outbound-upload:hover, html.dark .berry-main .outbound-upload.dragging, html.dark .berry-main .outbound-upload:focus-within { background: #1f2937; border-color: #60a5fa; }
+html.dark .skip-link { background: #1f2937; color: #f3f4f6; }
+html.dark .berry-main .button.primary, html.dark .berry-main .MuiButton-containedPrimary { background: #2563eb; border-color: #2563eb; color: #fff; }
+html.dark .berry-main .button.primary:hover, html.dark .berry-main .MuiButton-containedPrimary:hover { background: #1d4ed8; border-color: #1d4ed8; }
+html.dark .MuiChip-colorSuccess { color: #86efac !important; border-color: #4b7655 !important; }
+html.dark .MuiChip-colorWarning { color: #fcd34d !important; border-color: #755b2b !important; }
+html.dark .MuiChip-colorError { color: #fca5a5 !important; border-color: #75434a !important; }
+html.dark .berry-main strong { color: #f3f4f6; }
+html.dark .berry-auth { background: #111827; color: #e5e7eb; }
+html.dark .berry-auth-title.MuiTypography-root { color: #c4b5fd; }
+html.dark .berry-auth label, html.dark .invite-card label, html.dark .invite-card p { color: #d1d5db; }
+html.dark .berry-auth .MuiOutlinedInput-root, html.dark .berry-auth input, html.dark .invite-card input, html.dark .invite-card .MuiOutlinedInput-root { background: #111827; color: #e5e7eb; border-color: #4b5563; }
+html.dark .berry-auth input::placeholder, html.dark .invite-card input::placeholder { color: #9ca3af; }
+html.dark .invite-card { background: #1f2937; color: #e5e7eb; border-color: #374151; }
+html.dark .invite-error { background: #3b2427; color: #fecaca; border-color: #6b3b42; }
+html.dark .berry-auth-back, html.dark .invite-card a { color: #c4b5fd; }
+html.dark .setup-page { background: radial-gradient(ellipse at 50% 0%, #1f2937 0, #111827 60%, #0b1220 100%); color: #e5e7eb; }
+html.dark .setup-header { border-color: #374151; }
+html.dark .setup-brand, html.dark .setup-page h1, html.dark .setup-page h2, html.dark .setup-page h3 { color: #f3f4f6; }
+html.dark .setup-header-label, html.dark .setup-page p, html.dark .setup-page label, html.dark .setup-page small { color: #a1a1aa; }
+html.dark .setup-stepper, html.dark .setup-action-card, html.dark .setup-aside, html.dark .message-settings { background: #1f2937; color: #e5e7eb; border-color: #374151; }
+html.dark .setup-step-label, html.dark .setup-step.MuiStepLabel-label { color: #cbd5e1; }
+html.dark .setup-step-number, html.dark .setup-phone-steps li, html.dark .setup-select-label select, html.dark .message-settings textarea { background: #111827; color: #e5e7eb; border-color: #4b5563; }
+html.dark .setup-aside { background: linear-gradient(145deg, #1f2937, #182337); }
+html.dark .setup-aside-icon, html.dark .setup-success-icon { background: #273449; color: #86efac; }
+html.dark .setup-alert { background: #3b2427; color: #fecaca; border-color: #6b3b42; }
+html.dark .setup-page .MuiStepLabel-label { color: #cbd5e1; }
+html.dark .berry-main .setup-stepper .MuiStepLabel-label { color: #cbd5e1; }
+html.dark .berry-main .setup-stage-label { color: #a7f3d0; }
+html.dark .case-studio, html.dark .case-studio h1, html.dark .case-studio h2 { color: #f3f4f6; }
+html.dark .case-card, html.dark .case-form { background: #1f2937; color: #e5e7eb; border-color: #374151; }
+html.dark .case-card .case-hint { background: #273449; color: #dbeafe; }
+html.dark .case-intro, html.dark .case-card p, html.dark .case-note { color: #cbd5e1; }
+html.dark .case-tabs button:not([aria-pressed="true"]) { background: #1f2937; color: #e5e7eb; border-color: #4b5563; }
