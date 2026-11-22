@@ -31,6 +31,7 @@ import { Orders } from "./orders";
 import { Tickets } from "./tickets";
 import { Outbound } from "./outbound";
 import { Connections } from "./onboarding";
+import { AdminOverview } from "./admin-overview";
 
 export async function api(path: string, method = "GET", body?: unknown) {
   const response = await fetch(`/api/portal/${path}`, {
@@ -57,7 +58,7 @@ export const number = (n: number | null | undefined) =>
 export function Status({ value }: { value: string }) {
   return (
     <span
-      className={`status ${["ready", "running", "active", "completed", "ended"].includes(value) ? "green" : ["provisioning", "starting", "restarting"].includes(value) ? "amber" : ["failed", "error", "cancelled", "offline"].includes(value) ? "red" : "neutral"}`}
+      className={`status ${["ready", "running", "active", "connected", "completed", "ended"].includes(value) ? "green" : ["provisioning", "starting", "restarting"].includes(value) ? "amber" : ["failed", "error", "cancelled", "offline"].includes(value) ? "red" : "neutral"}`}
     >
       <i />
       {value === "draft"
@@ -247,10 +248,12 @@ export function Portal({
   initial,
   section,
   initialCustomers = [],
+  workspace = "",
 }: {
   initial: PortalData;
   section: string;
   initialCustomers?: Customer[];
+  workspace?: string;
 }) {
   const [data, setData] = useState(initial);
   const [message, setMessage] = useState("");
@@ -260,9 +263,9 @@ export function Portal({
   const [days, setDays] = useState(30);
   const [agent, setAgent] = useState("");
   const refreshId = useRef(0);
-  const nav = pages.filter((page) => canAccessSection(data, page.href));
+  const nav = pages.filter((page) => canAccessSection(data, page.href)).map(page => data.is_admin ? { ...page, group: "Administration" } : page);
   const page = pages.find((page) => page.href === section)!;
-  const title =
+  const title = data.is_admin && section === "dashboard" && workspace ? `${initialCustomers.find(customer => customer.id === workspace)?.business_name || "Workspace"} calls` :
     section === "dashboard" && data.read_only ? "Call history" : page.label;
   const initials = (data.display_name || data.business_name)
     .charAt(0)
@@ -274,7 +277,7 @@ export function Portal({
       setError("");
       try {
         const result = await api(
-          `data?section=${section}&days=${nextDays}${nextAgent ? `&agent=${nextAgent}` : ""}`,
+          `data?section=${section}&days=${nextDays}${nextAgent ? `&agent=${nextAgent}` : ""}${data.is_admin && workspace && ["agents", "dashboard"].includes(section) ? `&workspace=${encodeURIComponent(workspace)}` : ""}`,
         );
         if (id === refreshId.current) setData(result);
       } catch (e) {
@@ -283,7 +286,7 @@ export function Portal({
         if (id === refreshId.current) setBusy(false);
       }
     },
-    [days, agent, section],
+    [days, agent, section, workspace, data.is_admin],
   );
   function notify(text: string) {
     setMessage(text);
@@ -334,9 +337,9 @@ export function Portal({
         <div className="workspace-switch">
           <div className="workspace-avatar">{data.business_name.charAt(0)}</div>
           <div>
-            <strong>{data.business_name}</strong>
+            <strong>{data.is_admin ? "Administration" : data.business_name}</strong>
             <span>
-              {data.read_only ? "View-only workspace" : "Your workspace"}
+              {data.is_admin ? "Portal oversight" : data.read_only ? "View-only workspace" : "Your workspace"}
             </span>
           </div>
         </div>
@@ -398,7 +401,7 @@ export function Portal({
             >
               {mobile ? <X size={20} /> : <Menu size={20} />}
             </Button>
-            <span className="muted">{data.business_name}</span>
+            <span className="muted">{data.is_admin ? "Administration" : data.business_name}</span>
             <span className="crumb-slash">/</span>
             <strong>{title}</strong>
           </div>
@@ -407,7 +410,7 @@ export function Portal({
               className="button refresh-button"
               disabled={busy}
               onClick={() =>
-                section === "admin" ? window.location.reload() : refresh()
+                (section === "admin" || (data.is_admin && section === "dashboard" && !workspace)) ? window.location.reload() : refresh()
               }
             >
               <RefreshCw size={15} className={busy ? "spin" : ""} />
@@ -420,7 +423,9 @@ export function Portal({
             <div>
               <h1>{title}</h1>
               <p>
-                {data.read_only && section === "dashboard"
+                {data.is_admin && section === "dashboard"
+                  ? workspace ? "Review calls and transcripts for this workspace." : "Monitor customer workspaces, users, agents and WhatsApp numbers."
+                  : data.read_only && section === "dashboard"
                   ? "Find a call and read what was discussed."
                   : page.description}
               </p>
@@ -446,20 +451,10 @@ export function Portal({
               </Button>
             </div>
           )}
-          {section === "dashboard" ? (
+          {section === "dashboard" && data.is_admin && !workspace ? (
+            <AdminOverview customers={initialCustomers} />
+          ) : section === "dashboard" ? (
             <>
-              {!data.read_only && !data.agents.length && (
-                <section className="setup-start panel">
-                  <AudioLines size={26} />
-                  <div>
-                    <h2>Set up your first voice agent</h2>
-                    <p>Add its name and instructions to get started.</p>
-                  </div>
-                  <Link className="button primary" href="/agents">
-                    Set up agent <ArrowRight size={16} />
-                  </Link>
-                </section>
-              )}
               {!data.read_only && attention.length > 0 && (
                 <div className="attention-grid">
                   {attention.map((item) => (
@@ -540,7 +535,7 @@ export function Portal({
           ) : section === "admin" ? (
             <Customers initial={initialCustomers} />
           ) : section === "agents" ? (
-            <Agents data={data} refresh={refresh} notify={notify} />
+            <Agents data={data} refresh={refresh} notify={notify} customers={initialCustomers} workspace={workspace} />
           ) : section === "outbound" ? (
             <Outbound />
           ) : section === "appointments" ? (

@@ -7,16 +7,23 @@ export async function getData(
   days = 30,
   agent?: string,
   section = "dashboard",
+  workspace?: string,
 ): Promise<PortalData> {
   const sql = db();
   const [account] = await sql`select c.business_name,u.display_name,u.is_admin,c.portal_read_only as read_only,c.portal_tools as allowed_tools from customers c join portal_users u on u.customer_id=c.id where c.id=${customer} and u.email=${email}`;
   if (!account) throw new Error("Workspace not found.");
-  const editable = !account.read_only;
+  if (workspace && account.is_admin && ["agents", "dashboard"].includes(section)) {
+    const [target] = await sql`select id,portal_tools from customers c where id=${workspace} and not exists(select 1 from portal_users u where u.customer_id=c.id and u.is_admin)`;
+    if (!target) throw new Error("Workspace not found.");
+    customer = target.id;
+    account.allowed_tools = target.portal_tools;
+  }
+  const editable = account.is_admin || !account.read_only;
   const dashboard = section === "dashboard";
   const allowed = (name: string, tool: string) => editable && section === name && account.allowed_tools.includes(tool);
   const [agents, documents, products, calls, appointments, orders, tickets, totals, attention] =
     await Promise.all([
-      sql`select id,name,company_name,company_url,case when ${editable && section === "agents"} then system_prompt else '' end as system_prompt,voice,languages,tools,max_calls,case when ${editable && section === "agents"} then phone_number_id else '' end as phone_number_id,status,version,deployed_version,heartbeat_at,case when ${editable && section === "agents"} then telemetry else '{}'::jsonb end as telemetry,(${editable && section === "agents"} and (credentials is not null or phone_number_id=${process.env.PHONE_NUMBER_ID || ""})) as has_credentials,created_at from portal_agents where customer_id=${customer} and (${dashboard} or status<>'archived') order by (status='archived'),created_at desc`,
+      sql`select id,name,company_name,company_url,case when ${account.is_admin && section === "agents"} then system_prompt else '' end as system_prompt,voice,languages,tools,max_calls,case when ${account.is_admin && section === "agents"} then phone_number_id else '' end as phone_number_id,status,version,deployed_version,heartbeat_at,case when ${account.is_admin && section === "agents"} then telemetry else '{}'::jsonb end as telemetry,(${account.is_admin && section === "agents"} and (credentials is not null or phone_number_id=${process.env.PHONE_NUMBER_ID || ""})) as has_credentials,created_at from portal_agents where customer_id=${customer} and ${!account.is_admin || section !== "agents" || !!workspace} and (${dashboard} or status<>'archived') order by (status='archived'),created_at desc`,
       editable && section === "knowledge" ? sql`select id,name,bytes,type,created_at,length(content) as characters from portal_documents where customer_id=${customer} order by created_at desc` : [],
       editable && section === "catalogue" ? sql`select id,name,sku,description,category,price,currency,stock,status from portal_products where customer_id=${customer} order by updated_at desc limit 2000` : [],
       dashboard ? sql`select c.id,c.agent_id,a.name as agent_name,c.customer_phone,c.status,c.transcript,c.duration_seconds,c.tokens,c.created_at,c.source from portal_calls c left join portal_agents a on a.id=c.agent_id where c.customer_id=${customer} and (${agent || null}::uuid is null or c.agent_id=${agent || null}::uuid) and c.created_at>=((now() at time zone 'Asia/Colombo')::date-(${days}-1))::timestamp at time zone 'Asia/Colombo' order by c.created_at desc limit 100` : [],

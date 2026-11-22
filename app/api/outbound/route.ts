@@ -25,6 +25,7 @@ const normalizeMobile = (value: string) => {
 async function handler(request: Request) {
   try {
     const user = await requireUser();
+    if (user.is_admin) throw new ApiError("Customer workspace access required.", 403);
     if (user.read_only) throw new ApiError("This account can only view calls.", 403);
     const sql = db();
     const url = new URL(request.url);

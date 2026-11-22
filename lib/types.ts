@@ -7,6 +7,7 @@ export type Customer = {
   users: { id: string; email: string; name: string; is_admin: boolean; invitation_pending: boolean; invitation_sent: boolean }[];
   agents: number;
   calls: number;
+  connections: { id: string; phone: string; status: string; enabled: boolean; error: string; agent_name: string | null }[];
 };
 export type Agent = {
   id: string;

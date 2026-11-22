@@ -107,7 +107,7 @@ export function Customers({ initial }: { initial: Customer[] }) {
               Email
               <Input name="email" type="email" required autoComplete="off" />
             </label>
-            <fieldset><legend>Workspace access</legend>{toolNames.map(tool => <label key={tool}><input type="checkbox" name={tool} defaultChecked /> {toolLabels[tool]}</label>)}<label><input type="checkbox" name="can_edit" defaultChecked /> Allow customer to edit agent settings</label></fieldset>
+            <fieldset><legend>Workspace access</legend>{toolNames.map(tool => <label key={tool}><input type="checkbox" name={tool} defaultChecked /> {toolLabels[tool]}</label>)}<label><input type="checkbox" name="can_edit" defaultChecked /> Allow customer to manage workspace resources</label></fieldset>
             <Button variant="ghost" className="button primary" disabled={!!busy}>
               {busy === "create" ? "Creating…" : "Create account"}
             </Button>
@@ -141,7 +141,7 @@ export function Customers({ initial }: { initial: Customer[] }) {
                 </small>
               </span>
               <span className="tag">
-                {customer.read_only ? "View only" : "Can edit"}
+                {customer.read_only ? "View only" : "Workspace access"}
               </span>
             </summary>
             <div className="customer-access">
@@ -206,7 +206,7 @@ export function Customers({ initial }: { initial: Customer[] }) {
                     update(customer.id, { read_only: !event.target.checked })
                   }
                 />
-                Allow this customer to edit agent settings and enabled resources
+                Allow this customer to manage workspace resources
               </label>
               <p className="muted">
                 With editing off, the customer can only view calls and

@@ -193,9 +193,10 @@ async function handler(
       }
       throw new ApiError("Not found.", 404);
     }
+    if (user.is_admin && !["data", "logout", "agents", "assistant"].includes(route || "")) throw new ApiError("Customer workspace access required.", 403);
     if (!user.is_admin && !user.onboarding_completed && !["onboarding", "logout"].includes(route || ""))
       throw new ApiError("Complete WhatsApp onboarding before opening the workspace.", 403);
-    if (user.read_only && !["data", "logout", "onboarding"].includes(route || ""))
+    if (!user.is_admin && user.read_only && !["data", "logout", "onboarding"].includes(route || ""))
       throw new ApiError("This account can only view calls and transcripts.", 403);
     if (route === "onboarding" || route === "connections") {
       if (method === "GET") {
@@ -239,6 +240,7 @@ async function handler(
       if (id && method === "PATCH") {
         uuid.parse(id);
         const b = z.object({ voice_enabled: z.boolean().optional(), message_replies_enabled: z.boolean().optional(), message_reply_instructions: z.string().trim().max(2000).optional() }).parse(await request.json());
+        if (b.message_reply_instructions !== undefined && !user.is_admin) throw new ApiError("Administrator access required.", 403);
         const rows = await sql`update portal_whatsapp_links set voice_enabled=coalesce(${b.voice_enabled ?? null},voice_enabled),message_replies_enabled=coalesce(${b.message_replies_enabled ?? null},message_replies_enabled),message_reply_instructions=coalesce(${b.message_reply_instructions ?? null},message_reply_instructions),updated_at=now() where id=${id} and customer_id=${customer} returning id`;
         if (!rows.length) throw new ApiError("Connection not found.", 404);
         return Response.json({ ok: true });
@@ -262,17 +264,21 @@ async function handler(
           .max(90)
           .parse(url.searchParams.get("days") || 30),
         filter = url.searchParams.get("agent");
+      const section = z.enum(["dashboard", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin", "onboarding", "connections"]).parse(url.searchParams.get("section") || "dashboard");
+      if (user.is_admin && !["dashboard", "agents", "admin"].includes(section)) throw new ApiError("Customer workspace access required.", 403);
       return Response.json(
         await getData(
           customer,
           user.email,
           days,
           filter ? uuid.parse(filter) : undefined,
-          z.enum(["dashboard", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin", "onboarding", "connections"]).parse(url.searchParams.get("section") || "dashboard"),
+          section,
+          user.is_admin && ["agents", "dashboard"].includes(section) && url.searchParams.get("workspace") ? uuid.parse(url.searchParams.get("workspace")) : undefined,
         ),
         { headers: { "Cache-Control": "private, no-store" } },
       );
     }
+    if (["agents", "assistant"].includes(route || "") && !user.is_admin) throw new ApiError("Administrator access required.", 403);
     if (route === "assistant" && method === "POST") {
       await rateLimit(`ai:${user.id}`, 15, 3600);
       const { prompt } = z
@@ -302,20 +308,26 @@ async function handler(
       return Response.json({ ok: true });
     }
     if (route === "agents") {
+      const workspace = new URL(request.url).searchParams.get("workspace");
+      if (!workspace) throw new ApiError("Choose a customer workspace.", 400);
+      const target = uuid.parse(workspace);
+      if (target === customer) throw new ApiError("Choose a customer workspace.", 403);
+      const [account] = await sql`select portal_tools from customers c where id=${target} and not exists(select 1 from portal_users u where u.customer_id=c.id and u.is_admin)`;
+      if (!account) throw new ApiError("Workspace not found.", 404);
       if (id) uuid.parse(id);
       if (method === "POST" || method === "PUT") {
         const b = agentSchema.parse(await request.json());
-        if (b.tools.some(tool => toolNames.includes(tool as typeof toolNames[number]) && !user.allowed_tools.includes(tool as typeof toolNames[number])))
+        if (b.tools.some(tool => toolNames.includes(tool as typeof toolNames[number]) && !account.portal_tools.includes(tool as typeof toolNames[number])))
           throw new ApiError("One or more tools are disabled for your workspace.", 403);
-        const tools = [...standardTools, ...b.tools.filter((tool): tool is typeof toolNames[number] => toolNames.includes(tool as typeof toolNames[number]) && user.allowed_tools.includes(tool as typeof toolNames[number]))];
+        const tools = [...standardTools, ...b.tools.filter((tool): tool is typeof toolNames[number] => toolNames.includes(tool as typeof toolNames[number]) && account.portal_tools.includes(tool as typeof toolNames[number]))];
         const count =
-          await sql`select id from portal_agents where customer_id=${customer} and status<>'archived'`;
+          await sql`select id from portal_agents where customer_id=${target} and status<>'archived'`;
         if (!id && count.length >= 20)
           throw new ApiError("Workspace limit: 20 agents.");
         let credentials: null | string = null;
         if (b.credentials && Object.values(b.credentials).some(Boolean)) {
           const [existing] = id
-            ? await sql`select credentials from portal_agents where id=${id} and customer_id=${customer}`
+            ? await sql`select credentials from portal_agents where id=${id} and customer_id=${target}`
             : [];
           const allowed = [
             "GEMINI_API_KEY",
@@ -333,11 +345,11 @@ async function handler(
           });
         }
         const rows = id
-          ? await sql`update portal_agents set name=${b.name},company_name=${b.company_name},company_url=${b.company_url},system_prompt=${b.system_prompt},voice=${b.voice},languages=${b.languages},tools=${tools},max_calls=${b.max_calls},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${customer} returning id`
-          : await sql`insert into portal_agents(customer_id,name,company_name,company_url,system_prompt,voice,languages,tools,max_calls,phone_number_id,credentials) values(${customer},${b.name},${b.company_name},${b.company_url},${b.system_prompt},${b.voice},${b.languages},${tools},${b.max_calls},${b.phone_number_id},${credentials}) returning id`;
+          ? await sql`update portal_agents set name=${b.name},company_name=${b.company_name},company_url=${b.company_url},system_prompt=${b.system_prompt},voice=${b.voice},languages=${b.languages},tools=${tools},max_calls=${b.max_calls},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${target} returning id`
+          : await sql`insert into portal_agents(customer_id,name,company_name,company_url,system_prompt,voice,languages,tools,max_calls,phone_number_id,credentials) values(${target},${b.name},${b.company_name},${b.company_url},${b.system_prompt},${b.voice},${b.languages},${tools},${b.max_calls},${b.phone_number_id},${credentials}) returning id`;
         if (!rows.length) throw new ApiError("Agent not found.", 404);
         await audit(
-          customer,
+          target,
           id ? "Agent configuration saved" : "Agent created",
           b.name,
           rows[0].id,
@@ -346,10 +358,10 @@ async function handler(
       }
       if (id && method === "DELETE") {
         const [a] =
-          await sql`select name from portal_agents where id=${id} and customer_id=${customer}`;
+          await sql`select name from portal_agents where id=${id} and customer_id=${target}`;
         if (!a) throw new ApiError("Agent not found.", 404);
-        await sql`update portal_agents set status='archived',runtime_token_hash=null,version=version+1,updated_at=now() where id=${id} and customer_id=${customer}`;
-        await audit(customer, "Agent archived", a.name, id);
+        await sql`update portal_agents set status='archived',runtime_token_hash=null,version=version+1,updated_at=now() where id=${id} and customer_id=${target}`;
+        await audit(target, "Agent archived", a.name, id);
         return Response.json({ ok: true });
       }
     }

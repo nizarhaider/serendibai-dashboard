@@ -22,7 +22,7 @@ import {
   Archive,
   WandSparkles,
 } from "lucide-react";
-import type { Agent, PortalData } from "@/lib/types";
+import type { Agent, Customer, PortalData } from "@/lib/types";
 import { standardTools, toolNames } from "@/lib/permissions";
 import { api, Modal, number, Status } from "./portal";
 
@@ -45,10 +45,14 @@ export function Agents({
   data,
   refresh,
   notify,
+  customers,
+  workspace,
 }: {
   data: PortalData;
   refresh: () => Promise<void>;
   notify: (s: string) => void;
+  customers: Customer[];
+  workspace: string;
 }) {
   const [selected, setSelected] = useState(data.agents[0]?.id || ""),
     [edit, setEdit] = useState<Editable>(data.agents[0] || defaultAgent()),
@@ -91,7 +95,7 @@ export function Agents({
     setBusy("save");
     setError("");
     try {
-      await api(`agents/${selected}`, "PUT", { ...edit, credentials: secrets });
+      await api(`agents/${selected}?workspace=${workspace}`, "PUT", { ...edit, credentials: secrets });
       setSecrets({});
       await refresh();
       notify("Agent configuration saved.");
@@ -111,6 +115,7 @@ export function Agents({
       : current?.status || "draft";
   return (
     <>
+      <label>Workspace <select value={workspace} onChange={(event) => { window.location.href = `/agents${event.target.value ? `?workspace=${event.target.value}` : ""}`; }}><option value="" disabled>Select a customer workspace</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}</select></label>
       <div className="agents-toolbar">
         <div className="agent-count">
           <strong>
@@ -118,7 +123,7 @@ export function Agents({
             {data.agents.length !== 1 ? "s" : ""}
           </strong>
         </div>
-        <Button variant="ghost" className="button primary" onClick={() => setNewOpen(true)}>
+        <Button variant="ghost" className="button primary" disabled={!workspace} onClick={() => setNewOpen(true)}>
           <Plus size={17} /> New voice agent
         </Button>
       </div>
@@ -547,7 +552,7 @@ export function Agents({
             <p>
               Add a name and instructions, then connect your business number.
             </p>
-            <Button variant="ghost" className="button primary" onClick={() => setNewOpen(true)}>
+            <Button variant="ghost" className="button primary" disabled={!workspace} onClick={() => setNewOpen(true)}>
               <Plus size={17} /> Create voice agent
             </Button>
           </section>
@@ -572,7 +577,7 @@ export function Agents({
                   name: newName,
                   company_name: newCompanyName,
                 };
-                const result = await api("agents", "POST", values);
+                const result = await api(`agents?workspace=${workspace}`, "POST", values);
                 await refresh();
                 setSelected(result.id);
                 setEdit({ ...values, id: result.id });
@@ -693,7 +698,7 @@ export function Agents({
                 onClick={async () => {
                   setBusy("action");
                   try {
-                    await api(`agents/${selected}`, "DELETE");
+                    await api(`agents/${selected}?workspace=${workspace}`, "DELETE");
                     setConfirm(false);
                     const next = data.agents.find((a) => a.id !== selected);
                     setSelected(next?.id || "");

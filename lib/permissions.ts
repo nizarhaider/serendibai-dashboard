@@ -10,8 +10,9 @@ export const resourceTools: Record<string, string> = {
   appointments: "book_appointment", orders: "create_order", tickets: "create_ticket",
 };
 export function canAccessSection(user: Access, section: string) {
+  if (user.is_admin) return ["dashboard", "admin", "agents"].includes(section);
   if (section === "dashboard") return true;
-  if (section === "admin") return user.is_admin;
+  if (section === "admin" || section === "agents") return false;
   if (section === "onboarding") return true;
   return !user.read_only && (!resourceTools[section] || user.allowed_tools.includes(resourceTools[section]));
 }
