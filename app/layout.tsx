@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
@@ -15,8 +14,8 @@ export const metadata: Metadata = {
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body><Script id="portal-theme" strategy="beforeInteractive">{`try{const t=localStorage.getItem("portal-theme");if(t==="dark"||(t===null&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch{}`}</Script><AppRouterCacheProvider options={{ enableCssLayer: true }}><BerryTheme>{children}</BerryTheme></AppRouterCacheProvider></body>
+    <html lang="en" className="dark">
+      <body><AppRouterCacheProvider options={{ enableCssLayer: true }}><BerryTheme>{children}</BerryTheme></AppRouterCacheProvider></body>
     </html>
   );
 }
