@@ -45,8 +45,10 @@ function Setup({ agents, businessName, standalone, onDone, initial }: { agents: 
   useEffect(() => {
     if (standalone || !link || link.status === "connected") return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    const discardOnLeave = () => { void fetch(`/api/portal/connections/${link.id}`, { method: "DELETE", keepalive: true }); };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
+    window.addEventListener("pagehide", discardOnLeave);
+    return () => { window.removeEventListener("beforeunload", warn); window.removeEventListener("pagehide", discardOnLeave); };
   }, [link, standalone]);
   const activeStep = link?.status === "connected" ? 4 : link?.qr ? 3 : link ? 2 : 1;
   const setup = <>
@@ -71,6 +73,15 @@ export function Connections({ agents }: { agents: Agent[] }) {
   const [selected, setSelected] = useState<Connection>();
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const cleaned = useState(() => new Set<string>())[0];
+  useEffect(() => {
+    const stale = links.filter(link => link.status !== "connected" && !cleaned.has(link.id));
+    if (!stale.length) return;
+    stale.forEach(link => cleaned.add(link.id));
+    void Promise.all(stale.map(link => api(`connections/${link.id}`, "DELETE")))
+      .then(() => mutate())
+      .catch(e => setError((e as Error).message));
+  }, [links, cleaned, mutate]);
   const refresh = useCallback(async () => { try { await mutate(); } catch (e) { setError((e as Error).message); } }, [mutate]);
   async function change(id: string, values: Partial<Connection>) {
     setBusy(id); setError("");
