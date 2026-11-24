@@ -205,21 +205,24 @@ async function handler(
         return Response.json(links, { headers: { "Cache-Control": "private, no-store" } });
       }
       if (method === "POST") {
-        const b = z.object({ agent_id: uuid, id: uuid.optional() }).parse(await request.json());
+        const b = z.object({ agent_id: uuid, id: uuid.optional(), refresh: z.boolean().optional() }).parse(await request.json());
         const [agent] = await sql`select id from portal_agents where id=${b.agent_id} and customer_id=${customer} and status<>'archived'`;
         if (!agent) throw new ApiError("Choose an assistant.", 404);
         if (!process.env.LINKED_SERVICE_URL || !process.env.LINKED_BRIDGE_SECRET) throw new ApiError("Connection service unavailable.", 503);
         const connection = b.id || randomUUID();
         if (b.id) {
-          const rows = await sql`update portal_whatsapp_links set agent_id=${b.agent_id},enabled=true,status='connecting',error='',updated_at=now() where id=${connection} and customer_id=${customer} returning id`;
-          if (!rows.length) throw new ApiError("Connection not found.", 404);
+          const [existing] = await sql`select status from portal_whatsapp_links where id=${connection} and customer_id=${customer}`;
+          if (!existing) throw new ApiError("Connection not found.", 404);
+          if (b.refresh && existing.status === "connected") throw new ApiError("This WhatsApp number is already connected.", 409);
+          await sql`update portal_whatsapp_links set agent_id=${b.agent_id},enabled=true,status=case when ${!!b.refresh} then status else 'connecting' end,error='',updated_at=now() where id=${connection} and customer_id=${customer}`;
         } else {
           await sql`insert into portal_whatsapp_links(id,customer_id,agent_id,enabled,status) values(${connection},${customer},${b.agent_id},true,'connecting')`;
         }
         try {
-          const response = await fetch(`${process.env.LINKED_SERVICE_URL}/connection`, { method: "POST", headers: { Authorization: `Bearer ${process.env.LINKED_BRIDGE_SECRET}`, "Content-Type": "application/json" }, body: JSON.stringify({ customer: connection, enabled: true }), signal: AbortSignal.timeout(10000) });
+          const response = await fetch(`${process.env.LINKED_SERVICE_URL}/connection`, { method: "POST", headers: { Authorization: `Bearer ${process.env.LINKED_BRIDGE_SECRET}`, "Content-Type": "application/json" }, body: JSON.stringify({ customer: connection, enabled: true, refresh: b.refresh && !!b.id }), signal: AbortSignal.timeout(10000) });
           if (!response.ok) throw new Error();
         } catch {
+          if (b.refresh) throw new ApiError("Could not refresh the QR code. Please try again.", 503);
           await sql`update portal_whatsapp_links set enabled=false,status='error',error='Connection service unavailable',qr=null,qr_expires_at=null where id=${connection} and customer_id=${customer}`;
           throw new ApiError("Connection service unavailable. Please try again.", 503);
         }

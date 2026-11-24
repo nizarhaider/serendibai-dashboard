@@ -16,7 +16,7 @@ type Connection = { id: string; agent_id: string; phone: string; status: string;
 const steps = ["Choose assistant", "Prepare phone", "Scan QR code", "Finish setup"];
 
 function Setup({ agents, businessName, standalone, onDone, initial }: { agents: Agent[]; businessName?: string; standalone?: boolean; onDone?: () => void; initial?: Connection }) {
-  const [agent, setAgent] = useState(agents[0]?.id || "");
+  const [agent, setAgent] = useState(initial?.agent_id || agents[0]?.id || "");
   const [link, setLink] = useState<Connection | null>(initial || null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -27,10 +27,10 @@ function Setup({ agents, businessName, standalone, onDone, initial }: { agents: 
     } catch (e) { setError((e as Error).message); }
   }, [standalone]);
   useEffect(() => { const initial = setTimeout(refresh, 0); const timer = setInterval(refresh, 5000); return () => { clearTimeout(initial); clearInterval(timer); }; }, [refresh]);
-  async function start() {
+  async function start(refresh = false) {
     setBusy(true); setError("");
     try {
-      const result = await api("onboarding", "POST", { agent_id: agent, ...(link ? { id: link.id } : {}) });
+      const result = await api("onboarding", "POST", { agent_id: agent, ...(link ? { id: link.id } : {}), ...(refresh ? { refresh: true } : {}) });
       const links: Connection[] = await api("onboarding");
       setLink(links.find(item => item.id === result.id) || null);
     } catch (e) { setError((e as Error).message); }
@@ -54,8 +54,8 @@ function Setup({ agents, businessName, standalone, onDone, initial }: { agents: 
   const setup = <>
     <Stepper activeStep={activeStep - 1} alternativeLabel className="setup-stepper" aria-label="WhatsApp setup progress">{steps.map(label => <Step key={label}><StepLabel>{label}</StepLabel></Step>)}</Stepper>
     <div className="setup-content-grid"><Card component="section" className="setup-action-card">
-      {activeStep === 1 && <><span className="setup-stage-label">STEP 1</span><h2>Choose your assistant</h2><label className="setup-select-label">Voice assistant<NativeSelect value={agent} onChange={event => setAgent(event.target.value)}>{agents.filter(item => item.status !== "archived").map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</NativeSelect></label><Button className="button primary setup-primary" disabled={busy || !agent} onClick={start}>Continue <ArrowRight size={17} /></Button></>}
-      {(activeStep === 2 || activeStep === 3) && <><span className="setup-stage-label">STEP {activeStep}</span><h2>{activeStep === 2 ? "Open WhatsApp Business" : "Scan the QR code"}</h2><p>On your phone, open WhatsApp Business → Linked devices → Link a device.</p>{link?.qr ? <div className="setup-qr-frame"><Image unoptimized src={`data:image/png;base64,${link.qr}`} alt="WhatsApp pairing QR code" width={232} height={232} /></div> : link?.status === "error" ? <Button className="button primary setup-primary" disabled={busy} onClick={start}>Try again</Button> : <div className="setup-waiting"><LoaderCircle size={17} /> Preparing QR code…</div>}</>}
+      {activeStep === 1 && <><span className="setup-stage-label">STEP 1</span><h2>Choose your assistant</h2><label className="setup-select-label">Voice assistant<NativeSelect value={agent} onChange={event => setAgent(event.target.value)}>{agents.filter(item => item.status !== "archived").map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</NativeSelect></label><Button className="button primary setup-primary" disabled={busy || !agent} onClick={() => start()}>Continue <ArrowRight size={17} /></Button></>}
+      {(activeStep === 2 || activeStep === 3) && <><span className="setup-stage-label">STEP {activeStep}</span><h2>{activeStep === 2 ? "Open WhatsApp Business" : "Scan the QR code"}</h2><p>On your phone, open WhatsApp Business → Linked devices → Link a device.</p>{link?.qr ? <div className="setup-qr-frame"><Image unoptimized src={`data:image/png;base64,${link.qr}`} alt="WhatsApp pairing QR code" width={232} height={232} /></div> : link?.status === "pairing" ? <><p>This QR code expired.</p><Button className="button primary setup-primary" disabled={busy} onClick={() => start(true)}>Generate a new QR code</Button></> : link?.status === "error" ? <Button className="button primary setup-primary" disabled={busy} onClick={() => start(true)}>Try again</Button> : <div className="setup-waiting"><LoaderCircle size={17} /> Preparing QR code…</div>}</>}
       {activeStep === 4 && <div className="setup-success"><span className="setup-success-icon"><Check size={28} /></span><span className="setup-stage-label">STEP 4 · COMPLETE</span><h2>WhatsApp connected</h2><p>{link?.phone ? `+${link.phone}` : "Your number is ready."}</p>{standalone ? <Link className="button primary setup-primary" href="/dashboard">Open workspace <ArrowRight size={17} /></Link> : <Button className="button primary setup-primary" onClick={onDone}>Done</Button>}</div>}
       {(error || link?.error) && <div className="setup-alert" role="alert">{error || link?.error}</div>}
       {!standalone && activeStep !== 4 && <div className="setup-back"><small>Leaving now discards this setup.</small><Button variant="outline" onClick={discard}>Cancel setup</Button></div>}
