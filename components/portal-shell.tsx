@@ -19,23 +19,18 @@ export function PortalShell({ account, children }: { account: Account; children:
   const [error, setError] = useState("");
   const section = usePathname().split("/")[1];
   useEffect(() => {
-    let stopped = false;
-    async function warmWorkspace() {
-      const sections = pages.map(page => page.href).filter(name => canAccessSection(account, name) && !["outbound", "connections", "admin"].includes(name));
-      const tasks: Promise<unknown>[] = sections.map(name => apiWithCache(`data?section=${name}`, account.email));
-      if (canAccessSection(account, "connections")) tasks.push(apiWithCache("connections", account.email));
-      if (!account.is_admin && !account.read_only && canAccessSection(account, "outbound")) {
-        tasks.push(fetch("/api/outbound").then(async response => {
-          if (!response.ok) return;
-          const data = await response.json();
-          sessionStorage.setItem(`serendibai:${account.email}:/api/outbound`, JSON.stringify({ time: Date.now(), data }));
-        }));
-      }
-      if (account.is_admin) tasks.push(apiWithCache("customers", account.email));
-      for (let i = 0; i < tasks.length && !stopped; i += 4) await Promise.allSettled(tasks.slice(i, i + 4));
+    const sections = pages.map(page => page.href).filter(name => canAccessSection(account, name) && !["outbound", "admin"].includes(name));
+    const tasks: Promise<unknown>[] = sections.map(name => apiWithCache(`data?section=${name}`, account.email));
+    if (canAccessSection(account, "connections")) tasks.push(apiWithCache("connections", account.email));
+    if (!account.is_admin && !account.read_only && canAccessSection(account, "outbound")) {
+      tasks.push(fetch("/api/outbound").then(async response => {
+        if (!response.ok) return;
+        const data = await response.json();
+        sessionStorage.setItem(`serendibai:${account.email}:/api/outbound`, JSON.stringify({ time: Date.now(), data }));
+      }));
     }
-    void warmWorkspace();
-    return () => { stopped = true; };
+    if (account.is_admin) tasks.push(apiWithCache("customers", account.email));
+    void Promise.allSettled(tasks);
   }, [account]);
   const nav = pages.filter(page => canAccessSection(account, page.href)).map(page => account.is_admin ? { ...page, group: "Administration" } : page);
   const page = pages.find(item => item.href === section);
