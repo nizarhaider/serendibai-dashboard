@@ -8,14 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowUpRight,
   AudioLines,
-  Check,
-  Sparkles,
   CalendarDays,
   ChevronRight,
   Code2,
-  Globe,
   Loader2,
   MessageSquare,
   PackageCheck,
@@ -24,7 +20,6 @@ import {
   Settings2,
   Ticket,
   Archive,
-  WandSparkles,
 } from "lucide-react";
 import type { Agent, Customer, PortalData } from "@/lib/types";
 import { standardTools, toolNames } from "@/lib/permissions";
@@ -34,6 +29,7 @@ const defaultAgent = () => ({
   name: "",
   company_name: "",
   company_url: "",
+  greeting: "",
   system_prompt: "",
   voice: "Aoede",
   languages: ["English", "Sinhala", "Tamil"],
@@ -65,13 +61,8 @@ export function Agents({
     [busy, setBusy] = useState(""),
     [error, setError] = useState(""),
     [newOpen, setNewOpen] = useState(false),
-    [newName, setNewName] = useState(""),
-    [newCompanyName, setNewCompanyName] = useState(""),
-    [research, setResearch] = useState(""),
-    [draft, setDraft] = useState<{
-      text: string;
-      sources: { url: string; title: string }[];
-    } | null>(null),
+    [newGreeting, setNewGreeting] = useState(""),
+    [newPrompt, setNewPrompt] = useState(""),
     [confirm, setConfirm] = useState(false),
     [secrets, setSecrets] = useState<Record<string, string>>({});
   const current = data.agents.find((a) => a.id === selected);
@@ -92,7 +83,6 @@ export function Agents({
       return;
     setSelected(a.id);
     setEdit(a);
-    setDraft(null);
     setError("");
     setSecrets({});
   }
@@ -196,106 +186,35 @@ export function Agents({
             <div className="editor-content">
               {tab === "instructions" ? (
                 <>
-                  <div className="field-row">
-                    <label>
-                      Agent name
-                      <Input
-                        value={edit.name}
-                        onChange={(e) =>
-                          setEdit({ ...edit, name: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      Business website
-                      <div className="input-with-icon">
-                        <Globe size={16} />
-                        <Input
-                          placeholder="https://yourbusiness.com"
-                          value={edit.company_url}
-                          onChange={(e) =>
-                            setEdit({ ...edit, company_url: e.target.value })
-                          }
-                        />
-                      </div>
-                    </label>
+                  <div className="prompt-label">
+                    <label htmlFor="agent-greeting">Opening greeting</label>
+                    <span>{number(edit.greeting.length)} characters</span>
                   </div>
-                  <div className="field-row company-name-row">
-                    <label>
-                      Company name
-                      <Input
-                        value={edit.company_name}
-                        onChange={(e) =>
-                          setEdit({ ...edit, company_name: e.target.value })
-                        }
-                        required
-                        maxLength={160}
-                      />
-                      <small>Used in the opening greeting.</small>
-                    </label>
+                  <div className="prompt-editor">
+                    <Textarea
+                      id="agent-greeting"
+                      rows={3}
+                      value={edit.greeting}
+                      required
+                      maxLength={1500}
+                      onChange={(e) => setEdit({ ...edit, greeting: e.target.value })}
+                    />
                   </div>
                   <div className="prompt-label">
-                    <label htmlFor="system-prompt">Call instructions</label>
+                    <label htmlFor="system-prompt">System prompt &amp; instructions</label>
                     <span>{number(edit.system_prompt.length)} characters</span>
                   </div>
-                  <p className="notice">Hosted demo agents use managed call scripts. This editor applies to runtimes configured to use workspace instructions.</p>
                   <div className="prompt-editor">
                     <Textarea
                       id="system-prompt"
+                      rows={12}
                       value={edit.system_prompt}
-                      placeholder="You are the voice assistant for…\n\nDescribe your business, the way your agent should speak, and what it can help callers with."
+                      required
+                      maxLength={30000}
                       onChange={(e) =>
                         setEdit({ ...edit, system_prompt: e.target.value })
                       }
                     />
-                    <details className="prompt-assistant">
-                      <summary>Help me draft instructions</summary>
-
-                      <form
-                        onSubmit={async (e) => {
-                          e.preventDefault();
-                          setBusy("research");
-                          setError("");
-                          try {
-                            setDraft(
-                              await api("assistant", "POST", {
-                                prompt: research,
-                              }),
-                            );
-                          } catch (e) {
-                            setError((e as Error).message);
-                          } finally {
-                            setBusy("");
-                          }
-                        }}
-                      >
-                        <Input
-                          aria-label="AI setup request"
-                          placeholder="Describe your business and include its website…"
-                          value={research}
-                          onChange={(e) => setResearch(e.target.value)}
-                          required
-                          minLength={5}
-                        />
-                        <Button variant="ghost"
-                          className="button primary"
-                          disabled={Boolean(busy)}
-                        >
-                          {busy === "research" ? (
-                            <Loader2 className="spin" size={16} />
-                          ) : (
-                            <WandSparkles size={16} />
-                          )}{" "}
-                          {busy === "research"
-                            ? "Researching…"
-                            : "Draft instructions"}
-                        </Button>
-                      </form>
-                      <small>
-                        Uses live website research. Review the draft before
-                        applying it.
-                      </small>
-                    </details>
                   </div>
                 </>
               ) : tab === "tools" ? (
@@ -504,9 +423,7 @@ export function Agents({
           <Card component="section" className="panel empty agent-empty">
             <AudioLines size={40} />
             <h2>Create your first voice agent</h2>
-            <p>
-              Add a name and instructions, then connect your business number.
-            </p>
+            <p>Add the greeting and system prompt for your agent.</p>
             <Button variant="ghost" className="button primary" disabled={!workspace} onClick={() => setNewOpen(true)}>
               <Plus size={17} /> Create voice agent
             </Button>
@@ -522,6 +439,8 @@ export function Agents({
               setBusy("new");
               setError("");
               try {
+                const companyName = customers.find((customer) => customer.id === workspace)?.business_name || "Voice agent";
+                const agentIndex = data.agents.filter((agent) => agent.company_name === companyName).length;
                 const values = {
                   ...defaultAgent(),
                   tools: defaultAgent().tools.filter(
@@ -529,8 +448,10 @@ export function Agents({
                       !toolNames.includes(tool as (typeof toolNames)[number]) ||
                       data.allowed_tools.includes(tool),
                   ),
-                  name: newName,
-                  company_name: newCompanyName,
+                  name: `${companyName.slice(0, 86)} agent${agentIndex ? ` ${agentIndex + 1}` : ""}`,
+                  company_name: companyName,
+                  greeting: newGreeting.trim(),
+                  system_prompt: newPrompt.trim(),
                 };
                 const result = await api(`agents?workspace=${workspace}`, "POST", values);
                 await refresh();
@@ -538,11 +459,9 @@ export function Agents({
                 setEdit({ ...values, id: result.id });
                 setTab("instructions");
                 setNewOpen(false);
-                setNewName("");
-                setNewCompanyName("");
-                notify(
-                  "Agent created. Add your instructions or use the website assistant.",
-                );
+                setNewGreeting("");
+                setNewPrompt("");
+                notify("Agent created.");
               } catch (e) {
                 setError((e as Error).message);
               } finally {
@@ -550,85 +469,33 @@ export function Agents({
               }
             }}
           >
-            <p className="muted">Name your agent and company.</p>
             <label>
-              Agent name
-              <Input
+              Opening greeting
+              <Textarea
                 autoFocus
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+                rows={3}
+                value={newGreeting}
+                onChange={(e) => setNewGreeting(e.target.value)}
                 required
-                maxLength={100}
+                maxLength={1500}
               />
             </label>
             <label>
-              Company name
-              <Input
-                value={newCompanyName}
-                onChange={(e) => setNewCompanyName(e.target.value)}
+              System prompt &amp; instructions
+              <Textarea
+                rows={10}
+                value={newPrompt}
+                onChange={(e) => setNewPrompt(e.target.value)}
                 required
-                maxLength={160}
+                maxLength={30000}
               />
             </label>
             {error && <p className="error">{error}</p>}
-            <Button variant="ghost" className="button primary" disabled={Boolean(busy)}>
+            <Button variant="ghost" className="button primary" disabled={Boolean(busy) || !newGreeting.trim() || !newPrompt.trim()}>
               {busy === "new" ? "Creating…" : "Create agent"}
               <ChevronRight size={16} />
             </Button>
           </form>
-        </Modal>
-      )}
-      {draft && (
-        <Modal
-          title="Your researched prompt"
-          onClose={() => setDraft(null)}
-          wide
-        >
-          <div className="modal-content">
-            <div className="import-info">
-              <Sparkles size={25} />
-              <div>
-                <strong>A starting point, shaped around your business.</strong>
-                <p>
-                  Review business facts and capabilities before applying this
-                  draft.
-                </p>
-              </div>
-            </div>
-            <Textarea
-              className="draft-text"
-              value={draft.text}
-              onChange={(e) => setDraft({ ...draft, text: e.target.value })}
-            />
-            {draft.sources.length > 0 && (
-              <div className="research-sources">
-                <strong>Research sources</strong>
-                {draft.sources.slice(0, 8).map((s, i) => (
-                  <a key={i} href={s.url} target="_blank" rel="noreferrer">
-                    {s.title}
-                    <ArrowUpRight size={13} />
-                  </a>
-                ))}
-              </div>
-            )}
-            <div className="modal-actions">
-              <Button variant="ghost" className="button" onClick={() => setDraft(null)}>
-                Discard draft
-              </Button>
-              <Button variant="ghost"
-                className="button primary"
-                onClick={() => {
-                  setEdit({ ...edit, system_prompt: draft.text });
-                  setDraft(null);
-                  notify(
-                    "Draft applied to the editor. Save changes when you’re ready.",
-                  );
-                }}
-              >
-                <Check size={15} /> Apply to system prompt
-              </Button>
-            </div>
-          </div>
         </Modal>
       )}
       {confirm && (

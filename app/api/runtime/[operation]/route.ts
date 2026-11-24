@@ -24,6 +24,7 @@ async function handler(
           id: agent.id,
           name: agent.name,
           company_name: agent.company_name,
+          greeting: agent.greeting,
           instructions: agent.system_prompt,
           voice: agent.voice,
           languages: agent.languages,

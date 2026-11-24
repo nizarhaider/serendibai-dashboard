@@ -1198,28 +1198,6 @@ td small {
   color: var(--legacy-muted);
   box-shadow: none;
 }
-.prompt-assistant {
-  background: linear-gradient(115deg, #ecf7f5, #eff8f6);
-  border-top: 1px solid #dbf0ec;
-  padding: 17px;
-}
-.prompt-assistant form {
-  display: flex;
-  gap: 8px;
-}
-.prompt-assistant input {
-  font-size: 11px;
-  background: #fff9;
-}
-.prompt-assistant .button {
-  font-size: 11px;
-}
-.prompt-assistant small {
-  font-size: 11px;
-  color: var(--legacy-muted);
-  display: block;
-  margin-top: 10px;
-}
 .tool-options {
   display: flex;
   flex-direction: column;
@@ -1302,33 +1280,6 @@ td small {
   border-radius: 8px;
   line-height: 1.8;
   margin: 20px 0;
-}
-.draft-text {
-  height: 370px;
-  line-height: 1.9;
-  font-size: 13px;
-  color: var(--legacy-muted);
-}
-.research-sources {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin-top: 15px;
-}
-.research-sources strong {
-  width: 100%;
-  font-size: 11px;
-  color: var(--legacy-muted);
-}
-.research-sources a {
-  font-size: 11px;
-  background: #f0f9f7;
-  color: var(--legacy-muted);
-  padding: 7px 9px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
 }
 .login-page {
   min-height: 100vh;
@@ -1783,21 +1734,6 @@ td small {
     font-size: 11px;
     min-height: 260px;
     padding: 12px;
-  }
-  .prompt-assistant {
-    padding: 13px;
-  }
-  .prompt-assistant form {
-    flex-wrap: wrap;
-  }
-  .prompt-assistant input {
-    width: 100%;
-  }
-  .prompt-assistant .button {
-    width: 100%;
-  }
-  .prompt-assistant small {
-    font-size: 8px;
   }
   .tool-option {
     padding: 13px;
@@ -2265,9 +2201,6 @@ td small, .catalogue-banner p, .upload-zone p, .panel-heading p { font-size: 12p
 .agent-editor-heading .eyebrow { display: none; }
 .editor-tabs button { white-space: nowrap; }
 .prompt-editor textarea { font-family: inherit; font-size: 14px; line-height: 1.8; min-height: 280px; background: #fcfdfc; }
-.prompt-assistant { border-top: 1px solid var(--border); background: #f6f8f6; padding: 18px; }
-.prompt-assistant > summary { cursor: pointer; font-weight: 550; color: #376c5d; }
-.prompt-assistant form { margin-top: 16px; }
 .settings-disclosure { border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 18px; }
 .settings-disclosure > summary { cursor: pointer; font-weight: 600; }
 .settings-disclosure[open] > summary { margin-bottom: 22px; }
@@ -2594,7 +2527,7 @@ html, body { min-height: 100%; background: var(--portal-canvas); color: var(--po
 .berry-workspace strong, .berry-user strong, .berry-main h1, .berry-main h2, .berry-main h3, .berry-main strong { color: var(--portal-text); }
 .berry-toolbar .MuiTypography-root, .berry-workspace small, .berry-user small, .berry-main p, .berry-main label, .berry-main small, .berry-main .muted { color: var(--portal-muted); }
 .berry-user, .berry-main table, .berry-main th, .berry-main td, .berry-main .admin-row, .berry-main .editor-tabs, .berry-main .connection { border-color: var(--portal-border); }
-.berry-main .panel, .berry-main .attention-card, .berry-main .setup-stepper, .berry-main .setup-action-card, .berry-main .setup-aside, .berry-main .outbound-card, .berry-main .case-card, .berry-main .catalogue-banner, .berry-main .upload-zone, .berry-main .prompt-assistant, .berry-main .notice, .berry-main .settings-disclosure, .berry-main .tool-option, .berry-main .customer-card, .berry-main .message-settings { background: var(--portal-surface); color: var(--portal-text); border-color: var(--portal-border); }
+.berry-main .panel, .berry-main .attention-card, .berry-main .setup-stepper, .berry-main .setup-action-card, .berry-main .setup-aside, .berry-main .outbound-card, .berry-main .case-card, .berry-main .catalogue-banner, .berry-main .upload-zone, .berry-main .notice, .berry-main .settings-disclosure, .berry-main .tool-option, .berry-main .customer-card, .berry-main .message-settings { background: var(--portal-surface); color: var(--portal-text); border-color: var(--portal-border); }
 .berry-main .tag, .berry-main .booking-date, .berry-main .priority, .berry-main th, .berry-main .list-toolbar, .berry-main .conversations-panel .list-toolbar { background: var(--portal-raised); color: var(--portal-muted); border-color: var(--portal-border); }
 .berry-main a:not(.button), .berry-auth-back, .invite-card a, .client-calls summary, .case-note a, .setup-cancel { color: var(--portal-accent); }
 .berry-main .tag { background: var(--portal-raised); color: var(--portal-text); }
@@ -2764,6 +2697,7 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .agent-create-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--portal-accent); }
 .agent-create-form .MuiOutlinedInput-root input.MuiOutlinedInput-input { color: var(--portal-text) !important; -webkit-text-fill-color: var(--portal-text); }
 .agent-create-form .MuiOutlinedInput-input::placeholder { color: var(--portal-muted); opacity: 1; }
+.agent-create-form .MuiOutlinedInput-root textarea.MuiOutlinedInput-input { min-height: 0; color: var(--portal-text) !important; -webkit-text-fill-color: var(--portal-text); }
 .agent-create-form > .button { align-self: flex-end; min-width: 160px; }
 @media (max-width: 600px) {
   .MuiDialog-paper:has(.agent-create-form) .MuiDialogTitle-root { padding: 18px 18px 14px; }

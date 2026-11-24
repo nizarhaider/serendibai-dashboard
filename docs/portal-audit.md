@@ -25,7 +25,7 @@ The main simplification opportunity was unused presentation code and excessive d
 | Agent removal | Hard deletion collided with demo and outbound foreign keys | Archive configurations, revoke runtime tokens and retain history and relationships |
 | Runtime archive | Direct database heartbeats could reactivate an archived agent | Existing heartbeat UPDATE now excludes archived agents |
 | Voice configuration | Database tools repeated the default already provided by the voice service | Removed redundant import and value; total voice change is two fewer lines and 36 fewer bytes |
-| Prompt editor | Hosted demo prompts are managed in voice-agent, not loaded from `portal_agents.system_prompt` | State this limitation in the editor and use an accurate save confirmation; preserve current demo behavior |
+| Prompt editor | Hosted calls rebuilt prompts in the voice runtime | Load editable greetings and system prompts from `portal_agents` and save changes through the admin UI |
 | Product imports | Ownership checks made one query per existing item | Validate all IDs with one tenant-scoped query before the transaction |
 | Outbound import | Batch creation committed before row insertion | Insert batch and rows in one transaction |
 | CSV headers | Browser validated duplicate/blank headings, server did not | Validate both on the server before generating fields or writing data |

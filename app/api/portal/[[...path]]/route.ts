@@ -14,7 +14,6 @@ import {
   hashPassword,
 } from "@/lib/auth";
 import { getData } from "@/lib/data";
-import { draftPrompt } from "@/lib/assistant";
 import { canAccessSection, resourceTools, standardTools, toolNames } from "@/lib/permissions";
 import { getCustomers } from "@/lib/customers";
 import { sendInvitation } from "@/lib/invitations";
@@ -40,7 +39,8 @@ const agentSchema = z.object({
   name: z.string().trim().min(1).max(100),
   company_name: z.string().trim().min(1).max(160),
   company_url: z.union([z.literal(""), z.url()]).default(""),
-  system_prompt: z.string().max(30000).default(""),
+  greeting: z.string().trim().min(1).max(1500),
+  system_prompt: z.string().trim().min(1).max(30000),
   voice: z.enum(["Aoede", "Charon"]).default("Aoede"),
   languages: z
     .array(z.enum(["English", "Sinhala", "Tamil"]))
@@ -193,7 +193,7 @@ async function handler(
       }
       throw new ApiError("Not found.", 404);
     }
-    if (user.is_admin && !["data", "logout", "agents", "assistant"].includes(route || "")) throw new ApiError("Customer workspace access required.", 403);
+    if (user.is_admin && !["data", "logout", "agents"].includes(route || "")) throw new ApiError("Customer workspace access required.", 403);
     if (!user.is_admin && !user.onboarding_completed && !["onboarding", "logout"].includes(route || ""))
       throw new ApiError("Complete WhatsApp onboarding before opening the workspace.", 403);
     if (!user.is_admin && user.read_only && !["data", "logout", "onboarding"].includes(route || ""))
@@ -278,16 +278,7 @@ async function handler(
         { headers: { "Cache-Control": "private, no-store" } },
       );
     }
-    if (["agents", "assistant"].includes(route || "") && !user.is_admin) throw new ApiError("Administrator access required.", 403);
-    if (route === "assistant" && method === "POST") {
-      await rateLimit(`ai:${user.id}`, 15, 3600);
-      const { prompt } = z
-        .object({ prompt: z.string().min(5).max(4000) })
-        .parse(await request.json());
-      const result = await draftPrompt(prompt);
-      await audit(customer, "Prompt researched", prompt.slice(0, 160));
-      return Response.json(result);
-    }
+    if (route === "agents" && !user.is_admin) throw new ApiError("Administrator access required.", 403);
     if (id && method === "PATCH" && ["orders", "tickets", "appointments"].includes(route || "")) {
       uuid.parse(id);
       const statuses = {
@@ -345,8 +336,8 @@ async function handler(
           });
         }
         const rows = id
-          ? await sql`update portal_agents set name=${b.name},company_name=${b.company_name},company_url=${b.company_url},system_prompt=${b.system_prompt},voice=${b.voice},languages=${b.languages},tools=${tools},max_calls=${b.max_calls},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${target} returning id`
-          : await sql`insert into portal_agents(customer_id,name,company_name,company_url,system_prompt,voice,languages,tools,max_calls,phone_number_id,credentials) values(${target},${b.name},${b.company_name},${b.company_url},${b.system_prompt},${b.voice},${b.languages},${tools},${b.max_calls},${b.phone_number_id},${credentials}) returning id`;
+          ? await sql`update portal_agents set name=${b.name},company_name=${b.company_name},company_url=${b.company_url},greeting=${b.greeting},system_prompt=${b.system_prompt},voice=${b.voice},languages=${b.languages},tools=${tools},max_calls=${b.max_calls},phone_number_id=${b.phone_number_id},credentials=coalesce(${credentials},credentials),version=version+1,updated_at=now() where id=${id} and customer_id=${target} returning id`
+          : await sql`insert into portal_agents(customer_id,name,company_name,company_url,greeting,system_prompt,voice,languages,tools,max_calls,phone_number_id,credentials) values(${target},${b.name},${b.company_name},${b.company_url},${b.greeting},${b.system_prompt},${b.voice},${b.languages},${tools},${b.max_calls},${b.phone_number_id},${credentials}) returning id`;
         if (!rows.length) throw new ApiError("Agent not found.", 404);
         await audit(
           target,
