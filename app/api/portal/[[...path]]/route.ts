@@ -200,7 +200,7 @@ async function handler(
       throw new ApiError("This account can only view calls and transcripts.", 403);
     if (route === "onboarding" || route === "connections") {
       if (method === "GET") {
-        const links = await sql`select id,agent_id,phone,enabled,status,case when qr_expires_at>now() then qr else null end as qr,error,voice_enabled,message_replies_enabled,message_reply_instructions from portal_whatsapp_links where customer_id=${customer} order by updated_at desc`;
+        const links = await sql`select id,agent_id,phone,enabled,status,case when qr_expires_at>now() then qr else null end as qr,qr_expires_at,error,voice_enabled,message_replies_enabled,message_reply_instructions from portal_whatsapp_links where customer_id=${customer} order by updated_at desc`;
         if (links.some(link => link.status === "connected")) await sql`update portal_users set onboarding_completed=true where customer_id=${customer} and not is_admin`;
         return Response.json(links, { headers: { "Cache-Control": "private, no-store" } });
       }
