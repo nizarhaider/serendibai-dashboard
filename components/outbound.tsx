@@ -26,7 +26,7 @@ async function request(path = "", init?: RequestInit, cacheScope?: string, useCa
   if (!init && cacheScope && useCache) {
     try {
       const cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
-      if (cached && Date.now() - cached.time < 60_000) return cached.data;
+      if (cached && Date.now() - cached.time < 5 * 60_000) return cached.data;
     } catch {}
   }
   const response = await fetch(`/api/outbound${path}`, init);

@@ -8,7 +8,7 @@ import { AppBar, Avatar, Box, Drawer, IconButton, List, ListItemButton, ListItem
 import { AudioLines, LogOut, Menu, X } from "lucide-react";
 import { canAccessSection } from "@/lib/permissions";
 import type { PortalData } from "@/lib/types";
-import { api, apiWithCache, pages } from "./portal";
+import { api, apiWithCache, cacheIsFresh, pages, saveCachedApi } from "./portal";
 
 type Account = Pick<PortalData, "business_name" | "display_name" | "email" | "is_admin" | "read_only" | "allowed_tools">;
 
@@ -28,10 +28,10 @@ export function PortalShell({ account, children }: { account: Account; children:
     const tasks: Promise<unknown>[] = sections.map(name => warm(`data?section=${name}`));
     if (canAccessSection(account, "connections")) tasks.push(warm("connections"));
     if (!account.is_admin && !account.read_only && canAccessSection(account, "outbound")) {
-      tasks.push(fetch("/api/outbound").then(async response => {
+      if (!cacheIsFresh("/api/outbound", account.email)) tasks.push(fetch("/api/outbound").then(async response => {
         if (!response.ok) return;
         const data = await response.json();
-        sessionStorage.setItem(`serendibai:${account.email}:/api/outbound`, JSON.stringify({ time: Date.now(), data }));
+        saveCachedApi("/api/outbound", account.email, data);
       }));
     }
     if (account.is_admin) tasks.push(warm("customers"));

@@ -30,23 +30,35 @@ import { Outbound } from "./outbound";
 import { Connections } from "./onboarding";
 import { AdminOverview } from "./admin-overview";
 
-const cacheAge = 60_000;
+export const cacheAge = 5 * 60_000;
 const cacheKey = (scope: string, path: string) => `serendibai:${scope}:${path}`;
 const memoryCache = new Map<string, { time: number; data: unknown }>();
 const pending = new Map<string, Promise<unknown>>();
-export function cachedApi<T>(path: string, scope: string): T | undefined {
+function cacheEntry(path: string, scope: string) {
   const key = cacheKey(scope, path);
   const memory = memoryCache.get(key);
-  if (memory && Date.now() - memory.time < cacheAge) return memory.data as T;
+  if (memory) return memory;
   try {
     const value = JSON.parse(sessionStorage.getItem(key) || "null");
-    if (value && Date.now() - value.time < cacheAge) memoryCache.set(key, value);
-    return value && Date.now() - value.time < cacheAge ? value.data as T : undefined;
+    if (value && typeof value.time === "number" && "data" in value) memoryCache.set(key, value);
+    return value;
   } catch { return undefined; }
 }
+export function cachedApi<T>(path: string, scope: string): T | undefined {
+  return cacheEntry(path, scope)?.data as T | undefined;
+}
+export function cacheIsFresh(path: string, scope: string) {
+  const entry = cacheEntry(path, scope);
+  return !!entry && Date.now() - entry.time < cacheAge;
+}
+export function saveCachedApi(path: string, scope: string, data: unknown) {
+  const key = cacheKey(scope, path);
+  const value = { time: Date.now(), data };
+  memoryCache.set(key, value);
+  try { sessionStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
 export function apiWithCache<T>(path: string, scope: string) {
-  const cached = cachedApi<T>(path, scope);
-  if (cached !== undefined) return Promise.resolve(cached);
+  if (cacheIsFresh(path, scope)) return Promise.resolve(cachedApi<T>(path, scope) as T);
   const key = cacheKey(scope, path);
   const existing = pending.get(key) as Promise<T> | undefined;
   if (existing) return existing;
