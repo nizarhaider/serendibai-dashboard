@@ -12,11 +12,13 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
   const [workspaceId, setWorkspaceId] = useState("all");
   const selectedCustomers = workspaceId === "all" ? customers : customers.filter(customer => customer.id === workspaceId);
   const connections = customers.flatMap(customer => customer.connections.map(connection => ({ ...connection, workspace: customer.business_name })));
+  const callsPlaced = customers.reduce((total, customer) => total + customer.calls, 0);
+  const callMinutes = customers.reduce((total, customer) => total + customer.call_minutes, 0);
+  const tokensUsed = customers.reduce((total, customer) => total + Object.values(customer.model_usage || {}).reduce((sum, usage) => sum + (Number(usage.total_tokens) || 0), 0), 0);
   const totals = [
-    ["Customer workspaces", customers.length, "Across your portal"],
-    ["Active users", customers.reduce((total, customer) => total + customer.users.length, 0), "With portal access"],
-    ["Voice agents", customers.reduce((total, customer) => total + customer.agents, 0), "Across all workspaces"],
-    ["Connected numbers", connections.filter(connection => connection.status === "connected").length, "WhatsApp lines online"],
+    ["Calls placed", callsPlaced.toLocaleString("en-US"), "Across all workspaces"],
+    ["Minutes used", callMinutes.toLocaleString("en-US", { maximumFractionDigits: 1 }), "Across all workspaces"],
+    ["Tokens used", tokensUsed.toLocaleString("en-US"), "Across all workspaces"],
   ] as const;
   const modelUsage = selectedCustomers.reduce<Record<string, { request_count: number; total_tokens: number; input_tokens: number; output_tokens: number; input_audio_tokens: number; output_audio_tokens: number; audio_seconds: number }>>((all, customer) => {
     for (const [model, usage] of Object.entries(customer.model_usage || {})) {
@@ -46,23 +48,27 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
     return { model, usage, inputAudio, outputAudio, cost };
   });
   const totalCost = pricing.reduce((total, row) => total + (row.cost ?? 0), 0);
-  const usd = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 4, maximumFractionDigits: 6 }).format(amount);
+  const usd = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount > 0 ? Math.ceil((amount - Number.EPSILON) * 100) / 100 : amount);
   const modelName = (model: string) => model === "gemini-3.8-live" ? "Gemini 3.8 Live" : model === "gemini-3.8-flash-lite-tts" ? "Nishadi TTS · Gemini 3.8 Flash-Lite" : model;
 
   return <div className="admin-overview">
     <div className="admin-totals">{totals.map(([label, count, detail]) => <Card className="panel admin-stat" key={label}><span>{label}</span><strong>{count}</strong><small>{detail}</small></Card>)}</div>
     <Card component="section" className="panel admin-section admin-pricing">
-      <div className="panel-heading"><div><h2>API pricing</h2><p>{usd(totalCost)} total across {selectedCustomers.reduce((sum, customer) => sum + customer.call_minutes, 0).toFixed(1)} call minutes</p></div>
-        <NativeSelect aria-label="Filter API pricing by workspace" value={workspaceId} onChange={event => setWorkspaceId(event.target.value)}>
+      <div className="panel-heading"><div><h2>API pricing</h2><p>{usd(totalCost)} total across {selectedCustomers.reduce((sum, customer) => sum + customer.call_minutes, 0).toLocaleString("en-US", { maximumFractionDigits: 1 })} call minutes</p></div>
+        <NativeSelect className="admin-workspace-filter" aria-label="Filter API pricing by workspace" value={workspaceId} onChange={event => setWorkspaceId(event.target.value)}>
           <option value="all">All workspaces</option>
           {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}
         </NativeSelect>
       </div>
-      {pricing.length ? pricing.map(({ model, usage, inputAudio, outputAudio, cost }) => <div className="admin-row" key={model}>
-        <div className="admin-row-main"><strong>{modelName(model)}</strong><small>{usage.request_count} requests · {usage.total_tokens.toLocaleString()} tokens · {usage.input_tokens.toLocaleString()} input / {usage.output_tokens.toLocaleString()} output{inputAudio || outputAudio ? ` · ${inputAudio.toLocaleString()} input audio / ${outputAudio.toLocaleString()} output audio tokens` : ""}</small></div>
+      {pricing.length ? pricing.map(({ model, cost }) => <div className="admin-row" key={model}>
+        <div className="admin-row-main"><strong>{modelName(model)}</strong></div>
         <strong className="admin-price">{cost === null ? "Rate unavailable" : usd(cost)}</strong>
       </div>) : <p className="admin-empty">No model usage recorded for this workspace yet.</p>}
-      <details className="admin-pricing-method"><summary>Rates and calculation</summary><p>Gemini 3.8 Live: text input $0.75/M, audio input $3/M, text output $4.50/M, audio output $12/M tokens. Nishadi TTS: text input $0.50/M and audio output $6/M through Dec 31, 2026 ($1/M and $12/M from Jan 1, 2027). Audio is 25 tokens/second. Free-tier traffic is $0; these totals apply Standard paid rates to portal-recorded tokens. Provider credits, billing adjustments, and calls outside this portal are not allocated by workspace.</p></details>
+      <details className="admin-pricing-method"><summary>Rates and calculation</summary><div className="admin-pricing-formulas">
+        <p><strong>Gemini 3.8 Live</strong><code>cost = (text in × $0.75 + audio in × $3 + text out × $4.50 + audio out × $12) ÷ 1,000,000</code></p>
+        <p><strong>Nishadi TTS</strong><code>cost = (text in × ${ttsInputRate} + audio out × ${ttsAudioRate}) ÷ 1,000,000</code></p>
+        <small>Rates are USD per million tokens. Audio is 25 tokens/second: Live input ≈ $0.005/min and output ≈ $0.018/min; TTS output ≈ ${usd(ttsAudioRate * 1_500 / 1_000_000)}/min. Free-tier traffic is $0.</small>
+      </div></details>
     </Card>
     <div className="admin-sections">
       <Card component="section" className="panel admin-section admin-workspaces">

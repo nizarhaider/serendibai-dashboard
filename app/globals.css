@@ -2644,7 +2644,7 @@ html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected .MuiListItemIcon
 .case-tabs button:not([aria-pressed="true"]), .case-reset.MuiButton-root { background: var(--portal-raised); color: var(--portal-text); border-color: var(--portal-border); }
 
 .admin-overview { display: grid; gap: 20px; }
-.admin-totals { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.admin-totals { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
 .admin-stat.MuiPaper-root { display: grid; align-content: start; gap: 8px; min-height: 124px; padding: 18px 20px; background: var(--portal-surface); border: 1px solid var(--portal-border); border-radius: 12px; }
 .admin-stat span { color: var(--portal-muted); font-size: 13px; }
 .admin-stat strong { color: var(--portal-text); font-size: 28px; line-height: 1.1; }
@@ -2662,6 +2662,13 @@ html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected .MuiListItemIcon
 .admin-row-main small { color: var(--portal-muted); font-size: 11px; line-height: 1.5; }
 .admin-pricing .panel-heading { align-items: center; }
 .admin-pricing .MuiInputBase-root { min-width: 220px; }
+.admin-pricing .admin-workspace-filter .MuiNativeSelect-select { border: 0; box-shadow: none; outline: 0; background: transparent; }
+.admin-pricing .admin-workspace-filter .MuiOutlinedInput-notchedOutline { border-color: var(--portal-border); }
+.admin-pricing .admin-workspace-filter:hover .MuiOutlinedInput-notchedOutline { border-color: var(--portal-accent); }
+.admin-pricing-formulas { display: grid; gap: 8px; margin-top: 10px; }
+.admin-pricing-formulas p { display: grid; gap: 4px; margin: 0; line-height: 1.5; }
+.admin-pricing-formulas code { width: fit-content; max-width: 100%; color: var(--portal-text); font: inherit; overflow-wrap: anywhere; }
+.admin-pricing-formulas small { color: var(--portal-muted); line-height: 1.5; }
 .admin-price { color: var(--portal-text); font-size: 15px; white-space: nowrap; }
 .admin-pricing-method { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--portal-border); color: var(--portal-muted); font-size: 11px; }
 .admin-pricing-method summary { width: fit-content; cursor: pointer; color: var(--portal-text); font-weight: 600; }
@@ -2711,7 +2718,8 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 @media (max-width: 760px) { .customer-admin > .panel .customer-create { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 560px) { .customer-admin > .panel .customer-create, .customer-access .customer-create { grid-template-columns: minmax(0,1fr); } .customer-create fieldset { grid-template-columns: minmax(0,1fr); } .customer-admin > .panel .customer-create { padding-inline: 18px; } .customer-access { padding-inline: 18px; } }
 
-.berry-main .MuiNativeSelect-select { min-height: 42px; padding: 0 38px 0 14px; border: 1px solid var(--portal-border); border-radius: 8px; background-color: var(--portal-raised); color: var(--portal-text); line-height: 1.3; }
+.berry-main .MuiNativeSelect-select { min-height: 42px; padding: 0 38px 0 14px; border: 0; border-radius: 8px; background-color: transparent; color: var(--portal-text); line-height: 1.3; }
+.berry-main .MuiOutlinedInput-notchedOutline { border-color: var(--portal-border); }
 .berry-main .MuiNativeSelect-icon { color: var(--portal-muted); right: 10px; }
 .berry-main select { line-height: 1.35; }
 .berry-main details > summary { color: var(--portal-text); }
