@@ -2722,6 +2722,10 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .berry-main .MuiNativeSelect-select { min-height: 42px; padding: 0 38px 0 14px; border: 0; border-radius: 8px; background-color: transparent; color: var(--portal-text); line-height: 1.3; }
 .berry-main .MuiOutlinedInput-notchedOutline { border-color: var(--portal-border); }
 .berry-main .MuiNativeSelect-icon { color: var(--portal-muted); right: 10px; }
+.berry-main .runtime-details { border-color: var(--portal-border); background: var(--portal-surface); }
+.berry-main .runtime-details h3 { background: var(--portal-raised); color: var(--portal-text); }
+.berry-main .runtime-details > div { border-color: var(--portal-border); }
+.berry-main .runtime-details span, .berry-main .runtime-details code { color: var(--portal-muted); }
 .berry-main select { line-height: 1.35; }
 .berry-main details > summary { color: var(--portal-text); }
 .berry-main .MuiCollapse-root, .berry-main .MuiPaper-root[role=region] { background: var(--portal-surface); color: var(--portal-text); }
