@@ -1,5 +1,4 @@
 "use client";
-import Checkbox from "@mui/material/Checkbox";
 import { Card, Switch, Tab, Tabs } from "@mui/material";
 import { NativeSelect } from "./ui/native-select";
 import { Input } from "@/components/ui/input";
@@ -180,7 +179,7 @@ export function Agents({
             </div>
             <Tabs value={tab} onChange={(_, value: string) => setTab(value)} variant="scrollable" scrollButtons="auto" className="editor-tabs" aria-label="Voice agent settings">
               <Tab value="instructions" label="Instructions" icon={<MessageSquare size={16} />} iconPosition="start" />
-              <Tab value="tools" label="Actions & languages" icon={<Settings2 size={16} />} iconPosition="start" />
+              <Tab value="tools" label="Actions" icon={<Settings2 size={16} />} iconPosition="start" />
               <Tab value="settings" label="Settings" icon={<Code2 size={16} />} iconPosition="start" />
             </Tabs>
             <div className="editor-content">
@@ -271,45 +270,6 @@ export function Agents({
                         </label>
                       ))}
                   </div>
-                  <div className="field-row">
-                    <label>
-                      Concurrent call limit
-                      <Input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={edit.max_calls}
-                        onChange={(e) =>
-                          setEdit({
-                            ...edit,
-                            max_calls: Number(e.target.value),
-                          })
-                        }
-                      />
-                      <small>
-                        Maximum calls your agent can handle at once.
-                      </small>
-                    </label>
-                  </div>
-                  <label>Supported languages</label>
-                  <div className="language-options">
-                    {["English", "Sinhala", "Tamil"].map((l) => (
-                      <label key={l}>
-                        <Checkbox
-                          checked={edit.languages.includes(l)}
-                          onChange={(e) =>
-                            setEdit({
-                              ...edit,
-                              languages: e.target.checked
-                                ? [...edit.languages, l]
-                                : edit.languages.filter((v) => v !== l),
-                            })
-                          }
-                        />
-                        {l}
-                      </label>
-                    ))}
-                  </div>
                 </>
               ) : (
                 <>
@@ -323,7 +283,7 @@ export function Agents({
                       </> : <>
                         <h3>Voice server</h3>
                         <div><span>Status</span><Status value={heartbeatFresh ? current.status : "offline"} /></div>
-                        <div><span>Active calls</span><code>{heartbeatFresh ? number(Number(current.telemetry.active_calls || 0)) : "—"} / {current.max_calls}</code></div>
+                        <div><span>Active calls</span><code>{heartbeatFresh ? number(Number(current.telemetry.active_calls || 0)) : "—"}</code></div>
                         <div><span>Last heartbeat</span><code>{current.heartbeat_at ? new Date(current.heartbeat_at).toLocaleString("en-GB", { timeZone: "Asia/Colombo" }) : "Never"}</code></div>
                         <div><span>Configuration</span><code>saved v{current.version} / running {current.deployed_version > 0 ? `v${current.deployed_version}` : "—"}</code></div>
                         <div><span>Health</span><code>{current.telemetry.error ? String(current.telemetry.error) : heartbeatFresh ? "Runtime responding" : "Not responding"}</code></div>
