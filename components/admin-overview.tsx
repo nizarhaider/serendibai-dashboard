@@ -12,9 +12,23 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
     ["Voice agents", customers.reduce((total, customer) => total + customer.agents, 0), "Across all workspaces"],
     ["Connected numbers", connections.filter(connection => connection.status === "connected").length, "WhatsApp lines online"],
   ] as const;
+  const modelUsage = customers.reduce<Record<string, { request_count: number; total_tokens: number; input_tokens: number; output_tokens: number; audio_seconds: number }>>((all, customer) => {
+    for (const [model, usage] of Object.entries(customer.model_usage || {})) {
+      const total = all[model] ??= { request_count: 0, total_tokens: 0, input_tokens: 0, output_tokens: 0, audio_seconds: 0 };
+      total.request_count += Number(usage.request_count) || 0;
+      total.total_tokens += Number(usage.total_tokens) || 0;
+      total.input_tokens += Number(usage.input_tokens) || 0;
+      total.output_tokens += Number(usage.output_tokens) || 0;
+      total.audio_seconds += Number(usage.audio_seconds) || 0;
+    }
+    return all;
+  }, {});
 
   return <div className="admin-overview">
     <div className="admin-totals">{totals.map(([label, count, detail]) => <Card className="panel admin-stat" key={label}><span>{label}</span><strong>{count}</strong><small>{detail}</small></Card>)}</div>
+    <Card component="section" className="panel admin-section"><div className="panel-heading"><div><h2>Model usage</h2><p>{customers.reduce((sum, customer) => sum + customer.call_minutes, 0).toFixed(1)} total call minutes</p></div></div>
+      {Object.entries(modelUsage).length ? Object.entries(modelUsage).map(([model, usage]) => <div className="admin-row" key={model}><div className="admin-row-main"><strong>{model === "gemini-3.8-live" ? "Gemini 3.8 Live" : model === "gemini-3.8-flash-lite-tts" ? "Nishadi TTS · Gemini 3.8 Flash-Lite" : model}</strong><small>{usage.request_count} requests · {usage.total_tokens.toLocaleString()} tokens{usage.audio_seconds ? ` · ${(usage.audio_seconds / 60).toFixed(1)} generated audio min` : ""}</small></div></div>) : <p className="admin-empty">No model usage recorded yet.</p>}
+    </Card>
     <div className="admin-sections">
       <Card component="section" className="panel admin-section admin-workspaces">
         <div className="panel-heading"><div><h2>Customer workspaces</h2><p>Manage access, agents, and call activity.</p></div><Link href="/admin" className="button">Manage customers</Link></div>

@@ -359,7 +359,7 @@ export function Portal({
           ) : section === "dashboard" ? (
             <>
               <div className="call-stats-grid">
-                {[{ label: "Calls placed", count: data.totals.calls }, { label: "Completed", count: data.totals.answered }, { label: "Failed", count: data.totals.failed }].map(({ label, count }) => <Card className="panel call-stat" key={label}><span>{label}</span><strong>{number(count)}</strong></Card>)}
+                {[{ label: "Calls placed", count: data.totals.calls }, { label: "Completed", count: data.totals.answered }, { label: "Failed", count: data.totals.failed }, { label: "Minutes on calls", count: number(data.totals.minutes ?? 0) }].map(({ label, count }) => <Card className="panel call-stat" key={label}><span>{label}</span><strong>{count}</strong></Card>)}
               </div>
               <Card component="section" className="panel conversations-panel">
                 <div className="panel-heading">
