@@ -57,7 +57,7 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
   return <div className="admin-overview">
     <div className="admin-totals">{totals.map(([label, count, detail]) => <Card className="panel admin-stat" key={label}><span>{label}</span><strong>{count}</strong><small>{detail}</small></Card>)}</div>
     <Card component="section" className="panel admin-section admin-pricing">
-      <div className="panel-heading"><div><h2>API pricing</h2><p>{usd(totalCost)} total across {selectedCustomers.reduce((sum, customer) => sum + customer.call_minutes, 0).toLocaleString("en-US", { maximumFractionDigits: 1 })} call minutes</p></div>
+      <div className="panel-heading"><div><h2>API cost estimate</h2><p>{usd(totalCost)} for tracked calls · {selectedCustomers.reduce((sum, customer) => sum + customer.call_minutes, 0).toLocaleString("en-US", { maximumFractionDigits: 1 })} call minutes</p></div>
         <NativeSelect className="admin-workspace-filter" aria-label="Filter API pricing by workspace" value={workspaceId} onChange={event => setWorkspaceId(event.target.value)}>
           <option value="all">All workspaces</option>
           {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}
@@ -67,6 +67,7 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
         <div className="admin-row-main"><strong>{modelName(model)}</strong></div>
         <strong className="admin-price">{cost === null ? "Rate unavailable" : usd(cost)}</strong>
       </div>) : <p className="admin-empty">No model usage recorded for this workspace yet.</p>}
+      <small className="admin-pricing-source">Call telemetry estimate only. <a href="https://aistudio.google.com/spend?project=gen-lang-client-0993167812" target="_blank" rel="noreferrer">View project spend in AI Studio</a> for the total across API keys.</small>
       <details className="admin-pricing-method"><summary>Rates and calculation</summary><div className="admin-pricing-formulas">
         <p><strong>Gemini 3.8 Live</strong><span className="admin-pricing-formula" dangerouslySetInnerHTML={{ __html: liveFormula }} /></p>
         <p><strong>Nishadi TTS</strong><span className="admin-pricing-formula" dangerouslySetInnerHTML={{ __html: ttsFormula }} /></p>
