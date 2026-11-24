@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { mutate as updateSWR } from "swr";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppBar, Avatar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from "@mui/material";
@@ -19,9 +20,13 @@ export function PortalShell({ account, children }: { account: Account; children:
   const [error, setError] = useState("");
   const section = usePathname().split("/")[1];
   useEffect(() => {
+    const warm = async (path: string) => {
+      const data = await apiWithCache(path, account.email);
+      await updateSWR(path, data, { revalidate: false });
+    };
     const sections = pages.map(page => page.href).filter(name => canAccessSection(account, name) && !["outbound", "admin"].includes(name));
-    const tasks: Promise<unknown>[] = sections.map(name => apiWithCache(`data?section=${name}`, account.email));
-    if (canAccessSection(account, "connections")) tasks.push(apiWithCache("connections", account.email));
+    const tasks: Promise<unknown>[] = sections.map(name => warm(`data?section=${name}`));
+    if (canAccessSection(account, "connections")) tasks.push(warm("connections"));
     if (!account.is_admin && !account.read_only && canAccessSection(account, "outbound")) {
       tasks.push(fetch("/api/outbound").then(async response => {
         if (!response.ok) return;
@@ -29,7 +34,7 @@ export function PortalShell({ account, children }: { account: Account; children:
         sessionStorage.setItem(`serendibai:${account.email}:/api/outbound`, JSON.stringify({ time: Date.now(), data }));
       }));
     }
-    if (account.is_admin) tasks.push(apiWithCache("customers", account.email));
+    if (account.is_admin) tasks.push(warm("customers"));
     void Promise.allSettled(tasks);
   }, [account]);
   const nav = pages.filter(page => canAccessSection(account, page.href)).map(page => account.is_admin ? { ...page, group: "Administration" } : page);
