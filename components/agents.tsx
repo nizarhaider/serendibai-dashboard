@@ -121,7 +121,7 @@ export function Agents({
       : current?.status || "draft";
   return (
     <>
-      <label>Workspace <NativeSelect value={workspace} onChange={(event) => { router.push(`/agents${event.target.value ? `?workspace=${event.target.value}` : ""}`); }}><option value="" disabled>Select a customer workspace</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}</NativeSelect></label>
+      <label className="agent-workspace-picker">Workspace <NativeSelect value={workspace} onChange={(event) => { router.push(`/agents${event.target.value ? `?workspace=${event.target.value}` : ""}`); }}><option value="" disabled>Select a customer workspace</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}</NativeSelect></label>
       <div className="agents-toolbar">
         <div className="agent-count">
           <strong>
