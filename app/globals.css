@@ -1182,6 +1182,7 @@ td small {
   color: var(--legacy-muted);
   white-space: nowrap;
 }
+.prompt-editor + .prompt-label { margin-top: 16px; }
 .prompt-editor {
   border: 1px solid #d7ede9;
   border-radius: 9px;
