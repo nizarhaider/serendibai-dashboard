@@ -26,6 +26,7 @@ export type Agent = {
   version: number;
   deployed_version: number;
   heartbeat_at: string | null;
+  active_voice_connection: boolean;
   telemetry: Record<string, number | string>;
   has_credentials: boolean;
   created_at: string;

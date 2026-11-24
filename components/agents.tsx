@@ -114,7 +114,8 @@ export function Agents({
     current?.heartbeat_at &&
     data.generatedAt - new Date(current.heartbeat_at).getTime() < 90000,
   );
-  const runtimeStatus =
+  const activeVoiceConnection = Boolean(current?.active_voice_connection);
+  const runtimeStatus = activeVoiceConnection ? "connected" :
     current?.status === "ready" && !heartbeatFresh
       ? "offline"
       : current?.status || "draft";
@@ -151,7 +152,9 @@ export function Agents({
               </span>
               <Status
                 value={
-                  a.status === "ready" &&
+                  a.active_voice_connection
+                    ? "connected"
+                    : a.status === "ready" &&
                   (!a.heartbeat_at ||
                     data.generatedAt - new Date(a.heartbeat_at).getTime() >
                       90000)
@@ -394,54 +397,18 @@ export function Agents({
                   <details className="settings-disclosure">
                     <summary>Service status</summary>
                     <div className="runtime-details">
-                      <h3>Voice server</h3>
-                      <div>
-                        <span>Status</span>
-                        <Status
-                          value={heartbeatFresh ? current.status : "offline"}
-                        />
-                      </div>
-                      <div>
-                        <span>Active calls</span>
-                        <code>
-                          {heartbeatFresh
-                            ? number(
-                                Number(current.telemetry.active_calls || 0),
-                              )
-                            : "—"}{" "}
-                          / {current.max_calls}
-                        </code>
-                      </div>
-                      <div>
-                        <span>Last heartbeat</span>
-                        <code>
-                          {current.heartbeat_at
-                            ? new Date(current.heartbeat_at).toLocaleString(
-                                "en-GB",
-                                { timeZone: "Asia/Colombo" },
-                              )
-                            : "Never"}
-                        </code>
-                      </div>
-                      <div>
-                        <span>Configuration</span>
-                        <code>
-                          saved v{current.version} / running{" "}
-                          {current.deployed_version > 0
-                            ? `v${current.deployed_version}`
-                            : "—"}
-                        </code>
-                      </div>
-                      <div>
-                        <span>Health</span>
-                        <code>
-                          {current.telemetry.error
-                            ? String(current.telemetry.error)
-                            : heartbeatFresh
-                              ? "Runtime responding"
-                              : "Not responding"}
-                        </code>
-                      </div>
+                      {activeVoiceConnection ? <>
+                        <h3>WhatsApp voice service</h3>
+                        <div><span>Status</span><Status value="connected" /></div>
+                        <div><span>Voice calls</span><code>Enabled while WhatsApp is connected</code></div>
+                      </> : <>
+                        <h3>Voice server</h3>
+                        <div><span>Status</span><Status value={heartbeatFresh ? current.status : "offline"} /></div>
+                        <div><span>Active calls</span><code>{heartbeatFresh ? number(Number(current.telemetry.active_calls || 0)) : "—"} / {current.max_calls}</code></div>
+                        <div><span>Last heartbeat</span><code>{current.heartbeat_at ? new Date(current.heartbeat_at).toLocaleString("en-GB", { timeZone: "Asia/Colombo" }) : "Never"}</code></div>
+                        <div><span>Configuration</span><code>saved v{current.version} / running {current.deployed_version > 0 ? `v${current.deployed_version}` : "—"}</code></div>
+                        <div><span>Health</span><code>{current.telemetry.error ? String(current.telemetry.error) : heartbeatFresh ? "Runtime responding" : "Not responding"}</code></div>
+                      </>}
                     </div>
                   </details>
                   <details className="settings-disclosure">
