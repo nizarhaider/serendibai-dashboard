@@ -2632,6 +2632,7 @@ html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected .MuiListItemIcon
 .MuiChip-outlined.MuiChip-colorDefault { background: var(--portal-raised); color: var(--portal-text); border-color: var(--portal-border); }
 .case-studio h1, .case-studio h2, .case-card h2 { color: var(--portal-text); }
 .berry-main .upload-icon, .berry-main .doc-icon, .berry-main .outbound-file-icon, .berry-main .outbound-symbol, .setup-brand-icon, .workspace-avatar, .user-avatar { background: var(--portal-accent-soft); color: var(--portal-accent); border-color: var(--portal-accent-soft); }
+.berry-main .outbound-upload { background: var(--portal-raised); border-color: var(--portal-border); }
 .berry-main .outbound-upload:hover, .berry-main .outbound-upload.dragging, .berry-main .outbound-upload:focus-within { background: var(--portal-accent-hover); border-color: var(--portal-accent); }
 .berry-auth, .setup-page { background: var(--portal-canvas); color: var(--portal-text); }
 .berry-auth-title.MuiTypography-root, .setup-brand, .setup-page h1, .setup-page h2, .setup-page h3, .case-eyebrow { color: var(--portal-accent); }
