@@ -13,6 +13,8 @@ export async function getCustomers() {
         'total_tokens', sum((bucket->>'total_tokens')::bigint),
         'input_tokens', sum((bucket->>'input_tokens')::bigint),
         'output_tokens', sum((bucket->>'output_tokens')::bigint),
+        'input_audio_tokens', sum((bucket->>'input_audio_tokens')::bigint),
+        'output_audio_tokens', sum((bucket->>'output_audio_tokens')::bigint),
         'audio_seconds', sum((bucket->>'audio_seconds')::numeric)
       ) as totals
       from (
@@ -25,6 +27,8 @@ export async function getCustomers() {
           'total_tokens', coalesce((select sum((request->>'total_token_count')::bigint) from jsonb_array_elements(coalesce(p.usage->'requests', '[]'::jsonb)) request), 0),
           'input_tokens', coalesce((select sum((request->>'prompt_token_count')::bigint) from jsonb_array_elements(coalesce(p.usage->'requests', '[]'::jsonb)) request), 0),
           'output_tokens', coalesce((select sum((request->>'response_token_count')::bigint) from jsonb_array_elements(coalesce(p.usage->'requests', '[]'::jsonb)) request), 0),
+          'input_audio_tokens', coalesce((select sum((detail->>'token_count')::bigint) from jsonb_array_elements(coalesce(p.usage->'requests', '[]'::jsonb)) request cross join lateral jsonb_array_elements(coalesce(request->'prompt_tokens_details', '[]'::jsonb)) detail where detail->>'modality'='AUDIO'), 0),
+          'output_audio_tokens', coalesce((select sum((detail->>'token_count')::bigint) from jsonb_array_elements(coalesce(p.usage->'requests', '[]'::jsonb)) request cross join lateral jsonb_array_elements(coalesce(request->'response_tokens_details', '[]'::jsonb)) detail where detail->>'modality'='AUDIO'), 0),
           'audio_seconds', 0
         )
         from portal_calls p where p.customer_id=c.id and p.usage->>'provider'='google_gemini_live'

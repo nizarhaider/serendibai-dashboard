@@ -2660,6 +2660,12 @@ html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected .MuiListItemIcon
 .admin-row-main { min-width: 0; display: grid; gap: 6px; }
 .admin-row-main strong { overflow-wrap: anywhere; color: var(--portal-text); font-size: 13px; font-weight: 600; }
 .admin-row-main small { color: var(--portal-muted); font-size: 11px; line-height: 1.5; }
+.admin-pricing .panel-heading { align-items: center; }
+.admin-pricing .MuiInputBase-root { min-width: 220px; }
+.admin-price { color: var(--portal-text); font-size: 15px; white-space: nowrap; }
+.admin-pricing-method { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--portal-border); color: var(--portal-muted); font-size: 11px; }
+.admin-pricing-method summary { width: fit-content; cursor: pointer; color: var(--portal-text); font-weight: 600; }
+.admin-pricing-method p { margin: 10px 0 0; line-height: 1.6; }
 .admin-row-main small span { color: var(--portal-accent); padding: 0 2px; }
 .admin-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .admin-row-action { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px; border: 1px solid var(--portal-border); border-radius: 8px; color: var(--portal-accent); background: var(--portal-raised); font-size: 11px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color 140ms ease,border-color 140ms ease,color 140ms ease; }
