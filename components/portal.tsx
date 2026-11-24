@@ -32,10 +32,15 @@ import { AdminOverview } from "./admin-overview";
 
 const cacheAge = 60_000;
 const cacheKey = (scope: string, path: string) => `serendibai:${scope}:${path}`;
+const memoryCache = new Map<string, { time: number; data: unknown }>();
 const pending = new Map<string, Promise<unknown>>();
 export function cachedApi<T>(path: string, scope: string): T | undefined {
+  const key = cacheKey(scope, path);
+  const memory = memoryCache.get(key);
+  if (memory && Date.now() - memory.time < cacheAge) return memory.data as T;
   try {
-    const value = JSON.parse(sessionStorage.getItem(cacheKey(scope, path)) || "null");
+    const value = JSON.parse(sessionStorage.getItem(key) || "null");
+    if (value && Date.now() - value.time < cacheAge) memoryCache.set(key, value);
     return value && Date.now() - value.time < cacheAge ? value.data as T : undefined;
   } catch { return undefined; }
 }
@@ -68,12 +73,15 @@ export async function api(path: string, method = "GET", body?: unknown, cacheSco
   const result = await response.json();
   if (!response.ok) throw Error(result.error || "Request failed.");
   if (method === "GET" && cacheScope && typeof window !== "undefined") {
-    try { sessionStorage.setItem(cacheKey(cacheScope, path), JSON.stringify({ time: Date.now(), data: result })); } catch {}
+    const value = { time: Date.now(), data: result };
+    memoryCache.set(cacheKey(cacheScope, path), value);
+    try { sessionStorage.setItem(cacheKey(cacheScope, path), JSON.stringify(value)); } catch {}
   }
   if (method !== "GET" && typeof window !== "undefined") {
     const current = window.location.pathname.slice(1);
     void updateCache(key => typeof key === "string" && key.startsWith("data?") && !key.startsWith(`data?section=${current}&`) && key !== `data?section=${current}`, undefined, { revalidate: false });
     if (path.startsWith("customers")) void updateCache("customers");
+    memoryCache.clear();
     for (const key of Object.keys(sessionStorage)) if (key.startsWith("serendibai:")) sessionStorage.removeItem(key);
   }
   return result;
