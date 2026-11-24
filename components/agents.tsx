@@ -516,7 +516,7 @@ export function Agents({
       {newOpen && (
         <Modal title="Create a voice agent" onClose={() => setNewOpen(false)}>
           <form
-            className="modal-content form-stack"
+            className="modal-content form-stack agent-create-form"
             onSubmit={async (e) => {
               e.preventDefault();
               setBusy("new");
@@ -550,9 +550,7 @@ export function Agents({
               }
             }}
           >
-            <p className="muted">
-              Set the agent and company names. You can add instructions next.
-            </p>
+            <p className="muted">Name your agent and company.</p>
             <label>
               Agent name
               <Input
@@ -579,7 +577,6 @@ export function Agents({
               {busy === "new" ? "Creating…" : "Create agent"}
               <ChevronRight size={16} />
             </Button>
-            <small>Start the voice server with ./deploy.sh --env local.</small>
           </form>
         </Modal>
       )}

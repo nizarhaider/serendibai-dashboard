@@ -2751,3 +2751,22 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .workspace-skeleton .MuiSkeleton-text::after, .outbound-loading-skeleton .MuiSkeleton-rounded::after { background:linear-gradient(90deg,transparent, color-mix(in srgb,var(--portal-muted) 8%,transparent),transparent); }
 .outbound-loading-skeleton { display:grid; gap:16px; padding:10px 4px; }
 @media(max-width:650px){.skeleton-stats{gap:8px}.skeleton-heading .MuiSkeleton-root:first-child{max-width:150px}}
+
+.MuiDialog-paper:has(.agent-create-form) { background: var(--portal-surface); color: var(--portal-text); border: 1px solid var(--portal-border); border-radius: 14px; }
+.MuiDialog-paper:has(.agent-create-form) .MuiDialogTitle-root { padding: 22px 24px 18px; color: var(--portal-text); font-size: 19px; font-weight: 650; }
+.MuiDialog-paper:has(.agent-create-form) .MuiDialogContent-root { padding: 20px 24px 24px; border-color: var(--portal-border); }
+.agent-create-form { gap: 18px; }
+.agent-create-form > p { margin: 0 0 2px; color: var(--portal-muted); }
+.agent-create-form > label { display: grid; gap: 8px; color: var(--portal-text); font-size: 13px; font-weight: 600; }
+.agent-create-form .MuiOutlinedInput-root { min-height: 48px; background: var(--portal-raised); color: var(--portal-text); border-radius: 9px; }
+.agent-create-form .MuiOutlinedInput-notchedOutline { border-color: var(--portal-border); }
+.agent-create-form .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline { border-color: var(--portal-muted); }
+.agent-create-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--portal-accent); }
+.agent-create-form .MuiOutlinedInput-input { color: var(--portal-text); }
+.agent-create-form .MuiOutlinedInput-input::placeholder { color: var(--portal-muted); opacity: 1; }
+.agent-create-form > .button { align-self: flex-end; min-width: 160px; }
+@media (max-width: 600px) {
+  .MuiDialog-paper:has(.agent-create-form) .MuiDialogTitle-root { padding: 18px 18px 14px; }
+  .MuiDialog-paper:has(.agent-create-form) .MuiDialogContent-root { padding: 18px; }
+  .agent-create-form > .button { width: 100%; }
+}
