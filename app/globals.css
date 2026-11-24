@@ -2722,3 +2722,4 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .call-stat strong { font-size:28px; line-height:1.1; }
 .berry-main .client-calls .transcript { background:var(--portal-raised); color:var(--portal-text); border:1px solid var(--portal-border); border-radius:8px; padding:14px; }
 @media(max-width:650px){.call-stats-grid{gap:8px}.call-stat.MuiPaper-root{padding:14px 12px}.call-stat strong{font-size:22px}}
+.berry-main .count { background: var(--portal-raised); color: var(--portal-muted); }
