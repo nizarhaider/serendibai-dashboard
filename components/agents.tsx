@@ -193,7 +193,7 @@ export function Agents({
                   <div className="prompt-editor">
                     <Textarea
                       id="agent-greeting"
-                      rows={3}
+                      rows={2}
                       value={edit.greeting}
                       required
                       maxLength={1500}
@@ -207,7 +207,7 @@ export function Agents({
                   <div className="prompt-editor">
                     <Textarea
                       id="system-prompt"
-                      rows={12}
+                      rows={6}
                       value={edit.system_prompt}
                       required
                       maxLength={30000}
@@ -473,7 +473,7 @@ export function Agents({
               Opening greeting
               <Textarea
                 autoFocus
-                rows={3}
+                rows={2}
                 value={newGreeting}
                 onChange={(e) => setNewGreeting(e.target.value)}
                 required
@@ -483,7 +483,7 @@ export function Agents({
             <label>
               System prompt &amp; instructions
               <Textarea
-                rows={10}
+                rows={6}
                 value={newPrompt}
                 onChange={(e) => setNewPrompt(e.target.value)}
                 required

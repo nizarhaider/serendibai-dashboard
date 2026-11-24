@@ -1189,15 +1189,16 @@ td small {
   border: 0;
   background: #fcfefe;
   border-radius: 0;
-  padding: 18px;
+  padding: 12px 14px;
   font-family: var(--font-mono), monospace;
   font-size: 12px;
-  line-height: 1.9;
-  min-height: 300px;
-  max-height: 500px;
+  line-height: 1.55;
+  min-height: 0;
+  max-height: 240px;
   color: var(--legacy-muted);
   box-shadow: none;
 }
+.prompt-editor:has(#agent-greeting) > textarea { max-height: 100px; }
 .tool-options {
   display: flex;
   flex-direction: column;
@@ -1730,11 +1731,7 @@ td small {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  .prompt-editor > textarea {
-    font-size: 11px;
-    min-height: 260px;
-    padding: 12px;
-  }
+  .prompt-editor > textarea { font-size: 11px; padding: 10px 12px; }
   .tool-option {
     padding: 13px;
     gap: 10px;
