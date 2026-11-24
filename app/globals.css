@@ -1173,11 +1173,14 @@ td small {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 9px;
 }
 .prompt-label span {
+  flex-shrink: 0;
   font-size: 11px;
   color: var(--legacy-muted);
+  white-space: nowrap;
 }
 .prompt-editor {
   border: 1px solid #d7ede9;
