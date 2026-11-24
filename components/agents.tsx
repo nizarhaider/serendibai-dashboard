@@ -30,6 +30,7 @@ const defaultAgent = () => ({
   company_url: "",
   greeting: "",
   system_prompt: "",
+  text_reply_instructions: "",
   voice: "Aoede",
   languages: ["English", "Sinhala", "Tamil"],
   tools: [...standardTools, ...toolNames],
@@ -62,6 +63,7 @@ export function Agents({
     [newOpen, setNewOpen] = useState(false),
     [newGreeting, setNewGreeting] = useState(""),
     [newPrompt, setNewPrompt] = useState(""),
+    [newTextReplyInstructions, setNewTextReplyInstructions] = useState(""),
     [confirm, setConfirm] = useState(false),
     [secrets, setSecrets] = useState<Record<string, string>>({});
   const current = data.agents.find((a) => a.id === selected);
@@ -200,7 +202,7 @@ export function Agents({
                     />
                   </div>
                   <div className="prompt-label">
-                    <label htmlFor="system-prompt">System prompt &amp; instructions</label>
+                    <label htmlFor="system-prompt">Call system prompt &amp; instructions</label>
                     <span>{number(edit.system_prompt.length)} characters</span>
                   </div>
                   <div className="prompt-editor">
@@ -210,9 +212,20 @@ export function Agents({
                       value={edit.system_prompt}
                       required
                       maxLength={30000}
-                      onChange={(e) =>
-                        setEdit({ ...edit, system_prompt: e.target.value })
-                      }
+                      onChange={(e) => setEdit({ ...edit, system_prompt: e.target.value })}
+                    />
+                  </div>
+                  <div className="prompt-label">
+                    <label htmlFor="text-reply-instructions">Text reply instructions</label>
+                    <span>{number(edit.text_reply_instructions.length)} characters</span>
+                  </div>
+                  <div className="prompt-editor">
+                    <Textarea
+                      id="text-reply-instructions"
+                      rows={4}
+                      value={edit.text_reply_instructions}
+                      maxLength={30000}
+                      onChange={(e) => setEdit({ ...edit, text_reply_instructions: e.target.value })}
                     />
                   </div>
                 </>
@@ -383,7 +396,7 @@ export function Agents({
           <Card component="section" className="panel empty agent-empty">
             <AudioLines size={40} />
             <h2>Create your first voice agent</h2>
-            <p>Add the greeting and system prompt for your agent.</p>
+            <p>Add instructions for calls and text replies.</p>
             <Button variant="ghost" className="button primary" disabled={!workspace} onClick={() => setNewOpen(true)}>
               <Plus size={17} /> Create voice agent
             </Button>
@@ -412,6 +425,7 @@ export function Agents({
                   company_name: companyName,
                   greeting: newGreeting.trim(),
                   system_prompt: newPrompt.trim(),
+                  text_reply_instructions: newTextReplyInstructions.trim(),
                 };
                 const result = await api(`agents?workspace=${workspace}`, "POST", values);
                 await refresh();
@@ -421,6 +435,7 @@ export function Agents({
                 setNewOpen(false);
                 setNewGreeting("");
                 setNewPrompt("");
+                setNewTextReplyInstructions("");
                 notify("Agent created.");
               } catch (e) {
                 setError((e as Error).message);
@@ -441,12 +456,21 @@ export function Agents({
               />
             </label>
             <label>
-              System prompt &amp; instructions
+              Call system prompt &amp; instructions
               <Textarea
                 rows={6}
                 value={newPrompt}
                 onChange={(e) => setNewPrompt(e.target.value)}
                 required
+                maxLength={30000}
+              />
+            </label>
+            <label>
+              Text reply instructions
+              <Textarea
+                rows={4}
+                value={newTextReplyInstructions}
+                onChange={(e) => setNewTextReplyInstructions(e.target.value)}
                 maxLength={30000}
               />
             </label>

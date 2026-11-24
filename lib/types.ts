@@ -18,6 +18,7 @@ export type Agent = {
   company_url: string;
   greeting: string;
   system_prompt: string;
+  text_reply_instructions: string;
   voice: string;
   languages: string[];
   tools: string[];
