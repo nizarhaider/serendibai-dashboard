@@ -32,6 +32,7 @@ import { AdminOverview } from "./admin-overview";
 
 const cacheAge = 60_000;
 const cacheKey = (scope: string, path: string) => `serendibai:${scope}:${path}`;
+const pending = new Map<string, Promise<unknown>>();
 export function cachedApi<T>(path: string, scope: string): T | undefined {
   try {
     const value = JSON.parse(sessionStorage.getItem(cacheKey(scope, path)) || "null");
@@ -39,7 +40,15 @@ export function cachedApi<T>(path: string, scope: string): T | undefined {
   } catch { return undefined; }
 }
 export function apiWithCache<T>(path: string, scope: string) {
-  return Promise.resolve(cachedApi<T>(path, scope) ?? api(path, "GET", undefined, scope));
+  const cached = cachedApi<T>(path, scope);
+  if (cached !== undefined) return Promise.resolve(cached);
+  const key = cacheKey(scope, path);
+  const existing = pending.get(key) as Promise<T> | undefined;
+  if (existing) return existing;
+  const request = api(path, "GET", undefined, scope) as Promise<T>;
+  pending.set(key, request);
+  void request.then(() => pending.delete(key), () => pending.delete(key));
+  return request;
 }
 
 export async function api(path: string, method = "GET", body?: unknown, cacheScope?: string) {
@@ -390,13 +399,13 @@ export function Portal({
               </Card>
             </>
           ) : section === "connections" ? (
-            <Connections agents={data.agents} />
+            <Connections agents={data.agents} cacheScope={data.email} />
           ) : section === "admin" ? (
             <Customers key={JSON.stringify(initialCustomers)} initial={initialCustomers} />
           ) : section === "agents" ? (
             <Agents data={data} refresh={refresh} notify={notify} customers={initialCustomers} workspace={workspace} />
           ) : section === "outbound" ? (
-            <Outbound />
+            <Outbound cacheScope={data.email} />
           ) : section === "appointments" ? (
             <Appointments data={data} refresh={refresh} />
           ) : section === "orders" ? (

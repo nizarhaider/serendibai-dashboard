@@ -21,12 +21,23 @@ const retryStates = ["failed", "declined", "expired"];
 const assessEnglish = "__assess_english";
 const date = (value: string) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Colombo" }).format(new Date(value));
 
-async function request(path = "", init?: RequestInit) {
+async function request(path = "", init?: RequestInit, cacheScope?: string, useCache = true) {
+  const cacheKey = `serendibai:${cacheScope}:/api/outbound${path}`;
+  if (!init && cacheScope && useCache) {
+    try {
+      const cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
+      if (cached && Date.now() - cached.time < 60_000) return cached.data;
+    } catch {}
+  }
   const response = await fetch(`/api/outbound${path}`, init);
   if (response.status === 401) throw Error("Your session has expired. Sign in again to continue.");
   const result = await response.json();
   if (!response.ok) throw Error(result.error || "Something went wrong. Please try again.");
+  if (!init && cacheScope) {
+    try { sessionStorage.setItem(cacheKey, JSON.stringify({ time: Date.now(), data: result })); } catch {}
+  }
   if (init?.method === "POST") void mutate(key => typeof key === "string" && key.startsWith("data?section=dashboard"), undefined, { revalidate: false });
+  if (init?.method === "POST" && cacheScope) for (const key of Object.keys(sessionStorage)) if (key.startsWith(`serendibai:${cacheScope}:/api/outbound`)) sessionStorage.removeItem(key);
   return result;
 }
 
@@ -42,7 +53,7 @@ function callProgress(row: Row) {
   return "Not called";
 }
 
-export function Outbound() {
+export function Outbound({ cacheScope }: { cacheScope: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
@@ -66,16 +77,16 @@ export function Outbound() {
 
   const loadList = useCallback(async (id: string) => {
     const version = ++selection.current;
-    const result = await request(`?id=${id}`);
+    const result = await request(`?id=${id}`, undefined, cacheScope);
     if (version !== selection.current) return;
     setBatch(result.batch);
     setRows(result.rows);
     window.history.replaceState(null, "", `/outbound?list=${id}`);
-  }, []);
+  }, [cacheScope]);
 
   useEffect(() => {
     let mounted = true;
-    request().then(async (lists: SavedList[]) => {
+    request("", undefined, cacheScope).then(async (lists: SavedList[]) => {
       if (!mounted) return;
       setBatches(lists);
       const requested = new URLSearchParams(window.location.search).get("list");
@@ -85,7 +96,7 @@ export function Outbound() {
     }).catch(e => { if (mounted) setError(e.message); })
       .finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
-  }, [loadList]);
+  }, [loadList, cacheScope]);
 
   useEffect(() => {
     if (!batchId || !watching) return;
@@ -93,11 +104,11 @@ export function Outbound() {
     let timer: ReturnType<typeof setTimeout>;
     async function poll() {
       try {
-        const result = await request(`?id=${batchId}`, { signal: controller.signal });
+        const result = await request(`?id=${batchId}`, { signal: controller.signal }, cacheScope, false);
         for (const row of result.rows.filter((row: Row) => row.state === "completed" && !row.result)) {
-          await request(`?id=${batchId}&action=result`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: row.id }), signal: controller.signal });
+          await request(`?id=${batchId}&action=result`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: row.id }), signal: controller.signal }, cacheScope);
         }
-        const latest = result.rows.some((row: Row) => row.state === "completed" && !row.result) ? await request(`?id=${batchId}`, { signal: controller.signal }) : result;
+        const latest = result.rows.some((row: Row) => row.state === "completed" && !row.result) ? await request(`?id=${batchId}`, { signal: controller.signal }, cacheScope, false) : result;
         if (!controller.signal.aborted) { setRows(latest.rows); setLiveError(false); }
       } catch {
         if (!controller.signal.aborted) setLiveError(true);
@@ -107,7 +118,7 @@ export function Outbound() {
     }
     timer = setTimeout(poll, 4000);
     return () => { controller.abort(); clearTimeout(timer); };
-  }, [batchId, watching]);
+  }, [batchId, watching, cacheScope]);
 
   async function selectFile(next?: File) {
     if (!next) return;
@@ -141,8 +152,8 @@ export function Outbound() {
       form.set("max_retries", String(maxRetries));
       form.set("retry_days", String(retryDays));
       selectedColumns.forEach(column => form.append("validate_column", column));
-      const result = await request("", { method: "POST", body: form });
-      setBatches(await request());
+      const result = await request("", { method: "POST", body: form }, cacheScope);
+      setBatches(await request("", undefined, cacheScope));
       await loadList(result.id);
       setShowForm(false); setFile(null); setPreview(null); setSelectedColumns([]);
     } catch (e) { setError((e as Error).message); }
@@ -156,7 +167,7 @@ export function Outbound() {
     setProgress({ done: 0, total: selected.length }); setError("");
     try {
       for (const [index, row] of selected.entries()) {
-        await request(`?id=${batch.id}&action=call`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: row.id }) });
+        await request(`?id=${batch.id}&action=call`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ row_id: row.id }) }, cacheScope);
         setProgress({ done: index + 1, total: selected.length });
         await loadList(batch.id);
       }

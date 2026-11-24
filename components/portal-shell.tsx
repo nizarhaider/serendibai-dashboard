@@ -1,13 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppBar, Avatar, Box, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from "@mui/material";
 import { AudioLines, LogOut, Menu, X } from "lucide-react";
 import { canAccessSection } from "@/lib/permissions";
 import type { PortalData } from "@/lib/types";
-import { api, pages } from "./portal";
+import { api, apiWithCache, pages } from "./portal";
 
 type Account = Pick<PortalData, "business_name" | "display_name" | "email" | "is_admin" | "read_only" | "allowed_tools">;
 
@@ -18,6 +18,25 @@ export function PortalShell({ account, children }: { account: Account; children:
   const [mobile, setMobile] = useState(false);
   const [error, setError] = useState("");
   const section = usePathname().split("/")[1];
+  useEffect(() => {
+    let stopped = false;
+    async function warmWorkspace() {
+      const sections = pages.map(page => page.href).filter(name => canAccessSection(account, name) && !["outbound", "connections", "admin"].includes(name));
+      const tasks: Promise<unknown>[] = sections.map(name => apiWithCache(`data?section=${name}`, account.email));
+      if (canAccessSection(account, "connections")) tasks.push(apiWithCache("connections", account.email));
+      if (!account.is_admin && !account.read_only && canAccessSection(account, "outbound")) {
+        tasks.push(fetch("/api/outbound").then(async response => {
+          if (!response.ok) return;
+          const data = await response.json();
+          sessionStorage.setItem(`serendibai:${account.email}:/api/outbound`, JSON.stringify({ time: Date.now(), data }));
+        }));
+      }
+      if (account.is_admin) tasks.push(apiWithCache("customers", account.email));
+      for (let i = 0; i < tasks.length && !stopped; i += 4) await Promise.allSettled(tasks.slice(i, i + 4));
+    }
+    void warmWorkspace();
+    return () => { stopped = true; };
+  }, [account]);
   const nav = pages.filter(page => canAccessSection(account, page.href)).map(page => account.is_admin ? { ...page, group: "Administration" } : page);
   const page = pages.find(item => item.href === section);
   const title = section === "dashboard" && account.read_only ? "Call history" : page?.label || "Workspace";

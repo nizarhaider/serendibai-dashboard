@@ -7,7 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, AudioLines, Check, LoaderCircle, Plus, Trash2 } from "lucide-react";
 import type { Agent } from "@/lib/types";
-import { api } from "./portal";
+import { api, apiWithCache, cachedApi } from "./portal";
 import { Button } from "./ui/button";
 import { NativeSelect } from "./ui/native-select";
 import { Switch } from "./ui/switch";
@@ -67,8 +67,8 @@ function Setup({ agents, businessName, standalone, onDone, initial }: { agents: 
 
 export function Onboarding({ agents, businessName }: { agents: Agent[]; businessName?: string; standalone?: boolean }) { return <Setup agents={agents} businessName={businessName} standalone />; }
 
-export function Connections({ agents }: { agents: Agent[] }) {
-  const { data: links = [], error: loadError, isLoading, mutate } = useSWR<Connection[]>("connections", api, { revalidateIfStale: false, shouldRetryOnError: false });
+export function Connections({ agents, cacheScope }: { agents: Agent[]; cacheScope: string }) {
+  const { data: links = [], error: loadError, isLoading, mutate } = useSWR<Connection[]>("connections", path => apiWithCache<Connection[]>(path, cacheScope), { fallbackData: cachedApi<Connection[]>("connections", cacheScope), revalidateIfStale: false, revalidateOnMount: true, shouldRetryOnError: false });
   const [adding, setAdding] = useState(false);
   const [selected, setSelected] = useState<Connection>();
   const [busy, setBusy] = useState("");
