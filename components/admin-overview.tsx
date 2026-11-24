@@ -1,6 +1,7 @@
 "use client";
 
 import Card from "@mui/material/Card";
+import katex from "katex";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
@@ -50,6 +51,8 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
   const totalCost = pricing.reduce((total, row) => total + (row.cost ?? 0), 0);
   const usd = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount > 0 ? Math.ceil((amount - Number.EPSILON) * 100) / 100 : amount);
   const modelName = (model: string) => model === "gemini-3.8-live" ? "Gemini 3.8 Live" : model === "gemini-3.8-flash-lite-tts" ? "Nishadi TTS · Gemini 3.8 Flash-Lite" : model;
+  const liveFormula = katex.renderToString(String.raw`C_{\mathrm{Live}} = \frac{0.75T_{\mathrm{in}} + 3A_{\mathrm{in}} + 4.50T_{\mathrm{out}} + 12A_{\mathrm{out}}}{10^6}`, { throwOnError: false });
+  const ttsFormula = katex.renderToString(String.raw`C_{\mathrm{TTS}} = \frac{${ttsInputRate.toFixed(2)}T_{\mathrm{in}} + ${ttsAudioRate.toFixed(2)}A_{\mathrm{out}}}{10^6}`, { throwOnError: false });
 
   return <div className="admin-overview">
     <div className="admin-totals">{totals.map(([label, count, detail]) => <Card className="panel admin-stat" key={label}><span>{label}</span><strong>{count}</strong><small>{detail}</small></Card>)}</div>
@@ -65,8 +68,8 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
         <strong className="admin-price">{cost === null ? "Rate unavailable" : usd(cost)}</strong>
       </div>) : <p className="admin-empty">No model usage recorded for this workspace yet.</p>}
       <details className="admin-pricing-method"><summary>Rates and calculation</summary><div className="admin-pricing-formulas">
-        <p><strong>Gemini 3.8 Live</strong><code>cost = (text in × $0.75 + audio in × $3 + text out × $4.50 + audio out × $12) ÷ 1,000,000</code></p>
-        <p><strong>Nishadi TTS</strong><code>{`cost = (text in × $${ttsInputRate.toFixed(2)} + audio out × $${ttsAudioRate.toFixed(2)}) ÷ 1,000,000`}</code></p>
+        <p><strong>Gemini 3.8 Live</strong><span className="admin-pricing-formula" dangerouslySetInnerHTML={{ __html: liveFormula }} /></p>
+        <p><strong>Nishadi TTS</strong><span className="admin-pricing-formula" dangerouslySetInnerHTML={{ __html: ttsFormula }} /></p>
         <small>Rates are USD per million tokens. Audio is 25 tokens/second: Live input ≈ $0.005/min and output ≈ $0.018/min; TTS output ≈ {usd(ttsAudioRate * 1_500 / 1_000_000)}/min. Free-tier traffic is $0.</small>
       </div></details>
     </Card>
