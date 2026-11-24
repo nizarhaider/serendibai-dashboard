@@ -2635,8 +2635,8 @@ html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected .MuiListItemIcon
 .berry-main .outbound-upload:hover, .berry-main .outbound-upload.dragging, .berry-main .outbound-upload:focus-within { background: var(--portal-accent-hover); border-color: var(--portal-accent); }
 .berry-auth, .setup-page { background: var(--portal-canvas); color: var(--portal-text); }
 .berry-auth-title.MuiTypography-root, .setup-brand, .setup-page h1, .setup-page h2, .setup-page h3, .case-eyebrow { color: var(--portal-accent); }
-.berry-auth .MuiOutlinedInput-root, .berry-auth input, .invite-card input, .invite-card .MuiOutlinedInput-root, .setup-select-label select, .message-settings textarea { background: var(--portal-surface); color: var(--portal-text); border-color: var(--portal-border); }
-.berry-auth input::placeholder, .invite-card input::placeholder, .setup-page p, .setup-page label, .setup-page small { color: var(--portal-muted); }
+.berry-auth .MuiOutlinedInput-root, .berry-auth input:not([type="checkbox"], .sr-only), .invite-card input, .invite-card .MuiOutlinedInput-root, .setup-select-label select, .message-settings textarea { background: var(--portal-surface); color: var(--portal-text); border-color: var(--portal-border); }
+.berry-auth label, .berry-auth input::placeholder, .invite-card input::placeholder, .setup-page p, .setup-page label, .setup-page small { color: var(--portal-muted); }
 .invite-card, .setup-stepper, .setup-action-card, .setup-aside, .message-settings, .case-card, .case-form { background: var(--portal-surface); color: var(--portal-text); border-color: var(--portal-border); }
 .case-card .case-hint { background: var(--portal-accent-soft); color: var(--portal-text); }
 .case-tabs button:not([aria-pressed="true"]), .case-reset.MuiButton-root { background: var(--portal-raised); color: var(--portal-text); border-color: var(--portal-border); }
