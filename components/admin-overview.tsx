@@ -66,8 +66,8 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
       </div>) : <p className="admin-empty">No model usage recorded for this workspace yet.</p>}
       <details className="admin-pricing-method"><summary>Rates and calculation</summary><div className="admin-pricing-formulas">
         <p><strong>Gemini 3.8 Live</strong><code>cost = (text in × $0.75 + audio in × $3 + text out × $4.50 + audio out × $12) ÷ 1,000,000</code></p>
-        <p><strong>Nishadi TTS</strong><code>cost = (text in × ${ttsInputRate} + audio out × ${ttsAudioRate}) ÷ 1,000,000</code></p>
-        <small>Rates are USD per million tokens. Audio is 25 tokens/second: Live input ≈ $0.005/min and output ≈ $0.018/min; TTS output ≈ ${usd(ttsAudioRate * 1_500 / 1_000_000)}/min. Free-tier traffic is $0.</small>
+        <p><strong>Nishadi TTS</strong><code>{`cost = (text in × $${ttsInputRate.toFixed(2)} + audio out × $${ttsAudioRate.toFixed(2)}) ÷ 1,000,000`}</code></p>
+        <small>Rates are USD per million tokens. Audio is 25 tokens/second: Live input ≈ $0.005/min and output ≈ $0.018/min; TTS output ≈ {usd(ttsAudioRate * 1_500 / 1_000_000)}/min. Free-tier traffic is $0.</small>
       </div></details>
     </Card>
     <div className="admin-sections">
