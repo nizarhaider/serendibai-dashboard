@@ -2,6 +2,7 @@
 import Checkbox from "@mui/material/Checkbox";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@mui/material";
 import Card from "@mui/material/Card";
+import Skeleton from "@mui/material/Skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -179,7 +180,7 @@ export function Outbound() {
       <label className="outbound-list-picker"><span>Saved call lists</span><NativeSelect value={batch?.id || ""} disabled={!!busy || loading} onChange={e => void chooseList(e.target.value)}><option value="" disabled>Select a list</option>{batches.map(item => <option key={item.id} value={item.id}>{item.name} · {date(item.created_at)}</option>)}</NativeSelect></label>
       <Button variant="ghost" className="button" disabled={!!busy || loading} onClick={() => { setShowForm(true); setMaxRetries(0); setRetryDays(1); setError(""); }}><Plus size={16} /> New list</Button>
     </div>}
-    {loading ? <div className="outbound-loading" role="status"><Loader2 className="outbound-spin" size={22} /> Loading your call lists…</div> : showForm || !batch ? <Card component="section" className="outbound-card outbound-setup">
+    {loading ? <div className="outbound-loading-skeleton" role="status" aria-label="Loading call lists"><Skeleton variant="rounded" height={150} /><Skeleton variant="rounded" height={46} /></div> : showForm || !batch ? <Card component="section" className="outbound-card outbound-setup">
       <div className="outbound-card-heading"><div className="outbound-symbol"><Phone size={21} /></div><div><h2>Upload a call list</h2></div>{batch && <Button variant="ghost" className="icon-button" aria-label="Close new list" disabled={!!busy} onClick={() => setShowForm(false)}><X size={18} /></Button>}</div>
       <form onSubmit={create}>
         <label className={`outbound-upload ${dragging ? "dragging" : ""} ${file ? "has-file" : ""}`} onDragOver={e => { e.preventDefault(); if (!busy) setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={e => { e.preventDefault(); setDragging(false); if (!busy) void selectFile(e.dataTransfer.files[0]); }}>

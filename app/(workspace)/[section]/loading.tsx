@@ -1,3 +1,5 @@
+import { WorkspaceSkeleton } from "@/components/portal";
+
 export default function Loading() {
-  return <div className="workspace-message" role="status">Loading page…</div>;
+  return <WorkspaceSkeleton section="workspace" />;
 }

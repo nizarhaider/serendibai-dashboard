@@ -2723,3 +2723,10 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .berry-main .client-calls .transcript { background:var(--portal-raised); color:var(--portal-text); border:1px solid var(--portal-border); border-radius:8px; padding:14px; }
 @media(max-width:650px){.call-stats-grid{gap:8px}.call-stat.MuiPaper-root{padding:14px 12px}.call-stat strong{font-size:22px}}
 .berry-main .count { background: var(--portal-raised); color: var(--portal-muted); }
+.workspace-skeleton { display:grid; gap:18px; padding-top:2px; }
+.skeleton-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.skeleton-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.workspace-skeleton .MuiSkeleton-root, .outbound-loading-skeleton .MuiSkeleton-root { background:color-mix(in srgb,var(--portal-muted) 13%,var(--portal-surface)); }
+.workspace-skeleton .MuiSkeleton-text::after, .outbound-loading-skeleton .MuiSkeleton-rounded::after { background:linear-gradient(90deg,transparent, color-mix(in srgb,var(--portal-muted) 8%,transparent),transparent); }
+.outbound-loading-skeleton { display:grid; gap:16px; padding:10px 4px; }
+@media(max-width:650px){.skeleton-stats{gap:8px}.skeleton-heading .MuiSkeleton-root:first-child{max-width:150px}}

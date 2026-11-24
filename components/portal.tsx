@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { useCallback, useState, useRef } from "react";
-import { Card, Chip, Dialog, DialogContent, DialogTitle, IconButton } from "@mui/material";
+import { Card, Chip, Dialog, DialogContent, DialogTitle, IconButton, Skeleton } from "@mui/material";
 import { mutate as updateCache, useSWRConfig } from "swr";
 import {
   AudioLines,
@@ -30,7 +30,19 @@ import { Outbound } from "./outbound";
 import { Connections } from "./onboarding";
 import { AdminOverview } from "./admin-overview";
 
-export async function api(path: string, method = "GET", body?: unknown) {
+const cacheAge = 60_000;
+const cacheKey = (scope: string, path: string) => `serendibai:${scope}:${path}`;
+export function cachedApi<T>(path: string, scope: string): T | undefined {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(cacheKey(scope, path)) || "null");
+    return value && Date.now() - value.time < cacheAge ? value.data as T : undefined;
+  } catch { return undefined; }
+}
+export function apiWithCache<T>(path: string, scope: string) {
+  return Promise.resolve(cachedApi<T>(path, scope) ?? api(path, "GET", undefined, scope));
+}
+
+export async function api(path: string, method = "GET", body?: unknown, cacheScope?: string) {
   const response = await fetch(`/api/portal/${path}`, {
     method,
     headers:
@@ -46,12 +58,23 @@ export async function api(path: string, method = "GET", body?: unknown) {
   }
   const result = await response.json();
   if (!response.ok) throw Error(result.error || "Request failed.");
+  if (method === "GET" && cacheScope && typeof window !== "undefined") {
+    try { sessionStorage.setItem(cacheKey(cacheScope, path), JSON.stringify({ time: Date.now(), data: result })); } catch {}
+  }
   if (method !== "GET" && typeof window !== "undefined") {
     const current = window.location.pathname.slice(1);
     void updateCache(key => typeof key === "string" && key.startsWith("data?") && !key.startsWith(`data?section=${current}&`) && key !== `data?section=${current}`, undefined, { revalidate: false });
     if (path.startsWith("customers")) void updateCache("customers");
+    for (const key of Object.keys(sessionStorage)) if (key.startsWith("serendibai:")) sessionStorage.removeItem(key);
   }
   return result;
+}
+
+export function WorkspaceSkeleton({ section }: { section: string }) {
+  return <div className="workspace-skeleton" aria-label={`Loading ${section}`} role="status">
+    <div className="skeleton-heading"><div><Skeleton variant="text" width={190} height={38} /><Skeleton variant="text" width={290} /></div><Skeleton variant="rounded" width={90} height={38} /></div>
+    {section === "dashboard" ? <><div className="skeleton-stats">{[1, 2, 3].map(i => <Skeleton key={i} variant="rounded" height={102} />)}</div><Skeleton variant="rounded" height={340} /></> : <><Skeleton variant="rounded" height={74} /><Skeleton variant="rounded" height={300} /></>}
+  </div>;
 }
 export const number = (n: number | null | undefined) =>
   n == null
@@ -238,6 +261,7 @@ export function Portal({
       try {
         const result = await api(
           `data?section=${section}&days=${nextDays}${nextAgent ? `&agent=${nextAgent}` : ""}${data.is_admin && workspace && ["agents", "dashboard"].includes(section) ? `&workspace=${encodeURIComponent(workspace)}` : ""}`,
+          "GET", undefined, data.email,
         );
         if (id === refreshId.current) {
           if (nextDays === 30 && !nextAgent) {
@@ -251,7 +275,7 @@ export function Portal({
         if (id === refreshId.current) setBusy(false);
       }
     },
-    [days, agent, section, workspace, data.is_admin, mutate],
+    [days, agent, section, workspace, data.is_admin, data.email, mutate],
   );
   async function refreshPage() {
     if (section === "admin" || (data.is_admin && section === "dashboard" && !workspace)) {
