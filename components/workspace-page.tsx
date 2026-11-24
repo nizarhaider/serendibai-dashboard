@@ -22,6 +22,6 @@ export function WorkspacePage({ section, workspace }: { section: string; workspa
   if (customersError || error) return <div role="alert" className="workspace-message"><p>{(customersError || error).message}</p><button className="button" onClick={() => { void refreshCustomers(); void mutate(); }}>Try again</button></div>;
   if (!validTarget && customers) return <div role="alert" className="workspace-message">Workspace not found.</div>;
   if ((needsData && !data) || (account.is_admin && !customers)) return <div className="workspace-message" role="status">Loading page…</div>;
-  const initial = data || { ...account, generatedAt: 0, agents: [], documents: [], products: [], calls: [], appointments: [], orders: [], tickets: [], totals: { calls: 0, answered: 0, minutes: null, inbound_minutes: null, outbound_minutes: null }, attention: { tickets: 0, orders: 0, appointments: 0 } };
+  const initial = data || { ...account, generatedAt: 0, agents: [], documents: [], products: [], calls: [], appointments: [], orders: [], tickets: [], totals: { calls: 0, answered: 0, failed: 0, minutes: null, inbound_minutes: null, outbound_minutes: null }, attention: { tickets: 0, orders: 0, appointments: 0 } };
   return <Portal key={`${section}:${target}`} initial={initial} section={section} workspace={target} initialCustomers={customers || []} />;
 }

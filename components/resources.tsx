@@ -56,8 +56,7 @@ export function Resources({
       name: string;
     } | null>(null),
     [editing, setEditing] = useState<Product[] | null>(null),
-    [imported, setImported] = useState<Product[] | null>(null),
-    [drag, setDrag] = useState(false);
+    [imported, setImported] = useState<Product[] | null>(null);
   const picker = useRef<HTMLInputElement>(null),
     knowledge = section === "knowledge";
   async function upload(file?: File) {
@@ -214,62 +213,17 @@ export function Resources({
         </div>
       )}
       {knowledge ? (
-        <section
-          className={`upload-zone ${drag ? "dragging" : ""}`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDrag(true);
-          }}
-          onDragLeave={() => setDrag(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDrag(false);
-            void upload(e.dataTransfer.files[0]);
-          }}
-        >
-          <div className="upload-icon">
-            {busy ? (
-              <Loader2 className="spin" size={26} />
-            ) : (
-              <ArrowUpFromLine size={26} />
-            )}
-          </div>
-          <h2>
-            {busy
-              ? "Reading and indexing your document…"
-              : "Add business information"}
-          </h2>
-          <p>Upload FAQs, policies or service guides your agent should use.</p>
-          <Button variant="ghost"
-            className="button primary"
-            disabled={busy}
-            onClick={() => picker.current?.click()}
-          >
-            <Plus size={16} /> Upload document
-          </Button>
-          <small>PDF, Word, TXT, Markdown or CSV · Up to 5 MB per file</small>
+        <section className="catalogue-banner knowledge-banner">
+          <div><h2>Add to your knowledge library</h2><p>Upload FAQs, policies or service guides.</p></div>
+          <Button variant="ghost" className="button" onClick={() => picker.current?.click()}><ArrowUpFromLine size={16} /> Upload information</Button>
+          <a className="button" href="/knowledge-template.csv" download><ArrowDownToLine size={16} /> Download template</a>
+          <small>PDF, Word, TXT, Markdown or CSV · Up to 5 MB</small>
         </section>
       ) : (
         <section className="catalogue-banner">
-          <div>
-            <h2>Import your catalogue</h2>
-            <p>Use the template to add several products or services at once.</p>
-          </div>
-          <Button variant="ghost" className="button" onClick={template}>
-            <ArrowDownToLine size={16} /> Download template
-          </Button>
-          <Button variant="ghost"
-            className="button primary"
-            disabled={busy}
-            onClick={() => picker.current?.click()}
-          >
-            {busy ? (
-              <Loader2 className="spin" size={16} />
-            ) : (
-              <ArrowUpFromLine size={16} />
-            )}{" "}
-            Import Excel
-          </Button>
+          <div><h2>Import your catalogue</h2><p>Use the template to add several products or services at once.</p></div>
+          <Button variant="ghost" className="button" onClick={template}><ArrowDownToLine size={16} /> Download template</Button>
+          <Button variant="ghost" className="button primary" disabled={busy} onClick={() => picker.current?.click()}>{busy ? <Loader2 className="spin" size={16} /> : <ArrowUpFromLine size={16} />} Import Excel</Button>
         </section>
       )}
       <Card component="section" className="panel resource-panel">

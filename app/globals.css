@@ -2107,13 +2107,14 @@ td small, .catalogue-banner p, .upload-zone p, .panel-heading p { font-size: 12p
 .outbound-list-picker { flex: 1; max-width: 520px; }
 .outbound-list-picker > span { font-size: 11px; font-weight: 600; letter-spacing: .04em; }
 .outbound-list-picker select { width: 100%; min-height: 44px; }
-.outbound-setup { padding: 32px; }
+.outbound-setup { padding: 38px 32px 42px; }
 .outbound-card-heading { display: flex; align-items: center; gap: 14px; }
 .outbound-card-heading > div:nth-child(2) { flex: 1; }
 .outbound-card-heading p { margin-top: 5px; }
+.outbound-template-link { justify-self: end; display: inline-flex; align-items: center; gap: 7px; padding: 9px 12px; border: 1px solid var(--portal-border); border-radius: 8px; color: var(--portal-muted); font-size: 12px; }
 .outbound-symbol { display: grid; place-items: center; flex-shrink: 0; width: 46px; height: 46px; border: 1px solid #dbe7df; border-radius: 13px; color: #24614e; background: #f1f6f2; }
-.outbound-setup form { display: grid; gap: 22px; }
-.outbound-upload { position: relative; display: flex; align-items: center; text-align: center; padding: 32px 20px; border: 1.5px dashed #bfcfc5; border-radius: 12px; background: #fafcf9; cursor: pointer; gap: 7px; }
+.outbound-setup form { display: grid; gap: 28px; margin-top: 20px; }
+.outbound-upload { min-height: 190px; position: relative; display: flex; align-items: center; text-align: center; padding: 32px 20px; border: 1.5px dashed #bfcfc5; border-radius: 12px; background: #fafcf9; cursor: pointer; gap: 7px; }
 .outbound-upload:hover, .outbound-upload.dragging, .outbound-upload:focus-within { border-color: #398667; background: #f0f8f2; }
 .outbound-upload .outbound-file-icon { color: #447b60; margin-bottom: 7px; }
 .outbound-upload strong { font-size: 15px; color: var(--ink); overflow-wrap: anywhere; max-width: 100%; }
@@ -2703,3 +2704,21 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 @media (max-width: 700px) { .admin-totals { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .admin-stat.MuiPaper-root { min-height: 112px; padding: 14px; } .admin-section.MuiPaper-root { padding: 18px 16px; } .admin-section .panel-heading { align-items: flex-start; } .admin-row-actions { width: 100%; } .admin-row-action { flex: 1 1 auto; justify-content: center; } }
 @media (max-width: 760px) { .customer-admin > .panel .customer-create { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 560px) { .customer-admin > .panel .customer-create, .customer-access .customer-create { grid-template-columns: minmax(0,1fr); } .customer-create fieldset { grid-template-columns: minmax(0,1fr); } .customer-admin > .panel .customer-create { padding-inline: 18px; } .customer-access { padding-inline: 18px; } }
+
+.berry-main .MuiNativeSelect-select { min-height: 42px; padding: 0 38px 0 14px; border: 1px solid var(--portal-border); border-radius: 8px; background-color: var(--portal-raised); color: var(--portal-text); line-height: 1.3; }
+.berry-main .MuiNativeSelect-icon { color: var(--portal-muted); right: 10px; }
+.berry-main select { line-height: 1.35; }
+.berry-main details > summary { color: var(--portal-text); }
+.berry-main .MuiCollapse-root, .berry-main .MuiPaper-root[role=region] { background: var(--portal-surface); color: var(--portal-text); }
+.knowledge-banner { flex-wrap: wrap; }
+.knowledge-banner > div { flex: 1 1 100%; }
+.knowledge-banner small { flex-basis: 100%; color: var(--portal-muted); }
+.outbound-card-heading h2 { line-height: 1.3; }
+.outbound-setup .outbound-card-heading { margin-bottom: 2px; }
+
+.call-stats-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:24px; }
+.call-stat.MuiPaper-root { display:grid; gap:10px; padding:20px 22px; background:var(--portal-surface); color:var(--portal-text); border:1px solid var(--portal-border); border-radius:12px; }
+.call-stat span { color:var(--portal-muted); font-size:13px; }
+.call-stat strong { font-size:28px; line-height:1.1; }
+.berry-main .client-calls .transcript { background:var(--portal-raised); color:var(--portal-text); border:1px solid var(--portal-border); border-radius:8px; padding:14px; }
+@media(max-width:650px){.call-stats-grid{gap:8px}.call-stat.MuiPaper-root{padding:14px 12px}.call-stat strong{font-size:22px}}

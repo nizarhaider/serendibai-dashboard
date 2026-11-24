@@ -117,6 +117,7 @@ export type PortalData = {
   totals: {
     calls: number;
     answered: number;
+    failed: number;
     minutes: number | null;
     inbound_minutes: number | null;
     outbound_minutes: number | null;

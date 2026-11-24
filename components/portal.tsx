@@ -1,12 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
-import Link from "next/link";
 import { useCallback, useState, useRef } from "react";
 import { Card, Chip, Dialog, DialogContent, DialogTitle, IconButton } from "@mui/material";
 import { mutate as updateCache, useSWRConfig } from "swr";
 import {
-  ArrowRight,
   AudioLines,
   BookOpen,
   Box as BoxIcon,
@@ -21,7 +19,6 @@ import {
   Ticket,
 } from "lucide-react";
 import type { PortalData, Customer } from "@/lib/types";
-import { canAccessSection } from "@/lib/permissions";
 import { Customers } from "./customers";
 import { CallHistory } from "./call-history";
 import { Resources } from "./resources";
@@ -269,23 +266,6 @@ export function Portal({
     setMessage(text);
     setError("");
   }
-  const attention = [
-    {
-      href: "tickets",
-      label: "Open follow-ups",
-      count: data.attention.tickets,
-    },
-    {
-      href: "orders",
-      label: "Orders to fulfil",
-      count: data.attention.orders,
-    },
-    {
-      href: "appointments",
-      label: "Upcoming bookings",
-      count: data.attention.appointments,
-    },
-  ].filter((item) => canAccessSection(data, item.href));
   return (
     <>
           <div className="page-heading">
@@ -325,28 +305,13 @@ export function Portal({
             <AdminOverview customers={initialCustomers} />
           ) : section === "dashboard" ? (
             <>
-              {!data.read_only && attention.length > 0 && (
-                <div className="attention-grid">
-                  {attention.map((item) => (
-                    <Link
-                      className="attention-card"
-                      key={item.href}
-                      href={`/${item.href}`}
-                    >
-                      <span>{item.label}</span>
-                      <strong>{number(item.count)}</strong>
-                      <ArrowRight size={17} />
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <div className="call-stats-grid">
+                {[{ label: "Calls placed", count: data.totals.calls }, { label: "Completed", count: data.totals.answered }, { label: "Failed", count: data.totals.failed }].map(({ label, count }) => <Card className="panel call-stat" key={label}><span>{label}</span><strong>{number(count)}</strong></Card>)}
+              </div>
               <Card component="section" className="panel conversations-panel">
                 <div className="panel-heading">
                   <div>
                     <h2>Conversations</h2>
-                    <p>
-                      Choose a period, then open a call to read the transcript.
-                    </p>
                   </div>
                   <div className="toolbar-actions">
                     <NativeSelect

@@ -180,7 +180,7 @@ export function Outbound() {
       <Button variant="ghost" className="button" disabled={!!busy || loading} onClick={() => { setShowForm(true); setMaxRetries(0); setRetryDays(1); setError(""); }}><Plus size={16} /> New list</Button>
     </div>}
     {loading ? <div className="outbound-loading" role="status"><Loader2 className="outbound-spin" size={22} /> Loading your call lists…</div> : showForm || !batch ? <Card component="section" className="outbound-card outbound-setup">
-      <div className="outbound-card-heading"><div className="outbound-symbol"><Phone size={21} /></div><div><h2>Upload a call list</h2><p>Choose a CSV and we’ll handle the call setup.</p></div>{batch && <Button variant="ghost" className="icon-button" aria-label="Close new list" disabled={!!busy} onClick={() => setShowForm(false)}><X size={18} /></Button>}</div>
+      <div className="outbound-card-heading"><div className="outbound-symbol"><Phone size={21} /></div><div><h2>Upload a call list</h2></div>{batch && <Button variant="ghost" className="icon-button" aria-label="Close new list" disabled={!!busy} onClick={() => setShowForm(false)}><X size={18} /></Button>}</div>
       <form onSubmit={create}>
         <label className={`outbound-upload ${dragging ? "dragging" : ""} ${file ? "has-file" : ""}`} onDragOver={e => { e.preventDefault(); if (!busy) setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={e => { e.preventDefault(); setDragging(false); if (!busy) void selectFile(e.dataTransfer.files[0]); }}>
           <input className="sr-only" type="file" accept=".csv,text/csv" disabled={!!busy} aria-label="Upload contacts CSV" onChange={e => { void selectFile(e.target.files?.[0]); e.target.value = ""; }} />
@@ -200,7 +200,7 @@ export function Outbound() {
             </div>
           </>}
         </>}
-        <a className="button" href="/outbound-template.csv" download><ArrowDownToLine size={16} />Download CSV template</a>
+        <a className="outbound-template-link" href="/outbound-template.csv" download><ArrowDownToLine size={16} />CSV template</a>
         {file && <>
           <Button variant="ghost" className="button primary" disabled={!selectedColumns.length || !!busy}>{busy === "create" ? <><Loader2 className="outbound-spin" size={16} /> Preparing list…</> : <>Create call list <ArrowRight size={16} /></>}</Button>
         </>}
