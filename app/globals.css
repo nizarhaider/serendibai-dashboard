@@ -2762,7 +2762,7 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .agent-create-form .MuiOutlinedInput-notchedOutline { border-color: var(--portal-border); }
 .agent-create-form .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline { border-color: var(--portal-muted); }
 .agent-create-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline { border-color: var(--portal-accent); }
-.agent-create-form .MuiOutlinedInput-input { color: var(--portal-text); }
+.agent-create-form .MuiOutlinedInput-root input.MuiOutlinedInput-input { color: var(--portal-text) !important; -webkit-text-fill-color: var(--portal-text); }
 .agent-create-form .MuiOutlinedInput-input::placeholder { color: var(--portal-muted); opacity: 1; }
 .agent-create-form > .button { align-self: flex-end; min-width: 160px; }
 @media (max-width: 600px) {
