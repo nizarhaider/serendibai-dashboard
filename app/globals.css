@@ -2665,9 +2665,10 @@ html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected .MuiListItemIcon
 .admin-pricing .admin-workspace-filter .MuiNativeSelect-select { border: 0; box-shadow: none; outline: 0; background: transparent; }
 .admin-pricing .admin-workspace-filter .MuiOutlinedInput-notchedOutline { border-color: var(--portal-border); }
 .admin-pricing .admin-workspace-filter:hover .MuiOutlinedInput-notchedOutline { border-color: var(--portal-accent); }
-.admin-pricing-formulas { display: grid; gap: 8px; margin-top: 10px; }
+.admin-pricing-formulas { display: grid; gap: 8px; margin-top: 10px; font-size: 13px; }
 .admin-pricing-formulas p { display: grid; gap: 4px; margin: 0; line-height: 1.5; }
 .admin-pricing-formula { width: fit-content; max-width: 100%; overflow-x: auto; color: var(--portal-text); }
+.admin-pricing-formula .katex { font-size: 1.15em; }
 .admin-pricing-formulas small { color: var(--portal-muted); line-height: 1.5; }
 .admin-price { color: var(--portal-text); font-size: 15px; white-space: nowrap; }
 .admin-pricing-method { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--portal-border); color: var(--portal-muted); font-size: 11px; }
