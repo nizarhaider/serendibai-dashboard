@@ -557,7 +557,6 @@ export function Agents({
                 autoFocus
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="e.g. AirAsia travel assistant"
                 required
                 maxLength={100}
               />
@@ -567,7 +566,6 @@ export function Agents({
               <Input
                 value={newCompanyName}
                 onChange={(e) => setNewCompanyName(e.target.value)}
-                placeholder="e.g. SLT-MOBITEL"
                 required
                 maxLength={160}
               />
