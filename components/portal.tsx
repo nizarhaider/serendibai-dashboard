@@ -11,6 +11,7 @@ import {
   CalendarDays,
   Check,
   LayoutDashboard,
+  MessageSquareText,
   PhoneOutgoing,
   PackageCheck,
   RefreshCw,
@@ -21,6 +22,7 @@ import {
 import type { PortalData, Customer } from "@/lib/types";
 import { Customers } from "./customers";
 import { CallHistory } from "./call-history";
+import { MessageHistory } from "./message-history";
 import { Resources } from "./resources";
 import { Agents } from "./agents";
 import { Appointments } from "./appointments";
@@ -203,6 +205,13 @@ export const pages = [
     group: "Daily work",
     description:
       "Upload contacts, tell your agent what to check, and follow each call.",
+  },
+  {
+    href: "messages",
+    label: "Messages",
+    icon: MessageSquareText,
+    group: "Daily work",
+    description: "Review WhatsApp message history by contact.",
   },
   {
     href: "appointments",
@@ -418,6 +427,8 @@ export function Portal({
                 <CallHistory key={`${days}-${agent}`} data={data} />
               </Card>
             </>
+          ) : section === "messages" ? (
+            <MessageHistory data={data} />
           ) : section === "connections" ? (
             <Connections agents={data.agents} cacheScope={data.email} />
           ) : section === "admin" ? (

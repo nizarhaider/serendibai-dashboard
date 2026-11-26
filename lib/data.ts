@@ -21,12 +21,13 @@ export async function getData(
   const editable = account.is_admin || !account.read_only;
   const dashboard = section === "dashboard";
   const allowed = (name: string, tool: string) => editable && section === name && account.allowed_tools.includes(tool);
-  const [agents, documents, products, calls, appointments, orders, tickets, totals, attention] =
+  const [agents, documents, products, calls, messages, appointments, orders, tickets, totals, attention] =
     await Promise.all([
       sql`select id,name,company_name,company_url,case when ${account.is_admin && section === "agents"} then greeting else '' end as greeting,case when ${account.is_admin && section === "agents"} then system_prompt else '' end as system_prompt,case when ${account.is_admin && section === "agents"} then text_reply_instructions else '' end as text_reply_instructions,voice,languages,tools,max_calls,case when ${account.is_admin && section === "agents"} then phone_number_id else '' end as phone_number_id,status,version,deployed_version,heartbeat_at,exists(select 1 from portal_whatsapp_links l where l.agent_id=portal_agents.id and l.enabled and l.voice_enabled and l.status='connected') as active_voice_connection,case when ${account.is_admin && section === "agents"} then telemetry else '{}'::jsonb end as telemetry,(${account.is_admin && section === "agents"} and (credentials is not null or phone_number_id=${process.env.PHONE_NUMBER_ID || ""})) as has_credentials,created_at from portal_agents where customer_id=${customer} and ${!account.is_admin || section !== "agents" || !!workspace} and (${dashboard} or status<>'archived') order by (status='archived'),created_at desc`,
       editable && section === "knowledge" ? sql`select id,name,bytes,type,created_at,length(content) as characters from portal_documents where customer_id=${customer} order by created_at desc` : [],
       editable && section === "catalogue" ? sql`select id,name,sku,description,category,unit,price,currency,stock,status,image is not null as image_available from portal_products where customer_id=${customer} order by updated_at desc limit 2000` : [],
       dashboard ? sql`select c.id,c.agent_id,a.name as agent_name,c.customer_phone,c.status,c.transcript,c.duration_seconds,c.tokens,c.created_at,c.source from portal_calls c left join portal_agents a on a.id=c.agent_id where c.customer_id=${customer} and (${agent || null}::uuid is null or c.agent_id=${agent || null}::uuid) and c.created_at>=((now() at time zone 'Asia/Colombo')::date-(${days}-1))::timestamp at time zone 'Asia/Colombo' order by c.created_at desc limit 100` : [],
+      section === "messages" ? sql`select m.id,m.agent_id,a.name as agent_name,m.contact_phone,m.direction,m.body,m.status,m.model,m.usage,m.created_at from portal_messages m left join portal_agents a on a.id=m.agent_id where m.customer_id=${customer} order by m.created_at desc limit 2000` : [],
       allowed("appointments", "book_appointment") ? sql`select p.id,p.agent_id,a.name as agent_name,p.call_id,p.customer_phone,p.customer_name,p.service,p.appointment_at,p.duration_minutes,p.notes,p.status,p.created_at from portal_appointments p left join portal_agents a on a.id=p.agent_id where p.customer_id=${customer} order by p.appointment_at limit 2000` : [],
       allowed("orders", "create_order") ? sql`select o.id,o.agent_id,a.name as agent_name,o.call_id,o.customer_phone,o.customer_name,o.items,o.delivery_address,o.notes,o.status,o.created_at from portal_orders o left join portal_agents a on a.id=o.agent_id where o.customer_id=${customer} order by o.created_at desc limit 2000` : [],
       allowed("tickets", "create_ticket") ? sql`select t.id,t.agent_id,a.name as agent_name,t.call_id,t.customer_phone,t.customer_name,t.subject,t.description,t.priority,t.status,t.created_at from portal_tickets t left join portal_agents a on a.id=t.agent_id where t.customer_id=${customer} order by t.created_at desc limit 2000` : [],
@@ -45,6 +46,7 @@ export async function getData(
       documents,
       products,
       calls,
+      messages,
       appointments,
       orders,
       tickets,

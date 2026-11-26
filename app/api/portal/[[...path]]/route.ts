@@ -270,7 +270,7 @@ async function handler(
           .max(90)
           .parse(url.searchParams.get("days") || 30),
         filter = url.searchParams.get("agent");
-      const section = z.enum(["dashboard", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin", "onboarding", "connections"]).parse(url.searchParams.get("section") || "dashboard");
+      const section = z.enum(["dashboard", "messages", "appointments", "orders", "tickets", "knowledge", "catalogue", "agents", "outbound", "admin", "onboarding", "connections"]).parse(url.searchParams.get("section") || "dashboard");
       if (!canAccessSection(user, section)) throw new ApiError("This page is not available for your account.", 403);
       return Response.json(
         await getData(

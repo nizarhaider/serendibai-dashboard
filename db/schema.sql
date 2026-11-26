@@ -56,6 +56,26 @@ alter table portal_calls add column if not exists source text not null default '
 create index if not exists portal_calls_customer_date on portal_calls(customer_id,created_at desc);
 create table if not exists portal_text_usage (id text primary key, customer_id uuid not null references customers(id) on delete cascade, agent_id uuid references portal_agents(id) on delete set null, model text not null, usage jsonb not null, created_at timestamptz not null default now());
 create index if not exists portal_text_usage_customer_date on portal_text_usage(customer_id,created_at desc);
+create table if not exists portal_messages (
+  id uuid primary key default gen_random_uuid(),
+  customer_id uuid not null references customers(id) on delete cascade,
+  agent_id uuid references portal_agents(id) on delete set null,
+  connection_id uuid references portal_whatsapp_links(id) on delete set null,
+  contact_phone text not null,
+  direction text not null check(direction in ('inbound','outbound')),
+  body text not null,
+  status text not null check(status in ('received','sent','failed')),
+  source text not null check(source in ('linked_device','cloud_api')),
+  provider_message_id text,
+  reply_to_message_id text,
+  model text,
+  usage jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists portal_messages_contact_history on portal_messages(customer_id,contact_phone,created_at desc);
+create index if not exists portal_messages_customer_date on portal_messages(customer_id,created_at desc);
+create unique index if not exists portal_messages_linked_provider on portal_messages(connection_id,provider_message_id) where connection_id is not null and provider_message_id is not null;
+create unique index if not exists portal_messages_cloud_provider on portal_messages(customer_id,provider_message_id) where connection_id is null and provider_message_id is not null;
 create table if not exists portal_appointments (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id) on delete cascade, agent_id uuid references portal_agents(id) on delete set null, call_id text not null, customer_phone text not null default '', customer_name text not null, service text not null, appointment_at timestamptz not null, duration_minutes integer not null default 30 check(duration_minutes between 15 and 240), notes text not null default '', status text not null default 'booked' check(status in ('booked','completed','cancelled')), created_at timestamptz not null default now());
 create index if not exists portal_appointments_customer_date on portal_appointments(customer_id,appointment_at);
 create unique index if not exists portal_appointments_agent_slot on portal_appointments(agent_id,appointment_at) where status='booked';

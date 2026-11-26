@@ -2683,6 +2683,21 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .call-stat span { color:var(--portal-muted); font-size:13px; }
 .call-stat strong { font-size:28px; line-height:1.1; }
 .berry-main .client-calls .transcript { background:var(--portal-raised); color:var(--portal-text); border:1px solid var(--portal-border); border-radius:8px; padding:14px; }
+.message-history { display:grid; gap:18px; }
+.message-search { display:flex; align-items:center; justify-content:space-between; gap:14px; color:var(--portal-muted); font-size:12px; }
+.message-search input { max-width:420px; }
+.message-conversation { overflow:hidden; border:1px solid var(--portal-border); border-radius:12px; background:var(--portal-surface); }
+.message-conversation h2 { margin:0; padding:16px 20px; border-bottom:1px solid var(--portal-border); font-size:14px; }
+.message-thread { display:grid; gap:12px; padding:18px; }
+.message-row { display:flex; }
+.message-row.outbound { justify-content:flex-end; }
+.message-bubble { max-width:min(78%,620px); padding:11px 14px; border:1px solid var(--portal-border); border-radius:12px; background:var(--portal-raised); }
+.message-row.outbound .message-bubble { border-color:color-mix(in srgb,var(--portal-accent) 30%,var(--portal-border)); background:color-mix(in srgb,var(--portal-accent) 9%,var(--portal-surface)); }
+.message-meta { display:flex; gap:9px; align-items:center; color:var(--portal-muted); font-size:10px; text-transform:capitalize; }
+.message-meta time { margin-left:auto; }
+.message-bubble p { margin:8px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; font-size:13px; line-height:1.55; }
+.message-bubble small { display:block; margin-top:8px; color:var(--portal-muted); font-size:10px; }
+@media(max-width:650px){.message-search{align-items:stretch;flex-direction:column}.message-bubble{max-width:94%}.message-meta{flex-wrap:wrap}.message-meta time{margin-left:0;width:100%}}
 @media(max-width:650px){.call-stats-grid{gap:8px}.call-stat.MuiPaper-root{padding:14px 12px}.call-stat strong{font-size:22px}}
 .berry-main .count { background: var(--portal-raised); color: var(--portal-muted); }
 .workspace-skeleton { display:grid; gap:18px; padding-top:2px; }

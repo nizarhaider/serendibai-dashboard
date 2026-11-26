@@ -107,6 +107,17 @@ export type Ticket = {
   status: string;
   created_at: string;
 };
+export type Message = {
+  id: string;
+  agent_name: string | null;
+  contact_phone: string;
+  direction: "inbound" | "outbound";
+  body: string;
+  status: "received" | "sent" | "failed";
+  model: string | null;
+  usage: Record<string, unknown> | null;
+  created_at: string;
+};
 export type PortalData = {
   business_name: string;
   display_name: string;
@@ -119,6 +130,7 @@ export type PortalData = {
   documents: Document[];
   products: Product[];
   calls: Call[];
+  messages: Message[];
   appointments: Appointment[];
   orders: Order[];
   tickets: Ticket[];
