@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { redirect } from "next/navigation";
 import { canAccessSection } from "@/lib/permissions";
 import type { Customer, PortalData } from "@/lib/types";
-import { apiWithCache, cachedApi, Portal, WorkspaceSkeleton } from "./portal";
+import { api, apiWithCache, cachedApi, Portal, WorkspaceSkeleton } from "./portal";
 import { useAccount } from "./portal-shell";
 
 const options = { revalidateIfStale: true, revalidateOnMount: true, revalidateOnFocus: true, shouldRetryOnError: false, dedupingInterval: 60_000 };
@@ -22,7 +22,7 @@ export function WorkspacePage({ section, workspace }: { section: string; workspa
   const validTarget = !target || customers?.some(customer => customer.id === target);
   const needsData = section !== "outbound" && section !== "admin" && !(account.is_admin && section === "dashboard" && !target);
   const key = needsData && allowed && (!account.is_admin || customers) && validTarget ? `data?section=${section}${target && ["agents", "dashboard"].includes(section) ? `&workspace=${encodeURIComponent(target)}` : ""}` : null;
-  const { data, error, mutate } = useSWR<PortalData>(key, path => apiWithCache<PortalData>(path, account.email), { ...options, fallbackData: key ? cachedApi<PortalData>(key, account.email) : undefined });
+  const { data, error, mutate } = useSWR<PortalData>(key, path => section === "messages" ? api(path, "GET", undefined, account.email) : apiWithCache<PortalData>(path, account.email), { ...options, ...(section === "messages" ? { dedupingInterval: 5000, refreshInterval: 10000 } : {}), fallbackData: key ? cachedApi<PortalData>(key, account.email) : undefined });
   if (!allowed) redirect("/dashboard");
   if (!validTarget && customers) return <div role="alert" className="workspace-message">Workspace not found.</div>;
   const initialData = data || (browserReady && key ? cachedApi<PortalData>(key, account.email) : undefined);
