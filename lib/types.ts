@@ -111,6 +111,8 @@ export type Message = {
   id: string;
   agent_name: string | null;
   contact_phone: string;
+  category: string;
+  thread_status: string;
   direction: "inbound" | "outbound";
   body: string;
   status: "received" | "sent" | "failed";

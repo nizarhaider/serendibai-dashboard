@@ -284,6 +284,11 @@ async function handler(
         { headers: { "Cache-Control": "private, no-store" } },
       );
     }
+    if (route === "message-threads" && method === "PATCH") {
+      const b = z.object({ contact_phone: z.string().min(1).max(80), category: z.enum(["New inquiry", "Sales", "Support", "Product question", "Booking", "Other"]).optional(), status: z.enum(["Open", "Waiting", "Resolved"]).optional() }).refine(value => value.category || value.status).parse(await request.json());
+      await sql`insert into portal_message_threads(customer_id,contact_phone,category,status) values(${customer},${b.contact_phone},${b.category || "New inquiry"},${b.status || "Open"}) on conflict(customer_id,contact_phone) do update set category=coalesce(${b.category || null},portal_message_threads.category),status=coalesce(${b.status || null},portal_message_threads.status),updated_at=now()`;
+      return Response.json({ ok: true });
+    }
     if (route === "agents" && !user.is_admin) throw new ApiError("Administrator access required.", 403);
     if (id && method === "PATCH" && ["orders", "tickets", "appointments"].includes(route || "")) {
       uuid.parse(id);

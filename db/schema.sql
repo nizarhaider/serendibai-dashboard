@@ -72,6 +72,14 @@ create table if not exists portal_messages (
   usage jsonb,
   created_at timestamptz not null default now()
 );
+create table if not exists portal_message_threads (
+  customer_id uuid not null references customers(id) on delete cascade,
+  contact_phone text not null,
+  category text not null default 'New inquiry' check(category in ('New inquiry','Sales','Support','Product question','Booking','Other')),
+  status text not null default 'Open' check(status in ('Open','Waiting','Resolved')),
+  updated_at timestamptz not null default now(),
+  primary key(customer_id,contact_phone)
+);
 create index if not exists portal_messages_contact_history on portal_messages(customer_id,contact_phone,created_at desc);
 create index if not exists portal_messages_customer_date on portal_messages(customer_id,created_at desc);
 create unique index if not exists portal_messages_linked_provider on portal_messages(connection_id,provider_message_id) where connection_id is not null and provider_message_id is not null;

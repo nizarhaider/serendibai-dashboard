@@ -2688,6 +2688,8 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .message-search input { max-width:420px; }
 .message-conversation { overflow:hidden; border:1px solid var(--portal-border); border-radius:12px; background:var(--portal-surface); }
 .message-conversation h2 { margin:0; padding:16px 20px; border-bottom:1px solid var(--portal-border); font-size:14px; }
+.message-thread-controls { display:flex; flex-wrap:wrap; gap:14px; padding:12px 20px; border-bottom:1px solid var(--portal-border); }
+.message-thread-controls label { display:flex; align-items:center; gap:8px; color:var(--portal-muted); font-size:12px; }
 .message-thread { display:grid; gap:12px; padding:18px; }
 .message-row { display:flex; }
 .message-row.outbound { justify-content:flex-end; }
