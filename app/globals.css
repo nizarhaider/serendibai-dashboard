@@ -2671,6 +2671,10 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .knowledge-banner { flex-wrap: wrap; }
 .knowledge-banner > div { flex: 1 1 100%; }
 .knowledge-banner small { flex-basis: 100%; color: var(--portal-muted); }
+.product-image-upload { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--portal-accent); font-size: 12px; cursor: pointer; }
+.product-image-upload input { width: 190px; font-size: 11px; }
+.product-image-upload img, .product-image-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; }
+.catalogue-table .product-image-thumb { display: block; margin-bottom: 6px; }
 .outbound-card-heading h2 { line-height: 1.3; }
 .outbound-setup .outbound-card-heading { margin-bottom: 2px; }
 

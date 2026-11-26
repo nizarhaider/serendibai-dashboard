@@ -40,9 +40,11 @@ export type Product = {
   sku: string;
   description: string;
   category: string;
+  unit: string;
   price: number | null;
   currency: string;
   stock: number | null;
+  image_available?: boolean;
   status: string;
 };
 export type Document = {

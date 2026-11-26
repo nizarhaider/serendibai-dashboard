@@ -1,5 +1,5 @@
 export const toolNames = ["book_appointment", "create_order", "create_ticket"] as const;
-export const standardTools = ["search_knowledge", "search_products", "send_whatsapp_message"] as const;
+export const standardTools = ["search_knowledge", "search_products", "send_whatsapp_message", "send_product_image"] as const;
 export const toolLabels: Record<string, string> = {
   book_appointment: "Appointments",
   create_order: "Orders",

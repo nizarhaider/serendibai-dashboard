@@ -27,6 +27,7 @@ const blank = (): Product => ({
   sku: "",
   description: "",
   category: "Product",
+  unit: "unit",
   price: null,
   currency: "LKR",
   stock: null,
@@ -108,6 +109,7 @@ export function Resources({
             sku: value.sku || "",
             description: value.description || "",
             category: value.category || "Product",
+            unit: value.unit || "unit",
             price: value.price ? Number(value.price) : null,
             currency: (value.currency || "LKR").toUpperCase(),
             stock: value.stock ? Number(value.stock) : null,
@@ -141,6 +143,7 @@ export function Resources({
       "sku",
       "description",
       "category",
+      "unit",
       "price",
       "currency",
       "stock",
@@ -151,6 +154,7 @@ export function Resources({
       "SVC-001",
       "Replace this row with your product or service.",
       "Service",
+      "service",
       2500,
       "LKR",
       null,
@@ -180,6 +184,21 @@ export function Resources({
       notify(
         `${rows.length} catalogue items ${isImport ? "imported" : "saved"}. Your agents can search them immediately.`,
       );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function uploadImage(product: Product, file?: File) {
+    if (!product.id || !file) return;
+    const form = new FormData();
+    form.set("image", file);
+    setBusy(true);
+    try {
+      await api(`products/${product.id}/image`, "POST", form);
+      await refresh();
+      notify("Product photo saved. Agents can send it when customers ask to see it.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -221,7 +240,7 @@ export function Resources({
         </section>
       ) : (
         <section className="catalogue-banner">
-          <div><h2>Import your catalogue</h2><p>Use the template to add several products or services at once.</p></div>
+          <div><h2>Import your catalogue</h2><p>Use the template to add products or services, then add photos to saved items.</p></div>
           <Button variant="ghost" className="button" onClick={template}><ArrowDownToLine size={16} /> Download template</Button>
           <Button variant="ghost" className="button primary" disabled={busy} onClick={() => picker.current?.click()}>{busy ? <Loader2 className="spin" size={16} /> : <ArrowUpFromLine size={16} />} Import Excel</Button>
         </section>
@@ -384,6 +403,7 @@ export function Resources({
                   <TableCell component="th">NAME & DESCRIPTION</TableCell>
                   {editing && <TableCell component="th">SKU</TableCell>}
                   <TableCell component="th">TYPE</TableCell>
+                  <TableCell component="th">SOLD BY</TableCell>
                   <TableCell component="th">PRICE</TableCell>
                   {editing && <TableCell component="th">CURRENCY</TableCell>}
                   <TableCell component="th">STOCK</TableCell>
@@ -407,6 +427,11 @@ export function Resources({
                               setEditing(rows);
                             }}
                           />
+                          {p.id && <label className="product-image-upload">
+                            {p.image_available && <img src={`/api/portal/products/${p.id}/image`} alt={`${p.name} product`} />}
+                            <span>{p.image_available ? "Replace photo" : "Add photo"}</span>
+                            <input type="file" accept="image/jpeg,image/png" disabled={busy} onChange={(e) => uploadImage(p, e.target.files?.[0])} />
+                          </label>}
                           <Input
                             aria-label={`Description row ${i + 1}`}
                             className="description-input"
@@ -423,6 +448,7 @@ export function Resources({
                           [
                             "sku",
                             "category",
+                            "unit",
                             "price",
                             "currency",
                             "stock",
@@ -477,6 +503,7 @@ export function Resources({
                     ) : (
                       <>
                         <TableCell>
+                          {p.image_available && p.id && <img className="product-image-thumb" src={`/api/portal/products/${p.id}/image`} alt="" />}
                           <strong>{p.name}</strong>
                           <small>{p.description}</small>
                           {p.sku && <small>{p.sku}</small>}
@@ -485,10 +512,11 @@ export function Resources({
                         <TableCell>
                           <span className="tag">{p.category}</span>
                         </TableCell>
+                        <TableCell>{p.unit}</TableCell>
                         <TableCell>
                           {p.price == null
                             ? "Not set"
-                            : `${p.currency} ${number(p.price)}`}
+                            : `${p.currency} ${number(p.price)} / ${p.unit}`}
                         </TableCell>
                         <TableCell>
                           {p.stock == null ? "Unlimited" : number(p.stock)}

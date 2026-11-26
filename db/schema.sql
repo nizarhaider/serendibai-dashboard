@@ -45,6 +45,9 @@ create index if not exists portal_whatsapp_links_customer on portal_whatsapp_lin
 create table if not exists portal_documents (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), name text not null, content text not null, bytes integer not null, type text not null, created_at timestamptz not null default now());
 create index if not exists portal_documents_search on portal_documents using gin(to_tsvector('simple',content));
 create table if not exists portal_products (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id), name text not null, sku text not null default '', description text not null default '', category text not null default 'Product', price numeric check(price >= 0), currency text not null default 'LKR', stock integer check(stock >= 0), status text not null default 'active' check(status in ('active','draft','archived')), updated_at timestamptz not null default now());
+alter table portal_products add column if not exists unit text not null default 'unit';
+alter table portal_products add column if not exists image bytea;
+alter table portal_products add column if not exists image_type text;
 create index if not exists portal_products_customer on portal_products(customer_id);
 create table if not exists portal_calls (id text primary key, customer_id uuid not null references customers(id), agent_id uuid references portal_agents(id), customer_phone text, status text not null, transcript text, duration_seconds numeric, tokens integer, usage jsonb, events jsonb, recording_url text, source text not null default 'runtime', created_at timestamptz not null default now(), updated_at timestamptz not null default now());
 alter table portal_calls add column if not exists usage jsonb;

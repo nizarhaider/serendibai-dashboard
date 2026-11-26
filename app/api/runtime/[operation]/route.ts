@@ -75,7 +75,7 @@ async function handler(
       const results =
         b.tool === "search_knowledge"
           ? await sql`select id,name,left(content,18000) as content from portal_documents where customer_id=${agent.customer_id} and (to_tsvector('simple',content) @@ websearch_to_tsquery('simple',${terms}) or name ilike ${"%" + b.query.replace(/[%_]/g, "") + "%"}) order by ts_rank(to_tsvector('simple',content),websearch_to_tsquery('simple',${terms})) desc limit 5`
-          : await sql`select name,sku,description,category,price,currency,stock,status from portal_products where customer_id=${agent.customer_id} and status='active' and (to_tsvector('simple',name || ' ' || description || ' ' || category || ' ' || sku) @@ websearch_to_tsquery('simple',${terms}) or name ilike ${"%" + b.query.replace(/[%_]/g, "") + "%"}) limit 15`;
+          : await sql`select id,name,sku,description,category,unit,price,currency,stock,status,image is not null as image_available from portal_products where customer_id=${agent.customer_id} and status='active' and (to_tsvector('simple',name || ' ' || description || ' ' || category || ' ' || sku) @@ websearch_to_tsquery('simple',${terms}) or name ilike ${"%" + b.query.replace(/[%_]/g, "") + "%"}) limit 15`;
       return Response.json({ ok: true, results });
     }
     if (operation === "appointments") {

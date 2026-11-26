@@ -27,6 +27,7 @@ const product = z.object({
   sku: z.string().max(100).default(""),
   description: z.string().max(5000).default(""),
   category: z.string().max(100).default("Product"),
+  unit: z.string().trim().min(1).max(50).default("unit"),
   price: z.coerce.number().min(0).nullable(),
   currency: z
     .string()
@@ -56,6 +57,7 @@ const agentSchema = z.object({
         "search_knowledge",
         "search_products",
         "send_whatsapp_message",
+        "send_product_image",
       ]),
     )
     .default([...standardTools, ...toolNames]),
@@ -361,6 +363,27 @@ async function handler(
       }
     }
     if (route === "products") {
+      if (id && path[2] === "image") {
+        uuid.parse(id);
+        if (method === "GET") {
+          const [row] = await sql`select image,image_type from portal_products where id=${id} and customer_id=${customer} and image is not null`;
+          if (!row) throw new ApiError("Product image not found.", 404);
+          return new Response(row.image, { headers: { "Content-Type": row.image_type, "Cache-Control": "private, no-store" } });
+        }
+        if (method === "POST") {
+          const form = await request.formData(), file = form.get("image");
+          if (!(file instanceof File) || file.size === 0 || file.size > 5000000) throw new ApiError("Choose an image smaller than 5 MB.");
+          if (!["image/jpeg", "image/png"].includes(file.type)) throw new ApiError("Use a JPG or PNG image.");
+          const result = await sql`update portal_products set image=${Buffer.from(await file.arrayBuffer())},image_type=${file.type},updated_at=now() where id=${id} and customer_id=${customer} returning id`;
+          if (!result.length) throw new ApiError("Product not found.", 404);
+          await audit(customer, "Product image updated", id);
+          return Response.json({ ok: true });
+        }
+        if (method === "DELETE") {
+          await sql`update portal_products set image=null,image_type=null,updated_at=now() where id=${id} and customer_id=${customer}`;
+          return Response.json({ ok: true });
+        }
+      }
       if (method === "POST") {
         const { rows } = z
           .object({ rows: z.array(product).min(1).max(500) })
@@ -371,8 +394,8 @@ async function handler(
         await sql.transaction(
           rows.map((b) =>
             b.id
-              ? sql`update portal_products set name=${b.name},sku=${b.sku},description=${b.description},category=${b.category},price=${b.price},currency=${b.currency},stock=${b.stock},status=${b.status},updated_at=now() where id=${b.id} and customer_id=${customer}`
-              : sql`insert into portal_products(customer_id,name,sku,description,category,price,currency,stock,status) values(${customer},${b.name},${b.sku},${b.description},${b.category},${b.price},${b.currency},${b.stock},${b.status})`,
+              ? sql`update portal_products set name=${b.name},sku=${b.sku},description=${b.description},category=${b.category},unit=${b.unit},price=${b.price},currency=${b.currency},stock=${b.stock},status=${b.status},updated_at=now() where id=${b.id} and customer_id=${customer}`
+              : sql`insert into portal_products(customer_id,name,sku,description,category,unit,price,currency,stock,status) values(${customer},${b.name},${b.sku},${b.description},${b.category},${b.unit},${b.price},${b.currency},${b.stock},${b.status})`,
           ),
         );
         await audit(
