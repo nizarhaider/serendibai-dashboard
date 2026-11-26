@@ -134,6 +134,7 @@ export type PortalData = {
   products: Product[];
   calls: Call[];
   messages: Message[];
+  allowance?: { minutes: number; messages: number; used_minutes: number; used_messages: number; started_at: string } | null;
   appointments: Appointment[];
   orders: Order[];
   tickets: Ticket[];

@@ -96,6 +96,15 @@ async function handler(
     if (route === "customers") {
       if (!user.is_admin) throw new ApiError("Administrator access required.", 403);
       if (method === "GET") return Response.json(await getCustomers(), { headers: { "Cache-Control": "private, no-store" } });
+      if (id && path[2] === "allowance" && method === "PUT") {
+        uuid.parse(id);
+        const b = z.object({ minutes: z.number().min(0).max(1000000), messages: z.number().int().min(0).max(10000000) }).parse(await request.json());
+        const [target] = await sql`select id from customers c where c.id=${id} and not exists(select 1 from portal_users u where u.customer_id=c.id and u.is_admin)`;
+        if (!target) throw new ApiError("Customer workspace not found.", 404);
+        await sql`insert into portal_allowances(customer_id,minutes,messages) values(${id},${b.minutes},${b.messages}) on conflict(customer_id) do update set minutes=excluded.minutes,messages=excluded.messages,started_at=now()`;
+        await audit(id, "Allowance started", `${b.minutes} minutes, ${b.messages} messages`);
+        return Response.json({ ok: true });
+      }
       if (id && path[2] === "users" && method === "POST") {
         uuid.parse(id);
         const b = z.object({ contact_name: z.string().trim().min(1).max(160), email: z.email().max(250).transform(v => v.toLowerCase()) }).parse(await request.json());

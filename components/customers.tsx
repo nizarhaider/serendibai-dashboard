@@ -147,6 +147,20 @@ export function Customers({ initial }: { initial: Customer[] }) {
               </span>
             </summary>
             <div className="customer-access">
+              <h3>Start an allowance</h3>
+              <p className="muted">Starting a new allowance resets usage from now.</p>
+              <form className="customer-create" onSubmit={async event => {
+                event.preventDefault();
+                const form = event.currentTarget, values = new FormData(form);
+                setBusy(customer.id); setError(""); setMessage("");
+                try { await api(`customers/${customer.id}/allowance`, "PUT", { minutes: Number(values.get("minutes")), messages: Number(values.get("messages")) }); form.reset(); setMessage(`${customer.business_name} allowance started.`); }
+                catch (e) { setError((e as Error).message); }
+                finally { setBusy(""); }
+              }}>
+                <label>Minutes<Input name="minutes" type="number" min="0" max="1000000" step="0.01" required /></label>
+                <label>Messages<Input name="messages" type="number" min="0" max="10000000" step="1" required /></label>
+                <Button variant="ghost" className="button primary" disabled={!!busy}>Start allowance</Button>
+              </form>
               <h3>Users</h3>
               <p className="muted">Each user invited here shares this workspace’s feature access.</p>
               {!customer.users.length && (

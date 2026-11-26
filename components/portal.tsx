@@ -367,6 +367,7 @@ export function Portal({
             <AdminOverview customers={initialCustomers} />
           ) : section === "dashboard" ? (
             <>
+              {!data.is_admin && data.allowance && <Card component="section" className="panel admin-section"><div className="panel-heading"><div><h2>Your allowance</h2><p>Since {new Date(data.allowance.started_at).toLocaleDateString("en-GB", { timeZone: "Asia/Colombo" })}</p></div></div><div className="admin-totals"><div><strong>{number(Math.max(0, data.allowance.minutes - data.allowance.used_minutes))} minutes left</strong><p>{number(data.allowance.used_minutes)} of {number(data.allowance.minutes)} used</p></div><div><strong>{number(Math.max(0, data.allowance.messages - data.allowance.used_messages))} messages left</strong><p>{number(data.allowance.used_messages)} of {number(data.allowance.messages)} used</p></div></div></Card>}
               <div className="call-stats-grid">
                 {[{ label: "Calls placed", count: data.totals.calls }, { label: "Completed", count: data.totals.answered }, { label: "Failed", count: data.totals.failed }, { label: "Minutes on calls", count: number(data.totals.minutes ?? 0) }].map(({ label, count }) => <Card className="panel call-stat" key={label}><span>{label}</span><strong>{count}</strong></Card>)}
               </div>

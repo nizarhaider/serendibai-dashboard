@@ -55,6 +55,7 @@ alter table portal_calls add column if not exists events jsonb;
 alter table portal_calls add column if not exists source text not null default 'runtime';
 create index if not exists portal_calls_customer_date on portal_calls(customer_id,created_at desc);
 create table if not exists portal_text_usage (id text primary key, customer_id uuid not null references customers(id) on delete cascade, agent_id uuid references portal_agents(id) on delete set null, model text not null, usage jsonb not null, created_at timestamptz not null default now());
+create table if not exists portal_allowances (customer_id uuid primary key references customers(id) on delete cascade, minutes numeric not null check(minutes>=0), messages integer not null check(messages>=0), started_at timestamptz not null default now());
 create index if not exists portal_text_usage_customer_date on portal_text_usage(customer_id,created_at desc);
 create table if not exists portal_messages (
   id uuid primary key default gen_random_uuid(),

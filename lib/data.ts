@@ -21,7 +21,7 @@ export async function getData(
   const editable = account.is_admin || !account.read_only;
   const dashboard = section === "dashboard";
   const allowed = (name: string, tool: string) => editable && section === name && account.allowed_tools.includes(tool);
-  const [agents, documents, products, calls, messages, appointments, orders, tickets, totals, attention] =
+  const [agents, documents, products, calls, messages, appointments, orders, tickets, totals, attention, allowance] =
     await Promise.all([
       sql`select id,name,company_name,company_url,case when ${account.is_admin && section === "agents"} then greeting else '' end as greeting,case when ${account.is_admin && section === "agents"} then system_prompt else '' end as system_prompt,case when ${account.is_admin && section === "agents"} then text_reply_instructions else '' end as text_reply_instructions,voice,languages,tools,max_calls,case when ${account.is_admin && section === "agents"} then phone_number_id else '' end as phone_number_id,status,version,deployed_version,heartbeat_at,exists(select 1 from portal_whatsapp_links l where l.agent_id=portal_agents.id and l.enabled and l.voice_enabled and l.status='connected') as active_voice_connection,case when ${account.is_admin && section === "agents"} then telemetry else '{}'::jsonb end as telemetry,(${account.is_admin && section === "agents"} and (credentials is not null or phone_number_id=${process.env.PHONE_NUMBER_ID || ""})) as has_credentials,created_at from portal_agents where customer_id=${customer} and ${!account.is_admin || section !== "agents" || !!workspace} and (${dashboard} or status<>'archived') order by (status='archived'),created_at desc`,
       editable && section === "knowledge" ? sql`select id,name,bytes,type,created_at,length(content) as characters from portal_documents where customer_id=${customer} order by created_at desc` : [],
@@ -36,6 +36,7 @@ export async function getData(
         (select count(*)::int from portal_tickets where customer_id=${customer} and status in ('open','in_progress') and ${account.allowed_tools.includes("create_ticket")}) as tickets,
         (select count(*)::int from portal_orders where customer_id=${customer} and status in ('placed','processing') and ${account.allowed_tools.includes("create_order")}) as orders,
         (select count(*)::int from portal_appointments where customer_id=${customer} and status='booked' and appointment_at>=now() and ${account.allowed_tools.includes("book_appointment")}) as appointments` : [],
+      dashboard && !account.is_admin ? sql`select a.minutes::float,a.messages,a.started_at,coalesce((select sum(c.duration_seconds)/60 from portal_calls c where c.customer_id=a.customer_id and c.created_at>=a.started_at),0)::float as used_minutes,(select count(*)::int from portal_messages m where m.customer_id=a.customer_id and m.direction='outbound' and m.status='sent' and m.created_at>=a.started_at) as used_messages from portal_allowances a where a.customer_id=${customer}` : [],
     ]);
   return JSON.parse(
     JSON.stringify({
@@ -47,6 +48,7 @@ export async function getData(
       products,
       calls,
       messages,
+      allowance: allowance[0] || null,
       appointments,
       orders,
       tickets,
