@@ -1,6 +1,7 @@
 "use client";
 import { Table, TableHead, TableBody, TableRow, TableCell } from "@mui/material";
 import Card from "@mui/material/Card";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -233,7 +234,7 @@ export function Resources({
       )}
       {knowledge ? (
         <section className="catalogue-banner knowledge-banner">
-          <div><h2>Add to your knowledge library</h2><p>Upload FAQs, policies or service guides.</p></div>
+          <div><h2>Add to your knowledge library</h2><p>Fill in the template’s answer column, remove unused rows and upload it here.</p></div>
           <Button variant="ghost" className="button" onClick={() => picker.current?.click()}><ArrowUpFromLine size={16} /> Upload information</Button>
           <a className="button" href="/knowledge-template.csv" download><ArrowDownToLine size={16} /> Download template</a>
           <small>PDF, Word, TXT, Markdown or CSV · Up to 5 MB</small>
@@ -428,7 +429,7 @@ export function Resources({
                             }}
                           />
                           {p.id && <label className="product-image-upload">
-                            {p.image_available && <img src={`/api/portal/products/${p.id}/image`} alt={`${p.name} product`} />}
+                            {p.image_available && <Image src={`/api/portal/products/${p.id}/image`} alt={`${p.name} product`} width={44} height={44} unoptimized />}
                             <span>{p.image_available ? "Replace photo" : "Add photo"}</span>
                             <input type="file" accept="image/jpeg,image/png" disabled={busy} onChange={(e) => uploadImage(p, e.target.files?.[0])} />
                           </label>}
@@ -503,7 +504,7 @@ export function Resources({
                     ) : (
                       <>
                         <TableCell>
-                          {p.image_available && p.id && <img className="product-image-thumb" src={`/api/portal/products/${p.id}/image`} alt="" />}
+                          {p.image_available && p.id && <Image className="product-image-thumb" src={`/api/portal/products/${p.id}/image`} alt="" width={44} height={44} unoptimized />}
                           <strong>{p.name}</strong>
                           <small>{p.description}</small>
                           {p.sku && <small>{p.sku}</small>}
