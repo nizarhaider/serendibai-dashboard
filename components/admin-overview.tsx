@@ -1,17 +1,12 @@
 "use client";
 
 import Card from "@mui/material/Card";
-import katex from "katex";
 import Link from "next/link";
-import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { Customer } from "@/lib/types";
-import { NativeSelect } from "@/components/ui/native-select";
 import { Status } from "./portal";
 
 export function AdminOverview({ customers }: { customers: Customer[] }) {
-  const [workspaceId, setWorkspaceId] = useState("all");
-  const selectedCustomers = workspaceId === "all" ? customers : customers.filter(customer => customer.id === workspaceId);
   const connections = customers.flatMap(customer => customer.connections.map(connection => ({ ...connection, workspace: customer.business_name })));
   const callsPlaced = customers.reduce((total, customer) => total + customer.calls, 0);
   const callMinutes = customers.reduce((total, customer) => total + customer.call_minutes, 0);
@@ -21,58 +16,25 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
     ["Minutes used", callMinutes.toLocaleString("en-US", { maximumFractionDigits: 1 }), "Across all workspaces"],
     ["Tokens used", tokensUsed.toLocaleString("en-US"), "Across all workspaces"],
   ] as const;
-  const modelUsage = selectedCustomers.reduce<Record<string, { request_count: number; total_tokens: number; input_tokens: number; output_tokens: number; input_audio_tokens: number; output_audio_tokens: number; audio_seconds: number }>>((all, customer) => {
-    for (const [model, usage] of Object.entries(customer.model_usage || {})) {
-      const total = all[model] ??= { request_count: 0, total_tokens: 0, input_tokens: 0, output_tokens: 0, input_audio_tokens: 0, output_audio_tokens: 0, audio_seconds: 0 };
-      total.request_count += Number(usage.request_count) || 0;
-      total.total_tokens += Number(usage.total_tokens) || 0;
-      total.input_tokens += Number(usage.input_tokens) || 0;
-      total.output_tokens += Number(usage.output_tokens) || 0;
-      total.input_audio_tokens += Number(usage.input_audio_tokens) || 0;
-      total.output_audio_tokens += Number(usage.output_audio_tokens) || 0;
-      total.audio_seconds += Number(usage.audio_seconds) || 0;
-    }
-    return all;
-  }, {});
-  const ttsInputRate = new Date() < new Date("2027-01-01T00:00:00Z") ? 0.5 : 1;
-  const ttsAudioRate = new Date() < new Date("2027-01-01T00:00:00Z") ? 6 : 12;
-  const pricing = Object.entries(modelUsage).map(([model, usage]) => {
-    const inputAudio = usage.input_audio_tokens;
-    const outputAudio = usage.output_audio_tokens || (model === "gemini-3.8-flash-lite-tts" ? Math.round(usage.audio_seconds * 25) : 0);
-    const inputText = Math.max(0, usage.input_tokens - inputAudio);
-    const outputText = Math.max(0, usage.output_tokens - outputAudio);
-    const cost = model === "gemini-3.8-live"
-      ? (inputText * 0.75 + inputAudio * 3 + outputText * 4.5 + outputAudio * 12) / 1_000_000
-      : model === "gemini-3.8-flash-lite-tts"
-        ? (inputText * ttsInputRate + outputAudio * ttsAudioRate) / 1_000_000
-        : null;
-    return { model, usage, inputAudio, outputAudio, cost };
-  });
-  const totalCost = pricing.reduce((total, row) => total + (row.cost ?? 0), 0);
-  const usd = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount > 0 ? Math.ceil((amount - Number.EPSILON) * 100) / 100 : amount);
-  const modelName = (model: string) => model === "gemini-3.8-live" ? "Gemini 3.8 Live" : model === "gemini-3.8-flash-lite-tts" ? "Nishadi TTS · Gemini 3.8 Flash-Lite" : model;
-  const liveFormula = katex.renderToString(String.raw`C_{\mathrm{Live}} = \frac{0.75T_{\mathrm{in}} + 3A_{\mathrm{in}} + 4.50T_{\mathrm{out}} + 12A_{\mathrm{out}}}{10^6}`, { throwOnError: false });
-  const ttsFormula = katex.renderToString(String.raw`C_{\mathrm{TTS}} = \frac{${ttsInputRate.toFixed(2)}T_{\mathrm{in}} + ${ttsAudioRate.toFixed(2)}A_{\mathrm{out}}}{10^6}`, { throwOnError: false });
+  const lkr = (amount: number) => new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 
   return <div className="admin-overview">
     <div className="admin-totals">{totals.map(([label, count, detail]) => <Card className="panel admin-stat" key={label}><span>{label}</span><strong>{count}</strong><small>{detail}</small></Card>)}</div>
     <Card component="section" className="panel admin-section admin-pricing">
-      <div className="panel-heading"><div><h2>API cost estimate</h2><p>{usd(totalCost)} for tracked calls · {selectedCustomers.reduce((sum, customer) => sum + customer.call_minutes, 0).toLocaleString("en-US", { maximumFractionDigits: 1 })} call minutes</p></div>
-        <NativeSelect className="admin-workspace-filter" aria-label="Filter API pricing by workspace" value={workspaceId} onChange={event => setWorkspaceId(event.target.value)}>
-          <option value="all">All workspaces</option>
-          {customers.map(customer => <option key={customer.id} value={customer.id}>{customer.business_name}</option>)}
-        </NativeSelect>
+      <div className="panel-heading"><div><h2>Observed API cost averages</h2><p>Model billing and activity sample · Nov 1–25, 2026</p></div></div>
+      <div className="admin-row">
+        <div className="admin-row-main"><strong>Phone calls</strong><small>Rs 19.98 billed for Flash-Lite TTS over 1.88 minutes where it ran; Gemini Live showed no charge.</small></div>
+        <strong className="admin-price">{lkr(19.98 / (112.604 / 60))} / min</strong>
       </div>
-      {pricing.length ? pricing.map(({ model, cost }) => <div className="admin-row" key={model}>
-        <div className="admin-row-main"><strong>{modelName(model)}</strong></div>
-        <strong className="admin-price">{cost === null ? "Rate unavailable" : usd(cost)}</strong>
-      </div>) : <p className="admin-empty">No model usage recorded for this workspace yet.</p>}
-      <small className="admin-pricing-source">Call telemetry estimate only. <a href="https://aistudio.google.com/spend?project=gen-lang-client-0993167812" target="_blank" rel="noreferrer">View project spend in AI Studio</a> for the total across API keys.</small>
-      <details className="admin-pricing-method"><summary>Rates and calculation</summary><div className="admin-pricing-formulas">
-        <p><strong>Gemini 3.8 Live</strong><span className="admin-pricing-formula" dangerouslySetInnerHTML={{ __html: liveFormula }} /></p>
-        <p><strong>Nishadi TTS</strong><span className="admin-pricing-formula" dangerouslySetInnerHTML={{ __html: ttsFormula }} /></p>
-        <small>Rates are USD per million tokens. Audio is 25 tokens/second: Live input ≈ $0.005/min and output ≈ $0.018/min; TTS output ≈ {usd(ttsAudioRate * 1_500 / 1_000_000)}/min. Free-tier traffic is $0.</small>
-      </div></details>
+      <div className="admin-row">
+        <div className="admin-row-main"><strong>WhatsApp replies</strong><small>Rs 3.33 billed for Flash over 6 logged requests.</small></div>
+        <strong className="admin-price">{lkr(3.33 / 6)} / message</strong>
+      </div>
+      <div className="admin-row">
+        <div className="admin-row-main"><strong>Gemini Flash TTS (non-Lite)</strong><small>Billed in the project; not matched to current runtime call records, so excluded from the call average.</small></div>
+        <strong className="admin-price">{lkr(26.64)}</strong>
+      </div>
+      <small className="admin-pricing-source">Observed Google AI Studio model charges, converted at Rs 333 per USD (Nov 26). Account spend as of Nov 26: {lkr(276.39)}; prepay balance: {lkr(9713.61)}. These are small-sample averages, not workspace-level allocations; provider spend can take over 24 hours to update. <a href="https://aistudio.google.com/billing" target="_blank" rel="noreferrer">Open AI Studio billing</a>.</small>
     </Card>
     <div className="admin-sections">
       <Card component="section" className="panel admin-section admin-workspaces">
