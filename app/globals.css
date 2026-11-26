@@ -2599,20 +2599,20 @@ html.dark .MuiDrawer-paper .MuiListItemButton-root.Mui-selected .MuiListItemIcon
 .admin-row-main { min-width: 0; display: grid; gap: 6px; }
 .admin-row-main strong { overflow-wrap: anywhere; color: var(--portal-text); font-size: 13px; font-weight: 600; }
 .admin-row-main small { color: var(--portal-muted); font-size: 11px; line-height: 1.5; }
+.admin-usage-breakdown { border-top: 1px solid var(--portal-border); }
+.admin-usage-breakdown summary { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 16px; padding: 13px 0; cursor: pointer; list-style: none; }
+.admin-usage-breakdown summary::-webkit-details-marker { display: none; }
+.admin-usage-breakdown summary span { display: grid; gap: 5px; min-width: 0; }
+.admin-usage-breakdown summary strong { color: var(--portal-text); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.admin-usage-breakdown summary small,.admin-usage-table-wrap small { color: var(--portal-muted); font-size: 11px; line-height: 1.5; }
+.admin-usage-table-wrap { overflow-x: auto; padding-bottom: 14px; }
+.admin-usage-table { width: 100%; border-collapse: collapse; color: var(--portal-text); font-size: 11px; white-space: nowrap; }
+.admin-usage-table th,.admin-usage-table td { padding: 8px 10px; border-top: 1px solid var(--portal-border); text-align: right; }
+.admin-usage-table th:first-child,.admin-usage-table td:first-child { padding-left: 0; text-align: left; }
+.admin-usage-table th { color: var(--portal-muted); font-weight: 500; }
+.admin-usage-table-wrap small { display: block; margin-top: 10px; }
 .admin-pricing .panel-heading { align-items: center; }
-.admin-pricing .MuiInputBase-root { min-width: 220px; }
-.admin-pricing .admin-workspace-filter .MuiNativeSelect-select { border: 0; box-shadow: none; outline: 0; background: transparent; }
-.admin-pricing .admin-workspace-filter .MuiOutlinedInput-notchedOutline { border-color: var(--portal-border); }
-.admin-pricing .admin-workspace-filter:hover .MuiOutlinedInput-notchedOutline { border-color: var(--portal-accent); }
-.admin-pricing-formulas { display: grid; gap: 8px; margin-top: 10px; font-size: 13px; }
-.admin-pricing-formulas p { display: grid; gap: 4px; margin: 0; line-height: 1.5; }
-.admin-pricing-formula { width: fit-content; max-width: 100%; overflow-x: auto; color: var(--portal-text); }
-.admin-pricing-formula .katex { font-size: 1.15em; }
-.admin-pricing-formulas small { color: var(--portal-muted); line-height: 1.5; }
 .admin-price { color: var(--portal-text); font-size: 15px; white-space: nowrap; }
-.admin-pricing-method { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--portal-border); color: var(--portal-muted); font-size: 11px; }
-.admin-pricing-method summary { width: fit-content; cursor: pointer; color: var(--portal-text); font-weight: 600; }
-.admin-pricing-method p { margin: 10px 0 0; line-height: 1.6; }
 .admin-row-main small span { color: var(--portal-accent); padding: 0 2px; }
 .admin-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .admin-row-action { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px; border: 1px solid var(--portal-border); border-radius: 8px; color: var(--portal-accent); background: var(--portal-raised); font-size: 11px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background-color 140ms ease,border-color 140ms ease,color 140ms ease; }

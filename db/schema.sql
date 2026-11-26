@@ -51,6 +51,8 @@ alter table portal_calls add column if not exists usage jsonb;
 alter table portal_calls add column if not exists events jsonb;
 alter table portal_calls add column if not exists source text not null default 'runtime';
 create index if not exists portal_calls_customer_date on portal_calls(customer_id,created_at desc);
+create table if not exists portal_text_usage (id text primary key, customer_id uuid not null references customers(id) on delete cascade, agent_id uuid references portal_agents(id) on delete set null, model text not null, usage jsonb not null, created_at timestamptz not null default now());
+create index if not exists portal_text_usage_customer_date on portal_text_usage(customer_id,created_at desc);
 create table if not exists portal_appointments (id uuid primary key default gen_random_uuid(), customer_id uuid not null references customers(id) on delete cascade, agent_id uuid references portal_agents(id) on delete set null, call_id text not null, customer_phone text not null default '', customer_name text not null, service text not null, appointment_at timestamptz not null, duration_minutes integer not null default 30 check(duration_minutes between 15 and 240), notes text not null default '', status text not null default 'booked' check(status in ('booked','completed','cancelled')), created_at timestamptz not null default now());
 create index if not exists portal_appointments_customer_date on portal_appointments(customer_id,appointment_at);
 create unique index if not exists portal_appointments_agent_slot on portal_appointments(agent_id,appointment_at) where status='booked';

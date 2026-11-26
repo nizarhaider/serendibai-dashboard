@@ -8,7 +8,8 @@ export type Customer = {
   agents: number;
   calls: number;
   call_minutes: number;
-  model_usage: Record<string, { request_count: number; total_tokens: number; input_tokens: number; output_tokens: number; input_audio_tokens: number; output_audio_tokens: number; audio_seconds: number }>;
+  model_usage: Record<string, { request_count: number; total_tokens: number; input_tokens: number; output_tokens: number; input_audio_tokens: number; output_audio_tokens: number; audio_seconds: number; requests?: Record<string, unknown>[][] }>;
+  message_usage: Record<string, { request_count: number; total_tokens: number; input_tokens: number; output_tokens: number; requests: Record<string, unknown>[] }>;
   connections: { id: string; phone: string; status: string; enabled: boolean; error: string; agent_name: string | null }[];
 };
 export type Agent = {

@@ -15,7 +15,8 @@ export async function getCustomers() {
         'output_tokens', sum((bucket->>'output_tokens')::bigint),
         'input_audio_tokens', sum((bucket->>'input_audio_tokens')::bigint),
         'output_audio_tokens', sum((bucket->>'output_audio_tokens')::bigint),
-        'audio_seconds', sum((bucket->>'audio_seconds')::numeric)
+        'audio_seconds', sum((bucket->>'audio_seconds')::numeric),
+        'requests', jsonb_agg(coalesce(bucket->'requests', '[]'::jsonb))
       ) as totals
       from (
         select p.customer_id, model_usage.model, model_usage.bucket
@@ -29,11 +30,22 @@ export async function getCustomers() {
           'output_tokens', coalesce((select sum((request->>'response_token_count')::bigint) from jsonb_array_elements(coalesce(p.usage->'requests', '[]'::jsonb)) request), 0),
           'input_audio_tokens', coalesce((select sum((detail->>'token_count')::bigint) from jsonb_array_elements(coalesce(p.usage->'requests', '[]'::jsonb)) request cross join lateral jsonb_array_elements(coalesce(request->'prompt_tokens_details', '[]'::jsonb)) detail where detail->>'modality'='AUDIO'), 0),
           'output_audio_tokens', coalesce((select sum((detail->>'token_count')::bigint) from jsonb_array_elements(coalesce(p.usage->'requests', '[]'::jsonb)) request cross join lateral jsonb_array_elements(coalesce(request->'response_tokens_details', '[]'::jsonb)) detail where detail->>'modality'='AUDIO'), 0),
-          'audio_seconds', 0
+          'audio_seconds', 0,
+          'requests', coalesce(p.usage->'requests', '[]'::jsonb)
         )
         from portal_calls p where p.customer_id=c.id and p.usage->>'provider'='google_gemini_live'
       ) model_usage
       where model_usage.customer_id=c.id group by model
-    ) usage_by_model) as model_usage
+    ) usage_by_model) as model_usage,
+    (select coalesce(jsonb_object_agg(model, totals), '{}'::jsonb) from (
+      select model, jsonb_build_object(
+        'request_count', count(*)::int,
+        'total_tokens', coalesce(sum((usage->>'total_token_count')::bigint), 0),
+        'input_tokens', coalesce(sum((usage->>'prompt_token_count')::bigint), 0),
+        'output_tokens', coalesce(sum(coalesce((usage->>'candidates_token_count')::bigint, (usage->>'response_token_count')::bigint, 0) + coalesce((usage->>'thoughts_token_count')::bigint, 0)), 0),
+        'requests', jsonb_agg(usage)
+      ) as totals
+      from portal_text_usage where customer_id=c.id group by model
+    ) text_usage_by_model) as message_usage
     from customers c where not exists(select 1 from portal_users u where u.customer_id=c.id and u.is_admin) order by c.business_name`;
 }
