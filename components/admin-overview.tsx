@@ -113,7 +113,7 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
   }
   const callCosts = [...callModels].map(([model, usage]) => ({ model, usage, stats: usageBreakdown(model, usage) }));
   const messageCosts = [...messageModels].map(([model, usage]) => ({ model, usage, stats: usageBreakdown(model, usage) }));
-  const callTotal = callCosts.reduce((sum, row) => sum + (row.model === "gemini-3.8-live" ? 0 : row.stats.cost || 0), 0);
+  const callTotal = callCosts.reduce((sum, row) => sum + (row.stats.cost || 0), 0);
   const messageTotal = messageCosts.reduce((sum, row) => sum + (row.stats.cost || 0), 0);
   const messageCount = messageCosts.reduce((sum, row) => sum + row.stats.requests, 0);
   const modelLabel = (model: string) => ({ "gemini-3.8-live": "Gemini 3.8 Live", "gemini-3.8-flash-lite-tts": "Gemini 3.8 Flash-Lite TTS", "gemini-3.8-flash-tts": "Gemini 3.8 Flash TTS", "gemini-3.8-flash": "Gemini 3.8 Flash" }[model] || model);
@@ -141,24 +141,24 @@ export function AdminOverview({ customers }: { customers: Customer[] }) {
   return <div className="admin-overview">
     <div className="admin-totals">{totals.map(([label, count, detail]) => <Card className="panel admin-stat" key={label}><span>{label}</span><strong>{count}</strong><small>{detail}</small></Card>)}</div>
     <Card component="section" className="panel admin-section admin-pricing">
-      <div className="panel-heading"><div><h2>Gemini usage cost breakdown</h2><p>Gemini response token counts × published rates · all tracked activity</p></div></div>
+      <div className="panel-heading"><div><h2>Gemini usage cost breakdown</h2><p>Temporary rates use estimated Gemini costs with no markup.</p></div></div>
       <div className="admin-row">
         <div className="admin-row-main"><strong>Phone calls · average cost per minute</strong><small>{lkr(callTotal)} estimated across {callMinutes.toLocaleString("en-US", { maximumFractionDigits: 2 })} recorded call minutes</small></div>
-        <strong className="admin-price">{callMinutes ? `${lkr(callTotal / callMinutes)} / min` : "No call usage"}</strong>
+        <strong className="admin-price">{callCosts.some(row => row.stats.cost === null) ? "Rate unavailable" : callMinutes ? `${lkr(callTotal / callMinutes)} / min` : "No call usage"}</strong>
       </div>
       {callCosts.map(({ model, usage, stats }) => <details className="admin-usage-breakdown" key={`call-${model}`}>
-        <summary><span><strong>{modelLabel(model)}</strong><small>{stats.requests.toLocaleString("en-US")} Gemini requests · {stats.total.toLocaleString("en-US")} tokens</small></span><strong>{stats.cost === null ? "Rate unavailable" : model === "gemini-3.8-live" ? `Rs 0.00 billed · ${lkr(stats.cost)} paid-rate equivalent` : lkr(stats.cost)}</strong></summary>
+        <summary><span><strong>{modelLabel(model)}</strong><small>{stats.requests.toLocaleString("en-US")} Gemini requests · {stats.total.toLocaleString("en-US")} tokens</small></span><strong>{stats.cost === null ? "Rate unavailable" : lkr(stats.cost)}</strong></summary>
         {stats.rates ? <div className="admin-usage-table-wrap"><table className="admin-usage-table"><thead><tr><th>Token type</th><th>Gemini tokens</th><th>Billable tokens</th><th>Rate / 1M</th><th>Estimated cost</th></tr></thead><tbody>{tokenRows(model, stats).map(row => <tr key={row.label}><td>{row.label}</td><td>{row.tokens.toLocaleString("en-US")}</td><td>{row.billableTokens.toLocaleString("en-US")}</td><td>{lkr(row.rateLkr)}</td><td>{lkr(row.cost)}</td></tr>)}</tbody></table><small>Gemini reported {usage.request_count.toLocaleString("en-US")} requests; {stats.freeRequests} marked free. {stats.assumedPaidRequests} requests without a free-tier marker use the Standard paid rate. Estimate: billable tokens × rate, converted at Rs 333 per USD.</small></div> : <p className="admin-empty">No published rate mapping is configured for this model.</p>}
       </details>)}
       <div className="admin-row">
         <div className="admin-row-main"><strong>WhatsApp replies · average cost per message</strong><small>{messageCount ? `${lkr(messageTotal)} estimated across ${messageCount.toLocaleString("en-US")} Gemini replies` : "Gemini token usage will appear after the first reply recorded by this version."}</small></div>
-        <strong className="admin-price">{messageCount ? `${lkr(messageTotal / messageCount)} / message` : "Awaiting usage"}</strong>
+        <strong className="admin-price">{messageCosts.some(row => row.stats.cost === null) ? "Rate unavailable" : messageCount ? `${lkr(messageTotal / messageCount)} / message` : "Awaiting usage"}</strong>
       </div>
       {messageCosts.map(({ model, usage, stats }) => <details className="admin-usage-breakdown" key={`message-${model}`}>
         <summary><span><strong>{modelLabel(model)}</strong><small>{stats.requests.toLocaleString("en-US")} Gemini replies · {stats.total.toLocaleString("en-US")} tokens</small></span><strong>{stats.cost === null ? "Rate unavailable" : lkr(stats.cost)}</strong></summary>
         {stats.rates ? <div className="admin-usage-table-wrap"><table className="admin-usage-table"><thead><tr><th>Token type</th><th>Gemini tokens</th><th>Billable tokens</th><th>Rate / 1M</th><th>Estimated cost</th></tr></thead><tbody>{tokenRows(model, stats).map(row => <tr key={row.label}><td>{row.label}</td><td>{row.tokens.toLocaleString("en-US")}</td><td>{row.billableTokens.toLocaleString("en-US")}</td><td>{lkr(row.rateLkr)}</td><td>{lkr(row.cost)}</td></tr>)}</tbody></table><small>Gemini reported {usage.request_count.toLocaleString("en-US")} requests; {stats.freeRequests} marked free. {stats.assumedPaidRequests} requests without a free-tier marker use the Standard paid rate. Estimate: billable tokens × rate, converted at Rs 333 per USD.</small></div> : <p className="admin-empty">No published rate mapping is configured for this model.</p>}
       </details>)}
-      <small className="admin-pricing-source">Counts come from Gemini response metadata, including modality, tool-use and thinking tokens where returned. Requests marked free by Gemini are costed at Rs 0; requests without a tier marker use the Standard paid rate. Gemini Live is included at Rs 0 in the call average because AI Studio showed no charge in its Nov 25 check; its paid-rate equivalent remains available in the breakdown. Historical WhatsApp replies have no saved usage metadata. This covers portal runtime records, not manual AI Studio calls or startup warmups without a linked call. Conversion uses Rs 333 per USD (Nov 26). <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer">Google Gemini pricing</a>.</small>
+      <small className="admin-pricing-source">Estimates use recorded Gemini tokens and exclude hosting. Requests marked free are costed at Rs 0; requests without a tier marker use the standard paid rate. Actual bills can differ. Historical WhatsApp replies have no saved usage metadata. This covers portal runtime records, not manual AI Studio calls or startup warmups without a linked call. Conversion uses Rs 333 per USD (Nov 26). <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer">Google Gemini pricing</a>.</small>
     </Card>
     <div className="admin-sections">
       <Card component="section" className="panel admin-section admin-workspaces">
