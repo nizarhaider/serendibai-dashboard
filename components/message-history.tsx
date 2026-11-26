@@ -65,7 +65,7 @@ export function MessageHistory({ data }: { data: PortalData }) {
       ) : (
         conversations.map(({ phone, messages, category, status }) => (
           <article className="message-conversation" key={phone}>
-            <h2>{phone}</h2>
+            <h2>{messages.find(message => message.display_phone)?.display_phone || (phone.length > 13 ? "WhatsApp contact" : phone)}</h2>
             <div className="message-thread-controls">
               <label>Category <NativeSelect size="sm" aria-label={`Category for ${phone}`} value={category} disabled={saving === phone} onChange={event => void updateThread(phone, "category", event.target.value)}>{categories.map(item => <option key={item}>{item}</option>)}</NativeSelect></label>
               <label>Status <NativeSelect size="sm" aria-label={`Status for ${phone}`} value={status} disabled={saving === phone} onChange={event => void updateThread(phone, "status", event.target.value)}>{statuses.map(item => <option key={item}>{item}</option>)}</NativeSelect></label>
