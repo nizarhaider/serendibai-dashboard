@@ -2439,6 +2439,60 @@ th { background: #f8fafc; border-color: #e3e8ef; }
 .catalogue-table td .MuiInputBase-root { min-width: 105px; }
 .catalogue-table td:first-child .MuiInputBase-root { min-width: 190px; }
 .catalogue-table td .MuiInputBase-root + .MuiInputBase-root { margin-top: 6px; }
+.catalogue-editor-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+}
+.catalogue-editor-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--legacy-border, #e1e7e3);
+  border-radius: 12px;
+  background: var(--legacy-surface, #fff);
+}
+.catalogue-editor-title, .catalogue-field-wide, .catalogue-photo-field { grid-column: 1 / -1; }
+.catalogue-editor-title { display: flex; align-items: center; justify-content: space-between; }
+.catalogue-field { display: grid; min-width: 0; gap: 6px; color: var(--legacy-muted); font-size: 12px; }
+.catalogue-field .MuiInputBase-root, .catalogue-field .MuiNativeSelect-root { width: 100%; min-width: 0; }
+.catalogue-field .MuiInputBase-input { box-sizing: border-box; min-width: 0; }
+.catalogue-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid #cbd5d0;
+  border-radius: 7px;
+  background: #fff;
+  color: #17231d;
+  font: inherit;
+  line-height: 1.5;
+}
+.catalogue-photo-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px dashed #b8c8bf;
+  border-radius: 9px;
+  color: var(--legacy-muted);
+  cursor: pointer;
+}
+.catalogue-photo-field img { flex: 0 0 56px; object-fit: cover; border-radius: 6px; }
+.catalogue-photo-field span { display: grid; gap: 4px; min-width: 0; }
+.catalogue-photo-field strong { color: #26352d; font-size: 12px; overflow-wrap: anywhere; }
+.catalogue-photo-field small { font-size: 11px; line-height: 1.4; }
+.catalogue-photo-field input { width: min(150px, 32%); font-size: 11px; }
+@media (max-width: 520px) {
+  .catalogue-editor-card { padding: 14px; gap: 12px; }
+  .catalogue-photo-field { flex-wrap: wrap; }
+  .catalogue-photo-field input { width: 100%; }
+}
 .invite-password-wrap { width: 100%; }
 .invite-password-wrap .MuiButton-root { min-width: 44px; z-index: 1; }
 .agent-list-card.MuiButton-root { align-items: flex-start; text-align: left; gap: 8px; }

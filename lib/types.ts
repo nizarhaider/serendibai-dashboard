@@ -36,6 +36,7 @@ export type Agent = {
 };
 export type Product = {
   id?: string;
+  draftKey?: string;
   name: string;
   sku: string;
   description: string;

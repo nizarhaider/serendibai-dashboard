@@ -405,11 +405,11 @@ async function handler(
         const ids = rows.flatMap(row => row.id ? [row.id] : []);
         const owned = ids.length ? await sql`select id from portal_products where customer_id=${customer} and id=any(${ids}::uuid[])` : [];
         if (owned.length !== new Set(ids).size) throw new ApiError("Product not found.", 404);
-        await sql.transaction(
+        const saved = await sql.transaction(
           rows.map((b) =>
             b.id
-              ? sql`update portal_products set name=${b.name},sku=${b.sku},description=${b.description},category=${b.category},unit=${b.unit},price=${b.price},currency=${b.currency},stock=${b.stock},status=${b.status},updated_at=now() where id=${b.id} and customer_id=${customer}`
-              : sql`insert into portal_products(customer_id,name,sku,description,category,unit,price,currency,stock,status) values(${customer},${b.name},${b.sku},${b.description},${b.category},${b.unit},${b.price},${b.currency},${b.stock},${b.status})`,
+              ? sql`update portal_products set name=${b.name},sku=${b.sku},description=${b.description},category=${b.category},unit=${b.unit},price=${b.price},currency=${b.currency},stock=${b.stock},status=${b.status},updated_at=now() where id=${b.id} and customer_id=${customer} returning id`
+              : sql`insert into portal_products(customer_id,name,sku,description,category,unit,price,currency,stock,status) values(${customer},${b.name},${b.sku},${b.description},${b.category},${b.unit},${b.price},${b.currency},${b.stock},${b.status}) returning id`,
           ),
         );
         await audit(
@@ -417,7 +417,7 @@ async function handler(
           "Catalogue updated",
           `${rows.length} product or service rows saved.`,
         );
-        return Response.json({ ok: true, count: rows.length });
+        return Response.json({ ok: true, count: rows.length, products: saved.map(([row]) => row) });
       }
       if (id && method === "DELETE") {
         uuid.parse(id);

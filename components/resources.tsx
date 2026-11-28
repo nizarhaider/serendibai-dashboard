@@ -33,6 +33,7 @@ const blank = (): Product => ({
   currency: "LKR",
   stock: null,
   status: "active",
+  draftKey: crypto.randomUUID(),
 });
 export function Resources({
   section,
@@ -58,7 +59,8 @@ export function Resources({
       name: string;
     } | null>(null),
     [editing, setEditing] = useState<Product[] | null>(null),
-    [imported, setImported] = useState<Product[] | null>(null);
+    [imported, setImported] = useState<Product[] | null>(null),
+    [photos, setPhotos] = useState<Record<string, File>>({});
   const picker = useRef<HTMLInputElement>(null),
     knowledge = section === "knowledge";
   async function upload(file?: File) {
@@ -178,9 +180,20 @@ export function Resources({
     setBusy(true);
     setError("");
     try {
-      await api("products", "POST", { rows });
+      const result = await api("products", "POST", { rows });
+      const saved = rows.map((row, i) => ({ ...row, id: row.id || result.products[i].id }));
+      setEditing(saved);
+      for (const row of saved) {
+        const photo = photos[row.draftKey || row.id || ""];
+        if (photo && row.id) {
+          const form = new FormData();
+          form.set("image", photo);
+          await api(`products/${row.id}/image`, "POST", form);
+        }
+      }
       setEditing(null);
       setImported(null);
+      setPhotos({});
       await refresh();
       notify(
         `${rows.length} catalogue items ${isImport ? "imported" : "saved"}. Your agents can search them immediately.`,
@@ -241,7 +254,7 @@ export function Resources({
         </section>
       ) : (
         <section className="catalogue-banner">
-          <div><h2>Import your catalogue</h2><p>Use the template to add products or services, then add photos to saved items.</p></div>
+          <div><h2>Import your catalogue</h2><p>Import a spreadsheet or add items with photos below. Agents can send photos when customers ask.</p></div>
           <Button variant="ghost" className="button" onClick={template}><ArrowDownToLine size={16} /> Download template</Button>
           <Button variant="ghost" className="button primary" disabled={busy} onClick={() => picker.current?.click()}>{busy ? <Loader2 className="spin" size={16} /> : <ArrowUpFromLine size={16} />} Import Excel</Button>
         </section>
@@ -290,7 +303,7 @@ export function Resources({
               <>
                 {editing ? (
                   <>
-                    <Button variant="ghost" className="button" onClick={() => setEditing(null)}>
+                    <Button variant="ghost" className="button" onClick={() => { setEditing(null); setPhotos({}); }}>
                       Cancel
                     </Button>
                     <Button variant="ghost"
@@ -306,7 +319,7 @@ export function Resources({
                   <Button variant="ghost"
                     className="button"
                     onClick={() =>
-                      setEditing(data.products.map((p) => ({ ...p })))
+                      setEditing(data.products.map((p) => ({ ...p, draftKey: crypto.randomUUID() })))
                     }
                   >
                     Edit table
@@ -317,7 +330,7 @@ export function Resources({
                   onClick={() => {
                     setQuery("");
                     setEditing([
-                      ...(editing || data.products).map((p) => ({ ...p })),
+                      ...(editing || data.products).map((p) => ({ ...p, draftKey: p.draftKey || crypto.randomUUID() })),
                       blank(),
                     ]);
                   }}
@@ -397,7 +410,32 @@ export function Resources({
             )}
           </>
         ) : (
-          <div className="table-scroll catalogue-table">
+          <>
+          {editing && <div className="catalogue-editor-grid">
+            {products.map((p, i) => {
+              const key = p.draftKey || p.id || "";
+              const set = (field: keyof Product, value: string | number | null) =>
+                setEditing(editing.map((row, index) => index === i ? { ...row, [field]: value } : row));
+              return <section className="catalogue-editor-card" key={key}>
+                <div className="catalogue-editor-title"><strong>{p.name || `New item ${i + 1}`}</strong><Button variant="ghost" className="icon-button" aria-label={`Remove ${p.name || "new item"}`} onClick={() => { setEditing(editing.filter((_, index) => index !== i)); setPhotos(Object.fromEntries(Object.entries(photos).filter(([photoKey]) => photoKey !== key))); }}><Trash2 size={16} /></Button></div>
+                <label className="catalogue-field catalogue-field-wide">Name<Input aria-label={`Product name row ${i + 1}`} value={p.name} placeholder="Product or service name" onChange={e => set("name", e.target.value)} /></label>
+                <label className="catalogue-field catalogue-field-wide">Description<textarea aria-label={`Description row ${i + 1}`} value={p.description} placeholder="What it is, who it helps, key details…" onChange={e => set("description", e.target.value)} /></label>
+                <label className="catalogue-field">SKU<Input aria-label={`sku row ${i + 1}`} value={p.sku} placeholder="Optional item code" onChange={e => set("sku", e.target.value)} /></label>
+                <label className="catalogue-field">Type<Input aria-label={`category row ${i + 1}`} value={p.category} placeholder="Product or Service" onChange={e => set("category", e.target.value)} /></label>
+                <label className="catalogue-field">Sold by<Input aria-label={`unit row ${i + 1}`} value={p.unit} placeholder="unit, hour, month…" onChange={e => set("unit", e.target.value)} /></label>
+                <label className="catalogue-field">Price<Input aria-label={`price row ${i + 1}`} type="number" min="0" step="0.01" value={p.price ?? ""} placeholder="Not set" onChange={e => set("price", e.target.value === "" ? null : Number(e.target.value))} /></label>
+                <label className="catalogue-field">Currency<Input aria-label={`currency row ${i + 1}`} value={p.currency} maxLength={3} onChange={e => set("currency", e.target.value.toUpperCase())} /></label>
+                <label className="catalogue-field">Stock<Input aria-label={`stock row ${i + 1}`} type="number" min="0" step="1" value={p.stock ?? ""} placeholder="Unlimited" onChange={e => set("stock", e.target.value === "" ? null : Number(e.target.value))} /></label>
+                <label className="catalogue-field">Status<NativeSelect aria-label={`Status row ${i + 1}`} value={p.status} onChange={e => set("status", e.target.value)}>{["active", "draft", "archived"].map(status => <option key={status}>{status}</option>)}</NativeSelect></label>
+                <label className="catalogue-photo-field">
+                  {p.image_available && p.id && <Image src={`/api/portal/products/${p.id}/image`} alt={`${p.name} product`} width={56} height={56} unoptimized />}
+                  <span><strong>{photos[key]?.name || (p.image_available ? "Photo added" : "Add a product photo")}</strong><small>JPG or PNG · up to 5 MB · sent on WhatsApp when requested</small></span>
+                  <input aria-label={`Photo for ${p.name || "new item"}`} type="file" accept="image/jpeg,image/png" disabled={busy} onChange={e => { const file = e.target.files?.[0]; if (file && file.size > 5000000) { setError("Choose an image smaller than 5 MB."); return; } if (file) setPhotos({ ...photos, [key]: file }); }} />
+                </label>
+              </section>;
+            })}
+          </div>}
+          <div className="table-scroll catalogue-table" hidden={Boolean(editing)}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -577,6 +615,7 @@ export function Resources({
               </div>
             )}
           </div>
+          </>
         )}
         <div className="table-footer">
           {knowledge
