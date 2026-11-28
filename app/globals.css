@@ -2789,3 +2789,13 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
   .MuiDialog-paper:has(.agent-create-form) .MuiDialogContent-root { padding: 18px; }
   .agent-create-form > .button { width: 100%; }
 }
+.message-inbox { display:grid; grid-template-columns:minmax(180px, 280px) minmax(0, 1fr); min-height:520px; max-height:70vh; overflow:hidden; border:1px solid var(--portal-border); border-radius:12px; background:var(--portal-surface); }
+.message-contacts { overflow-y:auto; border-right:1px solid var(--portal-border); }
+.message-contact { display:grid; gap:6px; width:100%; padding:16px; border:0; border-bottom:1px solid var(--portal-border); background:transparent; color:var(--portal-text); text-align:left; cursor:pointer; }
+.message-contact:hover, .message-contact.selected { background:var(--portal-raised); }
+.message-contact span { overflow:hidden; color:var(--portal-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+.message-conversation { display:flex; flex-direction:column; min-width:0; overflow:hidden; border:0; border-radius:0; }
+.message-thread { overflow-y:auto; align-content:start; }
+.message-bubble p { margin:0 0 8px; }
+.message-empty { padding:20px; color:var(--portal-muted); font-size:13px; }
+@media(max-width:650px){.message-inbox{grid-template-columns:minmax(120px, 38%) minmax(0, 1fr); min-height:440px}.message-contact{padding:12px}.message-thread{padding:12px}}

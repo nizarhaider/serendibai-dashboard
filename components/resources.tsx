@@ -46,7 +46,6 @@ export function Resources({
   refresh: () => Promise<void>;
   notify: (s: string) => void;
 }) {
-  const [catalogueStatus, setCatalogueStatus] = useState("active");
   const [query, setQuery] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -222,10 +221,9 @@ export function Resources({
   const products = (editing || data.products).filter(
     (p) =>
       editing ||
-      ((catalogueStatus === "all" || p.status === catalogueStatus) &&
-        `${p.name} ${p.sku} ${p.category}`
-          .toLowerCase()
-          .includes(query.toLowerCase())),
+      `${p.name} ${p.sku} ${p.category}`
+        .toLowerCase()
+        .includes(query.toLowerCase()),
   );
   return (
     <>
@@ -275,17 +273,19 @@ export function Resources({
             </p>
           </div>
           <div className="toolbar-actions">
-            {!knowledge && !editing && (
-              <NativeSelect
-                aria-label="Catalogue status"
-                value={catalogueStatus}
-                onChange={(event) => setCatalogueStatus(event.target.value)}
-              >
-                <option value="active">Active items</option>
-                <option value="draft">Drafts</option>
-                <option value="archived">Archived</option>
-                <option value="all">All items</option>
-              </NativeSelect>
+            {!knowledge && (
+            <Button variant="ghost"
+                  className="button"
+                  onClick={() => {
+                    setQuery("");
+                    setEditing([
+                      ...(editing || data.products).map((p) => ({ ...p, draftKey: p.draftKey || crypto.randomUUID() })),
+                      blank(),
+                    ]);
+                  }}
+                >
+                  <Plus size={15} /> Add item
+                </Button>
             )}
             <div className="search-input">
               <Search size={16} />
@@ -325,18 +325,6 @@ export function Resources({
                     Edit table
                   </Button>
                 )}
-                <Button variant="ghost"
-                  className="button"
-                  onClick={() => {
-                    setQuery("");
-                    setEditing([
-                      ...(editing || data.products).map((p) => ({ ...p, draftKey: p.draftKey || crypto.randomUUID() })),
-                      blank(),
-                    ]);
-                  }}
-                >
-                  <Plus size={15} /> Add item
-                </Button>
               </>
             )}
           </div>
