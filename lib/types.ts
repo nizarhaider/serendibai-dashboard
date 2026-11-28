@@ -123,6 +123,7 @@ export type Message = {
   created_at: string;
 };
 export type PortalData = {
+  website_url?: string;
   business_name: string;
   display_name: string;
   is_admin: boolean;

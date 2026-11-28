@@ -46,6 +46,7 @@ export function Resources({
   refresh: () => Promise<void>;
   notify: (s: string) => void;
 }) {
+  const [website, setWebsite] = useState(data.website_url || "");
   const [query, setQuery] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -62,6 +63,19 @@ export function Resources({
     [photos, setPhotos] = useState<Record<string, File>>({});
   const picker = useRef<HTMLInputElement>(null),
     knowledge = section === "knowledge";
+  async function saveWebsite() {
+    setBusy(true);
+    setError("");
+    try {
+      await api("website", "PUT", { website_url: website.trim() });
+      await refresh();
+      notify("Website saved.");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function upload(file?: File) {
     if (!file || busy) return;
     setError("");
@@ -257,6 +271,11 @@ export function Resources({
           <Button variant="ghost" className="button primary" disabled={busy} onClick={() => picker.current?.click()}>{busy ? <Loader2 className="spin" size={16} /> : <ArrowUpFromLine size={16} />} Import Excel</Button>
         </section>
       )}
+      {knowledge && <section className="catalogue-banner website-setting">
+        <div><h2>Website</h2><p>Save your website for your workspace. Website lookup is not active yet.</p></div>
+        <Input aria-label="Website URL" type="url" placeholder="https://example.com" value={website} onChange={event => setWebsite(event.target.value)} />
+        <Button variant="ghost" className="button primary" disabled={busy} onClick={saveWebsite}>Save website</Button>
+      </section>}
       <Card component="section" className="panel resource-panel">
         <div className="panel-heading">
           <div>

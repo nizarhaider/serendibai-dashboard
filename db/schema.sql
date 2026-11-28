@@ -5,6 +5,7 @@ alter table portal_users add column if not exists onboarding_completed boolean n
 alter table customers add column if not exists portal_read_only boolean not null default false;
 alter table customers add column if not exists portal_tools text[] not null default array['book_appointment','create_order','create_ticket'];
 alter table customers add column if not exists email text;
+alter table customers add column if not exists website_url text not null default '';
 create table if not exists portal_sessions (token_hash text primary key, user_id uuid not null references portal_users(id) on delete cascade, expires_at timestamptz not null);
 create table if not exists portal_setup_tokens (token_hash text primary key, customer_id uuid not null references customers(id), expires_at timestamptz not null);
 create table if not exists portal_invitations (user_id uuid primary key references portal_users(id) on delete cascade, token_hash text not null unique, expires_at timestamptz not null, sent_at timestamptz);

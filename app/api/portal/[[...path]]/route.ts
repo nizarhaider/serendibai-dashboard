@@ -293,6 +293,12 @@ async function handler(
         { headers: { "Cache-Control": "private, no-store" } },
       );
     }
+    if (route === "website" && method === "PUT") {
+      if (!canAccessSection(user, "knowledge")) throw new ApiError("This page is not available for your account.", 403);
+      const { website_url } = z.object({ website_url: z.union([z.literal(""), z.url({ protocol: /^https?$/ })]).refine(value => !value || (!new URL(value).username && !new URL(value).password), "Remove credentials from the URL.") }).parse(await request.json());
+      await sql`update customers set website_url=${website_url} where id=${customer}`;
+      return Response.json({ ok: true });
+    }
     if (route === "message-threads" && method === "PATCH") {
       const b = z.object({ contact_phone: z.string().min(1).max(80), category: z.enum(["New inquiry", "Sales", "Support", "Product question", "Booking", "Other"]).optional(), status: z.enum(["Open", "Waiting", "Resolved"]).optional() }).refine(value => value.category || value.status).parse(await request.json());
       await sql`insert into portal_message_threads(customer_id,contact_phone,category,status) values(${customer},${b.contact_phone},${b.category || "New inquiry"},${b.status || "Open"}) on conflict(customer_id,contact_phone) do update set category=coalesce(${b.category || null},portal_message_threads.category),status=coalesce(${b.status || null},portal_message_threads.status),updated_at=now()`;

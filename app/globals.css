@@ -2799,3 +2799,6 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 .message-bubble p { margin:0 0 8px; }
 .message-empty { padding:20px; color:var(--portal-muted); font-size:13px; }
 @media(max-width:650px){.message-inbox{grid-template-columns:minmax(120px, 38%) minmax(0, 1fr); min-height:440px}.message-contact{padding:12px}.message-thread{padding:12px}}
+
+.website-setting { margin-top:20px; }
+.website-setting input { min-width:0; max-width:440px; }

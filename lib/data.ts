@@ -10,7 +10,7 @@ export async function getData(
   workspace?: string,
 ): Promise<PortalData> {
   const sql = db();
-  const [account] = await sql`select c.business_name,u.display_name,u.is_admin,c.portal_read_only as read_only,c.portal_tools as allowed_tools from customers c join portal_users u on u.customer_id=c.id where c.id=${customer} and u.email=${email}`;
+  const [account] = await sql`select c.business_name,c.website_url,u.display_name,u.is_admin,c.portal_read_only as read_only,c.portal_tools as allowed_tools from customers c join portal_users u on u.customer_id=c.id where c.id=${customer} and u.email=${email}`;
   if (!account) throw new Error("Workspace not found.");
   if (workspace && account.is_admin && ["agents", "dashboard"].includes(section)) {
     const [target] = await sql`select id,portal_tools from customers c where id=${workspace} and not exists(select 1 from portal_users u where u.customer_id=c.id and u.is_admin)`;
