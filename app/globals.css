@@ -2802,3 +2802,7 @@ html.dark .customer-create input { background: var(--portal-raised); color: var(
 
 .website-setting { margin-top:20px; }
 .website-setting input { min-width:0; max-width:440px; }
+@media (min-width: 701px) {
+  .resource-panel .toolbar-actions { flex: 0 0 auto; flex-wrap: nowrap; }
+  .resource-panel .toolbar-actions .search-input { flex: 0 0 190px; }
+}
