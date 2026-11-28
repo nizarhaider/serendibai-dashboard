@@ -272,7 +272,7 @@ export function Resources({
         </section>
       )}
       {knowledge && <section className="catalogue-banner website-setting">
-        <div><h2>Website</h2><p>Save your website for your workspace. Website lookup is not active yet.</p></div>
+        <div><h2>Website</h2><p>Your agents can look up information and products on this website.</p></div>
         <Input aria-label="Website URL" type="url" placeholder="https://example.com" value={website} onChange={event => setWebsite(event.target.value)} />
         <Button variant="ghost" className="button primary" disabled={busy} onClick={saveWebsite}>Save website</Button>
       </section>}
