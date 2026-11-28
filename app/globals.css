@@ -2488,6 +2488,12 @@ th { background: #f8fafc; border-color: #e3e8ef; }
 .catalogue-photo-field strong { color: #26352d; font-size: 12px; overflow-wrap: anywhere; }
 .catalogue-photo-field small { font-size: 11px; line-height: 1.4; }
 .catalogue-photo-field input { width: min(150px, 32%); font-size: 11px; }
+.berry-main .catalogue-editor-card { border-color: var(--portal-border); background: var(--portal-surface); color: var(--portal-text); }
+.berry-main .catalogue-editor-title strong { color: var(--portal-text); }
+.berry-main .catalogue-field { color: var(--portal-muted); }
+.berry-main .catalogue-field textarea { border-color: var(--portal-border); background: var(--portal-raised); color: var(--portal-text); }
+.berry-main .catalogue-photo-field { border-color: var(--portal-border); background: var(--portal-raised); color: var(--portal-muted); }
+.berry-main .catalogue-photo-field strong { color: var(--portal-text); }
 @media (max-width: 520px) {
   .catalogue-editor-card { padding: 14px; gap: 12px; }
   .catalogue-photo-field { flex-wrap: wrap; }
